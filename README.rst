@@ -1,8 +1,8 @@
-Regression Models
-=================
-
 .. image:: https://travis-ci.com/zhengp0/regm.svg?branch=main
     :target: https://travis-ci.com/zhengp0/regm
+
+Regression Models
+=================
 
 This package is design for general regression models including
 generalized linear models and others.
