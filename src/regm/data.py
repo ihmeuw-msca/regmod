@@ -86,3 +86,6 @@ class Data:
         if not isinstance(col_covs, list):
             col_covs = [col_covs]
         return self.get_cols(col_covs)
+
+    def __repr__(self):
+        return f"Data(num_obs={self.num_obs})"
