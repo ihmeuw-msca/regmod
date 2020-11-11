@@ -17,19 +17,23 @@ class Data:
     df: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     def __post_init__(self):
-        self.col_covs = set(self.col_covs)
-        self.col_covs.update('intercept')
-        self.col_covs = list(self.col_covs)
+        self.col_covs = list(set(self.col_covs).union({'intercept'}))
         self.cols = [self.col_obs, self.col_weights, self.col_offset] + self.col_covs
 
         if self.is_empty():
             self.df = pd.DataFrame(columns=self.cols)
         else:
+            self.df = self.df.loc[:, self.df.columns.isin(self.cols)]
             self.fill_df()
-            self.df = self.df[self.cols].copy()
+            self.check_cols()
 
     def is_empty(self) -> bool:
         return self.num_obs == 0
+
+    def check_cols(self):
+        for col in self.cols:
+            if col not in self.df.columns:
+                raise ValueError(f"Missing columnn {col}.")
 
     def fill_df(self):
         if "intercept" not in self.df.columns:
@@ -43,9 +47,9 @@ class Data:
         self.df = pd.DataFrame(columns=self.cols)
 
     def attach_df(self, df: pd.DataFrame):
-        self.df = df
+        self.df = df.loc[:, df.columns.isin(self.cols)]
         self.fill_df()
-        self.df = self.df[self.cols].copy()
+        self.check_cols()
 
     def copy(self, with_df=False) -> Data:
         df = self.df.copy() if with_df else pd.DataFrame(columns=self.cols)
