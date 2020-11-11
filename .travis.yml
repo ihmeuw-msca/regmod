@@ -1,0 +1,15 @@
+language: python
+python:
+- 3.8
+install:
+- pip install .
+script:
+- pytest tests
+# deploy:
+#   provider: pypi
+#   username: __token__
+#   password:
+#   on:
+#     branch: main
+#     repo: zhengp0/regm
+#     tags: true
