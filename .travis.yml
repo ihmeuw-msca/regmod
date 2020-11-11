@@ -5,11 +5,12 @@ install:
 - pip install .
 script:
 - pytest tests
-# deploy:
-#   provider: pypi
-#   username: __token__
-#   password:
-#   on:
-#     branch: main
-#     repo: zhengp0/regm
-#     tags: true
+deploy:
+  provider: pypi
+  username: __token__
+  password:
+    secure: SZJDWY6eYL9Hb7jAZTILA6uA1wgBoWetQYTm5etj+2NgSoI4bAuGYGSzD9LXQ7CZVugWphU6zFUCKUKwGT+pg+YtZuXoLySNVtzgNSRtNSHM061tNj9Q/GURi/XCZMB4QYPZDEmz33bPpNtw7NxWcsZQDAA0cJtKiTnkTgd70pROJS4rQ1Fes480M0nvKwnuCrpBGAS2L+DCPpBzZlOsH9YLPdGr0E/wUjgCm25pW7JgqzmgZTF1Wuzg25Ybxpj+ukEJ09gKOCqwdwRphoPZcMJJ4TW3al5lGp2sNjpCp2mx0KbLxXCh7I9D09nBaw9gx5gbWzCNA7xBWCxFbiML0YVltNTFjVCcQxu3S1KoNXA81f6a5Q1tTeT2EJm/ny0KLd7kkknx1lTqEBBV+Q6inhBAgxACFs4L/l/62l6AL6Oh6wh7oX0IjwjNIS3Ctdz4NVimTAa6IzkoBweoynXhrTlpQw6lMTzswoz9W/3V7OJNpv1iGGUcY6DTwAi2Krfad5aJCkkigRUjR9xzJpKxOZ6UFg1qF6gbyocphespXIpFI5idPUlRCgXmTjBa1SwORHyODD1VRcZc5tTkKUHeYZ7nvbeaIM/qQfhk//7PIiwQN4NiLuReKTLnv+1m+aLVOpK6us5x7y7YGu65WipJBmqOwK/s9XYfD4Ld1r7DubA=
+  on:
+    branch: main
+    repo: zhengp0/regm
+    tags: true
