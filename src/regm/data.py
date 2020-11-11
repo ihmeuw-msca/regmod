@@ -72,7 +72,7 @@ class Data:
 
     @property
     def covs(self) -> Dict[str, np.ndarray]:
-        self.df[self.col_covs].to_dict(orient="list")
+        return self.df[self.col_covs].to_dict(orient="list")
 
     @property
     def weights(self) -> np.ndarray:

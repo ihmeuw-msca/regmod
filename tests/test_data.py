@@ -80,3 +80,7 @@ def test_copy(data):
     data_copy = data.copy(with_df=True)
     assert set(data_copy.cols) == set(data.cols)
     assert data_copy.num_obs == NUM_OBS
+
+
+def test_covs(data):
+    assert len(data.covs) == len(COL_COVS) + 1
