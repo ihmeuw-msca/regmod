@@ -1,2 +1,2 @@
 from .data import Data
-from .prior import GaussianPrior, UniformPrior
+from .prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior

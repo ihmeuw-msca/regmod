@@ -17,6 +17,7 @@ if __name__ == '__main__':
         'numpy',
         'scipy',
         'pandas',
+        'xspline',
     ]
 
     test_requirements = [
