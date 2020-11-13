@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 if __name__ == '__main__':
     base_dir = Path(__file__).parent
-    src_dir = base_dir/'src'/'regm'
+    src_dir = base_dir/'src'/'regmod'
 
     sys.path.insert(0, src_dir.as_posix())
     import __about__ as about

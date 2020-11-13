@@ -4,10 +4,10 @@ Test variable module
 import numpy as np
 import pandas as pd
 import pytest
-from regm.data import Data
-from regm.variable import Variable, SplineVariable
-from regm.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
-from regm.utils import SplineSpecs
+from regmod.data import Data
+from regmod.variable import Variable, SplineVariable
+from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
+from regmod.utils import SplineSpecs
 
 
 NUM_OBS = 10
