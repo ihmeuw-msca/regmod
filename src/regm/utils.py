@@ -36,6 +36,12 @@ class SplineSpecs:
         assert self.knots_type in ["abs", "rel_domain", "rel_freq"], \
             "Knots type must be one of 'abs', 'rel_domain' or 'rel_freq'."
 
+    @property
+    def num_spline_bases(self) -> int:
+        inner_knots = self.knots[int(self.l_linear):
+                                 len(self.knots) - int(self.r_linear)]
+        return len(inner_knots) - 1 + self.degree
+
     def create_spline(self, vec: np.ndarray = None) -> XSpline:
         if self.knots_type == "abs":
             knots = self.knots
