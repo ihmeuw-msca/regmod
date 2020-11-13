@@ -1,19 +1,26 @@
 """
 Parameter module
 """
-from typing import List, Callable
+from typing import List, Union
 from dataclasses import dataclass, field
 import numpy as np
 from scipy.linalg import block_diag
 from .data import Data
 from .variable import Variable, SplineVariable
+from .function import SmoothFunction, fun_dict
 
 
 @dataclass
 class Parameter:
     name: str
     variables: List[Variable] = field(repr=False)
-    inv_link: Callable = field(repr=False)
+    inv_link: Union[str, SmoothFunction] = field(repr=False)
+
+    def __post_init__(self):
+        if isinstance(self.inv_link, str):
+            self.inv_link = fun_dict[self.inv_link]
+        assert isinstance(self.inv_link, SmoothFunction), \
+            "inv_link has to be an instance of SmoothFunction."
 
     @property
     def size(self) -> int:
