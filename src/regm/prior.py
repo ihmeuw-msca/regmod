@@ -48,14 +48,14 @@ class UniformPrior(Prior):
 
 
 @dataclass
-class SplineGaussianPrior(GaussianPrior):
+class SplinePrior:
+    size: int = 100
     order: int = 0
     domain_lb: float = field(default=0.0, repr=False)
     domain_ub: float = field(default=1.0, repr=False)
     domain_type: str = field(default="rel", repr=False)
 
     def __post_init__(self):
-        super().__post_init__()
         assert self.domain_lb <= self.domain_ub, \
             "Domain lower bound must be less or equal than upper bound."
         assert self.domain_type in ["rel", "abs"], \
@@ -78,30 +78,14 @@ class SplineGaussianPrior(GaussianPrior):
 
 
 @dataclass
-class SplineUniformPrior(UniformPrior):
-    order: int = 0
-    domain_lb: float = field(default=0.0, repr=False)
-    domain_ub: float = field(default=1.0, repr=False)
-    domain_type: str = field(default="rel", repr=False)
-
+class SplineGaussianPrior(SplinePrior, GaussianPrior):
     def __post_init__(self):
-        super().__post_init__()
-        assert self.domain_lb <= self.domain_ub, \
-            "Domain lower bound must be less or equal than upper bound."
-        assert self.domain_type in ["rel", "abs"], \
-            "Domain type must be 'rel' or 'abs'."
-        if self.domain_type == "rel":
-            assert self.domain_lb >= 0.0 and self.domain_ub <= 1.0, \
-                "Using relative domain, bounds must be numbers between 0 and 1."
+        SplinePrior.__post_init__(self)
+        GaussianPrior.__post_init__(self)
 
-    def get_mat(self, spline: XSpline) -> np.ndarray:
-        knots_lb = spline.knots[0]
-        knots_ub = spline.knots[-1]
-        if self.domain_type == "rel":
-            points_lb = knots_lb + (knots_ub - knots_lb)*self.domain_lb
-            points_ub = knots_lb + (knots_ub - knots_lb)*self.domain_ub
-        else:
-            points_lb = self.domain_lb
-            points_ub = self.domain_ub
-        points = np.linspace(points_lb, points_ub, self.size)
-        return spline.design_dmat(points, order=self.order)
+
+@dataclass
+class SplineUniformPrior(SplinePrior, UniformPrior):
+    def __post_init__(self):
+        SplinePrior.__post_init__(self)
+        UniformPrior.__post_init__(self)
