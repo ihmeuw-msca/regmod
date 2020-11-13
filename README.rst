@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.com/zhengp0/regm.svg?branch=main
-    :target: https://travis-ci.com/zhengp0/regm
+.. image:: https://travis-ci.com/zhengp0/regmod.svg?branch=main
+    :target: https://travis-ci.com/zhengp0/regmod
 
 Regression Models
 =================

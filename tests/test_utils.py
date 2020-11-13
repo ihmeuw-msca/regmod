@@ -4,7 +4,7 @@ Test utility module
 import numpy as np
 import pytest
 from xspline import XSpline
-import regm.utils as utils
+import regmod.utils as utils
 
 
 @pytest.mark.parametrize("vec", [[1, 2, 3], (1, 2, 3)])
