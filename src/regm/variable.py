@@ -154,7 +154,7 @@ class SplineVariable(Variable):
 
     def get_mat(self, data: Data) -> np.ndarray:
         self.check_data(data)
-        cov = data.get_cols[self.name]
+        cov = data.get_cols(self.name)
         return self.spline.design_mat(cov)
 
     def get_spline_uvec(self) -> np.ndarray:

@@ -4,7 +4,10 @@ Test variable module
 import numpy as np
 import pandas as pd
 import pytest
-from regm import Data, Variable, GaussianPrior, UniformPrior
+from regm.data import Data
+from regm.variable import Variable, SplineVariable
+from regm.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
+from regm.utils import SplineSpecs
 
 
 NUM_OBS = 10
@@ -41,6 +44,17 @@ def data(df):
 @pytest.fixture
 def variable():
     return Variable(name=COL_COVS[0])
+
+
+@pytest.fixture
+def spline_variable():
+    return SplineVariable(
+        name=COL_COVS[0],
+        spline_specs=SplineSpecs(
+            knots=np.linspace(0.0, 1.0, 5),
+            degree=3
+        )
+    )
 
 
 @pytest.fixture
@@ -101,3 +115,50 @@ def test_copy(variable, gprior, uprior):
     variable_copy = variable.copy()
     assert variable_copy == variable
     assert variable_copy is not variable
+
+
+def test_spline_variable_check_data(spline_variable, data):
+    spline_variable.check_data(data)
+    assert spline_variable.spline is not None
+
+
+def test_spline_variable_get_mat(spline_variable, data):
+    mat = spline_variable.get_mat(data)
+    assert mat.shape == (data.num_obs, spline_variable.size)
+
+
+def test_spline_variable_get_vec(spline_variable):
+    uprior = UniformPrior(lb=0.0, ub=1.0, size=spline_variable.size)
+    gprior = GaussianPrior(mean=0.0, sd=1.0, size=spline_variable.size)
+    spline_variable.add_priors([uprior, gprior])
+
+    uvec = spline_variable.get_uvec()
+    gvec = spline_variable.get_gvec()
+
+    assert uvec.shape == (2, spline_variable.size)
+    assert gvec.shape == (2, spline_variable.size)
+
+
+def test_spline_variable_get_spline_vec(spline_variable):
+    spline_uprior = SplineUniformPrior(lb=0.0, ub=np.inf, order=1)
+    spline_gprior = SplineGaussianPrior(mean=0.0, sd=1.0, order=1)
+    spline_variable.add_priors([spline_uprior, spline_gprior])
+
+    uvec = spline_variable.get_spline_uvec()
+    gvec = spline_variable.get_spline_gvec()
+
+    assert uvec.shape == (2, spline_uprior.size)
+    assert gvec.shape == (2, spline_gprior.size)
+
+
+def test_spline_variable_get_spline_mat(spline_variable, data):
+    spline_uprior = SplineUniformPrior(lb=0.0, ub=np.inf, order=1)
+    spline_gprior = SplineGaussianPrior(mean=0.0, sd=1.0, order=1)
+    spline_variable.check_data(data)
+    spline_variable.add_priors([spline_uprior, spline_gprior])
+
+    umat = spline_variable.get_spline_umat()
+    gmat = spline_variable.get_spline_gmat()
+
+    assert umat.shape == (spline_uprior.size, spline_variable.size)
+    assert gmat.shape == (spline_gprior.size, spline_variable.size)
