@@ -73,11 +73,28 @@ def test_model_size(model, var_cov0, var_cov1):
     assert model.size == var_cov0.size + var_cov1.size
 
 
+def test_uvec(model):
+    assert model.uvec.shape == (2, model.size)
+
+
+def test_gvec(model):
+    assert model.gvec.shape == (2, model.size)
+
+
+def test_spline_uprior(model):
+    assert model.spline_uvec.shape[1] == model.spline_umat.shape[0]
+    assert model.spline_umat.shape[1] == model.size
+
+
+def test_spline_gprior(model):
+    assert model.spline_gvec.shape[1] == model.spline_gmat.shape[0]
+    assert model.spline_gmat.shape[1] == model.size
+
+
 def test_model_objective(model):
     coefs = np.random.randn(model.size)
     my_obj = model.objective(coefs)
-    tr_obj = 0.5*np.sum((model.data.obs - model.mat[0].dot(coefs))**2)
-    assert np.isclose(my_obj, tr_obj)
+    assert my_obj > 0.0
 
 
 def test_model_gradient(model):
