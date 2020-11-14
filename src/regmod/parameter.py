@@ -15,6 +15,7 @@ class Parameter:
     name: str
     variables: List[Variable] = field(repr=False)
     inv_link: Union[str, SmoothFunction] = field(repr=False)
+    use_offset: bool = field(default=False, repr=False)
 
     def __post_init__(self):
         if isinstance(self.inv_link, str):
@@ -67,28 +68,29 @@ class Parameter:
         ])
         return gmat
 
-    def get_lin_param(self, coefs: np.ndarray,
-                      mat: np.ndarray = None, data: Data = None,
+    def get_lin_param(self, coefs: np.ndarray, data: Data,
+                      mat: np.ndarray = None,
                       return_mat: bool = False) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         if mat is None:
-            assert data is not None, "Must provide data or mat."
             mat = self.get_mat(data)
         lin_param = mat.dot(coefs)
+        if self.use_offset:
+            lin_param += data.offset
         if return_mat:
             return lin_param, mat
         return lin_param
 
-    def get_param(self, coefs: np.ndarray,
-                  mat: np.ndarray = None, data: Data = None) -> np.ndarray:
-        lin_param = self.get_lin_param(coefs, mat, data)
+    def get_param(self, coefs: np.ndarray, data: Data,
+                  mat: np.ndarray = None) -> np.ndarray:
+        lin_param = self.get_lin_param(coefs, data, mat)
         return self.inv_link.fun(lin_param)
 
-    def get_dparam(self, coefs: np.ndarray,
-                   mat: np.ndarray = None, data: Data = None) -> np.ndarray:
-        lin_param, mat = self.get_lin_param(coefs, mat, data, return_mat=True)
+    def get_dparam(self, coefs: np.ndarray, data: Data,
+                   mat: np.ndarray = None) -> np.ndarray:
+        lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
         return self.inv_link.dfun(lin_param)[:, None]*mat
 
-    def get_d2param(self, coefs: np.ndarray,
-                    mat: np.ndarray = None, data: Data = None) -> np.ndarray:
-        lin_param, mat = self.get_lin_param(coefs, mat, data, return_mat=True)
+    def get_d2param(self, coefs: np.ndarray, data: Data,
+                    mat: np.ndarray = None) -> np.ndarray:
+        lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
         return self.inv_link.d2fun(lin_param)[:, None, None]*(mat[..., None]*mat[:, None, :])
