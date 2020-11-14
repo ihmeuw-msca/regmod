@@ -1,7 +1,7 @@
 """
 Utility classes and functions
 """
-from typing import Any
+from typing import List, Any
 from dataclasses import dataclass
 import numpy as np
 from xspline import XSpline
@@ -58,3 +58,9 @@ class SplineSpecs:
         return XSpline(knots, self.degree,
                        l_linear=self.l_linear,
                        r_linear=self.r_linear)
+
+
+def sizes_to_sclices(sizes: np.array) -> List[slice]:
+    ends = np.cumsum(sizes)
+    starts = np.insert(ends, 0, 0)[:-1]
+    return [slice(*pair) for pair in zip(starts, ends)]
