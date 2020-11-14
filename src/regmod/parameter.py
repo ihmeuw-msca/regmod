@@ -1,7 +1,7 @@
 """
 Parameter module
 """
-from typing import List, Union
+from typing import List, Tuple, Union
 from dataclasses import dataclass, field
 import numpy as np
 from scipy.linalg import block_diag
@@ -66,3 +66,29 @@ class Parameter:
             for var in self.variables
         ])
         return gmat
+
+    def get_lin_param(self, coefs: np.ndarray,
+                      mat: np.ndarray = None, data: Data = None,
+                      return_mat: bool = False) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+        if mat is None:
+            assert data is not None, "Must provide data or mat."
+            mat = self.get_mat(data)
+        lin_param = mat.dot(coefs)
+        if return_mat:
+            return lin_param, mat
+        return lin_param
+
+    def get_param(self, coefs: np.ndarray,
+                  mat: np.ndarray = None, data: Data = None) -> np.ndarray:
+        lin_param = self.get_lin_param(coefs, mat, data)
+        return self.inv_link.fun(lin_param)
+
+    def get_dparam(self, coefs: np.ndarray,
+                   mat: np.ndarray = None, data: Data = None) -> np.ndarray:
+        lin_param, mat = self.get_lin_param(coefs, mat, data, return_mat=True)
+        return self.inv_link.dfun(lin_param)[:, None]*mat
+
+    def get_d2param(self, coefs: np.ndarray,
+                    mat: np.ndarray = None, data: Data = None) -> np.ndarray:
+        lin_param, mat = self.get_lin_param(coefs, mat, data, return_mat=True)
+        return self.inv_link.d2fun(lin_param)[:, None, None]*(mat[..., None]*mat[:, None, :])
