@@ -79,6 +79,7 @@ class Variable:
         self.process_priors()
 
     def get_mat(self, data: Data) -> np.ndarray:
+        self.check_data(data)
         return data.get_covs(self.name)
 
     def get_gvec(self) -> np.ndarray:
