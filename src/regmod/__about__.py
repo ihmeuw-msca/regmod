@@ -3,9 +3,9 @@ __all__ = [
     "__email__", "__license__", "__copyright__",
 ]
 
-__title__ = "regm"
-__summary__ = "regm: General regression models."
-__uri__ = "https://github.com/zhengp0/regm"
+__title__ = "regmod"
+__summary__ = "regmod: General regression models."
+__uri__ = "https://github.com/zhengp0/regmod"
 
 __version__ = "0.0.0"
 
