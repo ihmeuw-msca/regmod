@@ -120,8 +120,8 @@ def test_get_lin_param(param, data):
     param.check_data(data)
     coefs = np.ones(param.size)
     mat = param.get_mat(data)
-    lin_param1 = param.get_lin_param(coefs, data=data)
-    lin_param2 = param.get_lin_param(coefs, mat=mat)
+    lin_param1 = param.get_lin_param(coefs, data)
+    lin_param2 = param.get_lin_param(coefs, data, mat=mat)
     assert np.allclose(lin_param1, lin_param2)
 
 
@@ -129,8 +129,8 @@ def test_get_param(param, data):
     param.check_data(data)
     coefs = np.ones(param.size)
     mat = param.get_mat(data)
-    param1 = param.get_param(coefs, data=data)
-    param2 = param.get_param(coefs, mat=mat)
+    param1 = param.get_param(coefs, data)
+    param2 = param.get_param(coefs, data, mat=mat)
     assert np.allclose(param1, param2)
 
 
@@ -138,8 +138,8 @@ def test_get_dparam(param, data):
     param.check_data(data)
     coefs = np.ones(param.size)
     mat = param.get_mat(data)
-    dparam1 = param.get_dparam(coefs, data=data)
-    dparam2 = param.get_dparam(coefs, mat=mat)
+    dparam1 = param.get_dparam(coefs, data)
+    dparam2 = param.get_dparam(coefs, data, mat=mat)
     assert np.allclose(dparam1, dparam2)
 
 
@@ -147,6 +147,6 @@ def test_get_d2param(param, data):
     param.check_data(data)
     coefs = np.ones(param.size)
     mat = param.get_mat(data)
-    d2param1 = param.get_d2param(coefs, data=data)
-    d2param2 = param.get_d2param(coefs, mat=mat)
+    d2param1 = param.get_d2param(coefs, data)
+    d2param2 = param.get_d2param(coefs, data, mat=mat)
     assert np.allclose(d2param1, d2param2)
