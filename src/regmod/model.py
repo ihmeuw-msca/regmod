@@ -53,12 +53,27 @@ class Model:
     def negloglikelihood(self, coefs: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
 
-    def objective(self, coefs: np.ndarray) -> float:
-        val = sum(self.negloglikelihood(coefs))
-        val += 0.5*np.sum((coefs - self.gvec[0])**2/self.gvec[1]**2)
+    def objective_from_gprior(self, coefs: np.ndarray) -> float:
+        val = 0.5*np.sum((coefs - self.gvec[0])**2/self.gvec[1]**2)
         if self.has_spline_gprior():
             val += 0.5*np.sum((self.spline_gmat.dot(coefs) - self.spline_gvec[0])**2/self.spline_gvec[1]**2)
+        return val
 
+    def gradient_from_gprior(self, coefs: np.ndarray) -> np.ndarray:
+        grad = (coefs - self.gvec[0])/self.gvec[1]**2
+        if self.has_spline_gprior():
+            grad += (self.spline_gmat.T/self.spline_gvec[1]**2).dot(self.spline_gmat.dot(coefs) - self.spline_gvec[0])
+        return grad
+
+    def hessian_from_gprior(self) -> np.ndarray:
+        hess = np.diag(1.0/self.gvec[1]**2)
+        if self.has_spline_gprior():
+            hess += (self.spline_gmat.T/self.spline_gvec[1]**2).dot(self.spline_gmat)
+        return hess
+
+    def objective(self, coefs: np.ndarray) -> float:
+        val = sum(self.negloglikelihood(coefs))
+        val += self.objective_from_gprior(coefs)
         return val
 
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
@@ -83,15 +98,10 @@ class LinearModel(Model):
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
         grad = (self.mat[0].T*self.data.weights).dot(
             self.mat[0].dot(coefs) - self.data.obs
-        )
-        grad += (coefs - self.gvec[0])/self.gvec[1]**2
-        if self.has_spline_gprior():
-            grad += (self.spline_gmat.T/self.spline_gvec[1]**2).dot(self.spline_gmat.dot(coefs) - self.spline_gvec[0])
+        ) + self.gradient_from_gprior(coefs)
         return grad
 
     def hessian(self, coefs: np.ndarray) -> np.ndarray:
         hess = (self.mat[0].T*self.data.weights).dot(self.mat[0])
-        hess += np.diag(1.0/self.gvec[1]**2)
-        if self.has_spline_gprior():
-            hess += (self.spline_gmat.T/self.spline_gvec[1]**2).dot(self.spline_gmat)
+        hess += self.hessian_from_gprior()
         return hess
