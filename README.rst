@@ -11,3 +11,7 @@ It features
 
 * Bayesian framework, allows user to include priors into the mdoel.
 * Easy spline interface and spline shape priors and constraint.
+
+Current model pool contains:
+
+* Linear model
