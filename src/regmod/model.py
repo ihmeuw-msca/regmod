@@ -25,20 +25,26 @@ class Model:
             param.get_mat(self.data)
             for param in self.parameters
         ]
-        self.uvec = np.hstack([param.get_uvec for param in self.parameters])
-        self.gvec = np.hstack([param.get_gvec for param in self.parameters])
+        self.uvec = np.hstack([param.get_uvec() for param in self.parameters])
+        self.gvec = np.hstack([param.get_gvec() for param in self.parameters])
         self.spline_uvec = np.hstack([
-            param.get_spline_uvec for param in self.parameters
+            param.get_spline_uvec() for param in self.parameters
         ])
         self.spline_gvec = np.hstack([
-            param.get_spline_gvec for param in self.parameters
+            param.get_spline_gvec() for param in self.parameters
         ])
         self.spline_umat = block_diag(*[
-            param.get_spline_umat for param in self.parameters
+            param.get_spline_umat() for param in self.parameters
         ])
         self.spline_gmat = block_diag(*[
-            param.get_spline_gmat for param in self.parameters
+            param.get_spline_gmat() for param in self.parameters
         ])
+
+    def has_spline_gprior(self) -> bool:
+        return self.spline_gvec.size > 0
+
+    def has_spline_uprior(self) -> bool:
+        return self.spline_uvec.size > 0
 
     def split_coefs(self, coefs: np.ndarray) -> List[np.ndarray]:
         assert len(coefs) == self.size
@@ -48,7 +54,12 @@ class Model:
         raise NotImplementedError()
 
     def objective(self, coefs: np.ndarray) -> float:
-        return sum(self.negloglikelihood(coefs))
+        val = sum(self.negloglikelihood(coefs))
+        val += 0.5*np.sum((coefs - self.gvec[0])**2/self.gvec[1]**2)
+        if self.has_spline_gprior():
+            val += 0.5*np.sum((self.spline_gmat.dot(coefs) - self.spline_gvec[0])**2/self.spline_gvec[1]**2)
+
+        return val
 
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
@@ -70,9 +81,17 @@ class LinearModel(Model):
         )**2
 
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
-        return (self.mat[0].T*self.data.weights).dot(
+        grad = (self.mat[0].T*self.data.weights).dot(
             self.mat[0].dot(coefs) - self.data.obs
         )
+        grad += (coefs - self.gvec[0])/self.gvec[1]**2
+        if self.has_spline_gprior():
+            grad += (self.spline_gmat.T/self.spline_gvec[1]**2).dot(self.spline_gmat.dot(coefs) - self.spline_gvec[0])
+        return grad
 
     def hessian(self, coefs: np.ndarray) -> np.ndarray:
-        return (self.mat[0].T*self.data.weights).dot(self.mat[0])
+        hess = (self.mat[0].T*self.data.weights).dot(self.mat[0])
+        hess += np.diag(1.0/self.gvec[1]**2)
+        if self.has_spline_gprior():
+            hess += (self.spline_gmat.T/self.spline_gvec[1]**2).dot(self.spline_gmat)
+        return hess
