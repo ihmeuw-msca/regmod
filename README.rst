@@ -1,6 +1,9 @@
 .. image:: https://travis-ci.com/zhengp0/regmod.svg?branch=main
     :target: https://travis-ci.com/zhengp0/regmod
 
+.. image:: https://badge.fury.io/py/regmod.svg
+    :target: https://badge.fury.io/py/regmod
+
 Regression Models
 =================
 
