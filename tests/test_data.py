@@ -84,3 +84,9 @@ def test_copy(data):
 
 def test_covs(data):
     assert len(data.covs) == len(COL_COVS) + 1
+
+
+def test_no_obs(df):
+    data = Data(col_covs=COL_COVS, df=df)
+    with pytest.raises(ValueError):
+        data.obs
