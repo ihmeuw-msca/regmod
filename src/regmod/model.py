@@ -111,7 +111,7 @@ class Model:
         grad_params = self.dnll(params)
         hess_params = self.d2nll(params)
         hess = [
-            [dparams[i].T.dot(hess_params[i][j]).dot(dparams[j])
+            [(dparams[i].T*hess_params[i][j]).dot(dparams[j])
              for j in range(self.num_params)]
             for i in range(self.num_params)
         ]
@@ -137,7 +137,7 @@ class LinearModel(Model):
         return [self.data.weights*(params[0] - self.data.obs)]
 
     def d2nll(self, params: List[np.ndarray]) -> List[np.ndarray]:
-        return [[np.diag(self.data.weights)]]
+        return [[self.data.weights]]
 
     def __repr__(self) -> str:
         return f"LinearModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
@@ -162,7 +162,7 @@ class PoissonModel(Model):
         return [self.data.weights*(1.0 - self.data.obs/params[0])]
 
     def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
-        return [[np.diag(self.data.weights*self.data.obs/params[0]**2)]]
+        return [[self.data.weights*self.data.obs/params[0]**2]]
 
     def __repr__(self) -> str:
         return f"PoissonModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
@@ -196,8 +196,8 @@ class BinomialModel(Model):
                                     self.obs_0s/(1.0 - params[0]))]
 
     def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
-        return [[np.diag(self.data.weights*(self.obs_1s/params[0]**2 +
-                                            self.obs_0s/(1.0 - params[0])**2))]]
+        return [[self.data.weights*(self.obs_1s/params[0]**2 +
+                                    self.obs_0s/(1.0 - params[0])**2)]]
 
     def __repr__(self) -> str:
         return f"BinomialModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
