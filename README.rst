@@ -18,3 +18,5 @@ It features
 Current model pool contains:
 
 * Linear model
+* Poisson model
+* Binomial model
