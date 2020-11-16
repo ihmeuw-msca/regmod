@@ -1,5 +1,5 @@
 """
-Test Poisson Model
+Test Binomial Model
 """
 import pytest
 import numpy as np
@@ -8,19 +8,21 @@ from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
-from regmod.model import PoissonModel
+from regmod.model import BinomialModel
 from regmod.utils import SplineSpecs
 
 
 @pytest.fixture
 def data():
     num_obs = 5
+    obs_1s = np.random.rand(num_obs)*10
     df = pd.DataFrame({
-        "obs": np.random.rand(num_obs)*10,
+        "obs_1s": obs_1s,
+        "obs_sample_sizes": obs_1s + 1.0,
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
+    return Data(col_obs=["obs_1s", "obs_sample_sizes"],
                 col_covs=["cov0", "cov1"],
                 df=df)
 
@@ -29,7 +31,7 @@ def data():
 def wrong_data():
     num_obs = 5
     df = pd.DataFrame({
-        "obs": np.random.randn(num_obs),
+        "obs": np.random.rand(num_obs)*10,
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
@@ -80,7 +82,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return PoissonModel(data, [var_cov0, var_cov1])
+    return BinomialModel(data, [var_cov0, var_cov1])
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -111,7 +113,7 @@ def test_model_objective(model):
     assert np.isscalar(my_obj)
 
 
-@pytest.mark.parametrize("inv_link", ["expit", "exp"])
+@pytest.mark.parametrize("inv_link", ["expit"])
 def test_model_gradient(model, inv_link):
     model.parameters[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
@@ -125,7 +127,7 @@ def test_model_gradient(model, inv_link):
     assert np.allclose(my_grad, tr_grad)
 
 
-@pytest.mark.parametrize("inv_link", ["expit", "exp"])
+@pytest.mark.parametrize("inv_link", ["expit"])
 def test_model_hessian(model, inv_link):
     model.parameters[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
@@ -143,4 +145,4 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(AssertionError):
-        PoissonModel(wrong_data, [var_cov0, var_cov1])
+        BinomialModel(wrong_data, [var_cov0, var_cov1])

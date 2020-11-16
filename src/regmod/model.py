@@ -176,7 +176,7 @@ class BinomialModel(Model):
                       variables=variables,
                       inv_link=inv_link,
                       use_offset=use_offset)
-        assert all(data.obs >= 0), \
+        assert np.all(data.obs >= 0), \
             "Binomial model requires observations to be non-negative."
         assert len(data.col_obs) == 2, \
             "Binomial model need 2 columns of observations, one for number of events, one for sample size."
@@ -196,7 +196,7 @@ class BinomialModel(Model):
                                     self.obs_0s/(1.0 - params[0]))]
 
     def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
-        return [[np.diag(self.data.weights*(self.obs_1s/params[0]**2 -
+        return [[np.diag(self.data.weights*(self.obs_1s/params[0]**2 +
                                             self.obs_0s/(1.0 - params[0])**2))]]
 
     def __repr__(self) -> str:
