@@ -10,7 +10,7 @@ import pandas as pd
 
 @dataclass
 class Data:
-    col_obs: str = None
+    col_obs: Union[str, List[str]] = None
     col_covs: List[str] = field(default_factory=list)
     col_weights: str = "weights"
     col_offset: str = "offset"
@@ -20,7 +20,10 @@ class Data:
         self.col_covs = list(set(self.col_covs).union({'intercept'}))
         self.cols = self.col_covs + [self.col_weights, self.col_offset]
         if self.col_obs is not None:
-            self.cols.insert(0, self.col_obs)
+            if isinstance(self.col_obs, str):
+                self.cols.insert(0, self.col_obs)
+            else:
+                self.cols = self.col_obs + self.cols
 
         if self.is_empty():
             self.df = pd.DataFrame(columns=self.cols)
