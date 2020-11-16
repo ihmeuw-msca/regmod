@@ -4,7 +4,7 @@ Test data module
 import numpy as np
 import pandas as pd
 import pytest
-from regmod import Data
+from regmod.data import Data
 
 
 NUM_OBS = 10

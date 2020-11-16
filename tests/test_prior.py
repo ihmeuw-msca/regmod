@@ -4,7 +4,7 @@ Test prior module
 import numpy as np
 import pytest
 from xspline import XSpline
-from regmod import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
+from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 
 
 @pytest.fixture
