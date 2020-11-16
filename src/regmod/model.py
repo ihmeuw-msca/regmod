@@ -136,3 +136,21 @@ class LinearModel(Model):
 
     def d2nll(self, params: List[np.ndarray]) -> List[np.ndarray]:
         return [[np.diag(self.data.weights)]]
+
+
+class PoissonModel(Model):
+    def __init__(self, data: Data, variables: List[Variable],
+                 inv_link: Union[str, SmoothFunction] = "exp"):
+        lam = Parameter(name="lam",
+                        variables=variables,
+                        inv_link=inv_link)
+        super().__init__(data, [lam])
+
+    def nll(self, params: List[np.ndarray]) -> np.ndarray:
+        return self.data.weights*(params[0] - self.data.obs*np.log(params[0]))
+
+    def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
+        return [self.data.weights*(1.0 - self.data.obs/params[0])]
+
+    def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
+        return [[np.diag(self.data.weights*self.data.obs/params[0]**2)]]
