@@ -7,6 +7,7 @@ import pandas as pd
 from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
+from regmod.function import fun_dict
 from regmod.model import LinearModel
 from regmod.utils import SplineSpecs
 
@@ -97,7 +98,9 @@ def test_model_objective(model):
     assert my_obj > 0.0
 
 
-def test_model_gradient(model):
+@pytest.mark.parametrize("inv_link", ["identity", "exp"])
+def test_model_gradient(model, inv_link):
+    model.parameters[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
     coefs_c = coefs + 0j
     my_grad = model.gradient(coefs)
@@ -109,10 +112,17 @@ def test_model_gradient(model):
     assert np.allclose(my_grad, tr_grad)
 
 
-def test_model_hessian(model):
-    coefs1 = np.random.randn(model.size)
-    coefs2 = np.random.randn(model.size)
-    hessian1 = model.hessian(coefs1)
-    hessian2 = model.hessian(coefs2)
+@pytest.mark.parametrize("inv_link", ["identity", "exp"])
+def test_model_hessian(model, inv_link):
+    model.parameters[0].inv_link = fun_dict[inv_link]
+    coefs = np.random.randn(model.size)
+    coefs_c = coefs + 0j
+    my_hess = model.hessian(coefs)
+    tr_hess = np.zeros((model.size, model.size))
+    for i in range(model.size):
+        for j in range(model.size):
+            coefs_c[j] += 1e-16j
+            tr_hess[i][j] = model.gradient(coefs_c).imag[i]/1e-16
+            coefs_c[j] -= 1e-16j
 
-    assert np.allclose(hessian1, hessian2)
+    assert np.allclose(my_hess, tr_hess)

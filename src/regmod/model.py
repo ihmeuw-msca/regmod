@@ -1,12 +1,13 @@
 """
 Model module
 """
-from typing import List
+from typing import List, Union
 import numpy as np
 from scipy.linalg import block_diag
 from .data import Data
 from .variable import Variable
 from .parameter import Parameter
+from .function import SmoothFunction
 from .utils import sizes_to_sclices
 
 
@@ -50,6 +51,15 @@ class Model:
         assert len(coefs) == self.size
         return [coefs[index] for index in self.indices]
 
+    def get_param(self, index: int, coefs: np.ndarray) -> np.ndarray:
+        return self.parameters[index].get_param(coefs, self.data, mat=self.mat[index])
+
+    def get_dparam(self, index: int, coefs: np.ndarray) -> np.ndarray:
+        return self.parameters[index].get_dparam(coefs, self.data, mat=self.mat[index])
+
+    def get_d2param(self, index: int, coefs: np.ndarray) -> np.ndarray:
+        return self.parameters[index].get_d2param(coefs, self.data, mat=self.mat[index])
+
     def negloglikelihood(self, coefs: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
 
@@ -84,24 +94,30 @@ class Model:
 
 
 class LinearModel(Model):
-    def __init__(self, data: Data, variables: List[Variable]):
+    def __init__(self, data: Data, variables: List[Variable],
+                 inv_link: Union[str, SmoothFunction] = "identity"):
         mu = Parameter(name="mu",
                        variables=variables,
-                       inv_link="identity")
+                       inv_link=inv_link)
         super().__init__(data, [mu])
 
+    def residual(self, coefs: np.ndarray) -> np.ndarray:
+        return self.get_param(0, coefs) - self.data.obs
+
     def negloglikelihood(self, coefs: np.ndarray) -> np.ndarray:
-        return 0.5*self.data.weights*(
-            self.data.obs - self.mat[0].dot(coefs)
-        )**2
+        return 0.5*self.data.weights*self.residual(coefs)**2
 
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
-        grad = (self.mat[0].T*self.data.weights).dot(
-            self.mat[0].dot(coefs) - self.data.obs
+        grad = self.get_dparam(0, coefs).T.dot(
+            self.data.weights*self.residual(coefs)
         ) + self.gradient_from_gprior(coefs)
         return grad
 
     def hessian(self, coefs: np.ndarray) -> np.ndarray:
-        hess = (self.mat[0].T*self.data.weights).dot(self.mat[0])
+        dparam = self.get_dparam(0, coefs)
+        d2param = self.get_d2param(0, coefs)
+
+        hess = np.tensordot(self.data.weights*self.residual(coefs), d2param, axes=1)
+        hess += (dparam.T*self.data.weights).dot(dparam)
         hess += self.hessian_from_gprior()
         return hess
