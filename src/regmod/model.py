@@ -143,7 +143,8 @@ class PoissonModel(Model):
                  inv_link: Union[str, SmoothFunction] = "exp"):
         lam = Parameter(name="lam",
                         variables=variables,
-                        inv_link=inv_link)
+                        inv_link=inv_link,
+                        use_offset=True)
         super().__init__(data, [lam])
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
