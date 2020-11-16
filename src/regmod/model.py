@@ -139,6 +139,9 @@ class LinearModel(Model):
     def d2nll(self, params: List[np.ndarray]) -> List[np.ndarray]:
         return [[np.diag(self.data.weights)]]
 
+    def __repr__(self) -> str:
+        return f"LinearModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
+
 
 class PoissonModel(Model):
     def __init__(self, data: Data, variables: List[Variable],
@@ -148,6 +151,8 @@ class PoissonModel(Model):
                         variables=variables,
                         inv_link=inv_link,
                         use_offset=use_offset)
+        assert all(data.obs >= 0), \
+            "Poisson model require observations to be non-negagive."
         super().__init__(data, [lam])
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
@@ -158,3 +163,6 @@ class PoissonModel(Model):
 
     def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
         return [[np.diag(self.data.weights*self.data.obs/params[0]**2)]]
+
+    def __repr__(self) -> str:
+        return f"PoissonModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
