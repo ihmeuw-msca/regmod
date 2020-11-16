@@ -122,10 +122,12 @@ class Model:
 
 class LinearModel(Model):
     def __init__(self, data: Data, variables: List[Variable],
-                 inv_link: Union[str, SmoothFunction] = "identity"):
+                 inv_link: Union[str, SmoothFunction] = "identity",
+                 use_offset: bool = False):
         mu = Parameter(name="mu",
                        variables=variables,
-                       inv_link=inv_link)
+                       inv_link=inv_link,
+                       use_offset=use_offset)
         super().__init__(data, [mu])
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
@@ -140,11 +142,12 @@ class LinearModel(Model):
 
 class PoissonModel(Model):
     def __init__(self, data: Data, variables: List[Variable],
-                 inv_link: Union[str, SmoothFunction] = "exp"):
+                 inv_link: Union[str, SmoothFunction] = "exp",
+                 use_offset: bool = False):
         lam = Parameter(name="lam",
                         variables=variables,
                         inv_link=inv_link,
-                        use_offset=True)
+                        use_offset=use_offset)
         super().__init__(data, [lam])
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
