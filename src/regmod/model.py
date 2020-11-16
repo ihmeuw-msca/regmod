@@ -21,6 +21,7 @@ class Model:
         self.sizes = [param.size for param in self.parameters]
         self.indices = sizes_to_sclices(self.sizes)
         self.size = sum(self.sizes)
+        self.num_params = len(self.parameters)
 
         self.mat = [
             param.get_mat(self.data)
@@ -51,16 +52,25 @@ class Model:
         assert len(coefs) == self.size
         return [coefs[index] for index in self.indices]
 
-    def get_param(self, index: int, coefs: np.ndarray) -> np.ndarray:
-        return self.parameters[index].get_param(coefs, self.data, mat=self.mat[index])
+    def get_params(self, coefs: np.ndarray) -> np.ndarray:
+        return [param.get_param(coefs, self.data, mat=self.mat[i])
+                for i, param in enumerate(self.parameters)]
 
-    def get_dparam(self, index: int, coefs: np.ndarray) -> np.ndarray:
-        return self.parameters[index].get_dparam(coefs, self.data, mat=self.mat[index])
+    def get_dparams(self, coefs: np.ndarray) -> np.ndarray:
+        return [param.get_dparam(coefs, self.data, mat=self.mat[i])
+                for i, param in enumerate(self.parameters)]
 
-    def get_d2param(self, index: int, coefs: np.ndarray) -> np.ndarray:
-        return self.parameters[index].get_d2param(coefs, self.data, mat=self.mat[index])
+    def get_d2params(self, coefs: np.ndarray) -> np.ndarray:
+        return [param.get_d2param(coefs, self.data, mat=self.mat[i])
+                for i, param in enumerate(self.parameters)]
 
-    def negloglikelihood(self, coefs: np.ndarray) -> np.ndarray:
+    def nll(self, params: List[np.ndarray]) -> np.ndarray:
+        raise NotImplementedError()
+
+    def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
+        raise NotImplementedError()
+
+    def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
         raise NotImplementedError()
 
     def objective_from_gprior(self, coefs: np.ndarray) -> float:
@@ -82,42 +92,77 @@ class Model:
         return hess
 
     def objective(self, coefs: np.ndarray) -> float:
-        val = sum(self.negloglikelihood(coefs))
-        val += self.objective_from_gprior(coefs)
-        return val
+        params = self.get_params(coefs)
+        return np.sum(self.nll(params)) + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
-        raise NotImplementedError()
+        params = self.get_params(coefs)
+        dparams = self.get_dparams(coefs)
+        grad_params = self.dnll(params)
+        return np.hstack([
+            dparams[i].T.dot(grad_params[i])
+            for i in range(self.num_params)
+        ]) + self.gradient_from_gprior(coefs)
 
     def hessian(self, coefs: np.ndarray) -> np.ndarray:
-        raise NotImplementedError()
+        params = self.get_params(coefs)
+        dparams = self.get_dparams(coefs)
+        d2params = self.get_d2params(coefs)
+        grad_params = self.dnll(params)
+        hess_params = self.d2nll(params)
+        hess = [
+            [dparams[i].T.dot(hess_params[i][j]).dot(dparams[j])
+             for j in range(self.num_params)]
+            for i in range(self.num_params)
+        ]
+        for i in range(self.num_params):
+            hess[i][i] += np.tensordot(grad_params[i], d2params[i], axes=1)
+        return np.block(hess) + self.hessian_from_gprior()
 
 
 class LinearModel(Model):
     def __init__(self, data: Data, variables: List[Variable],
-                 inv_link: Union[str, SmoothFunction] = "identity"):
+                 inv_link: Union[str, SmoothFunction] = "identity",
+                 use_offset: bool = False):
         mu = Parameter(name="mu",
                        variables=variables,
-                       inv_link=inv_link)
+                       inv_link=inv_link,
+                       use_offset=use_offset)
         super().__init__(data, [mu])
 
-    def residual(self, coefs: np.ndarray) -> np.ndarray:
-        return self.get_param(0, coefs) - self.data.obs
+    def nll(self, params: List[np.ndarray]) -> np.ndarray:
+        return 0.5*self.data.weights*(params[0] - self.data.obs)**2
 
-    def negloglikelihood(self, coefs: np.ndarray) -> np.ndarray:
-        return 0.5*self.data.weights*self.residual(coefs)**2
+    def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
+        return [self.data.weights*(params[0] - self.data.obs)]
 
-    def gradient(self, coefs: np.ndarray) -> np.ndarray:
-        grad = self.get_dparam(0, coefs).T.dot(
-            self.data.weights*self.residual(coefs)
-        ) + self.gradient_from_gprior(coefs)
-        return grad
+    def d2nll(self, params: List[np.ndarray]) -> List[np.ndarray]:
+        return [[np.diag(self.data.weights)]]
 
-    def hessian(self, coefs: np.ndarray) -> np.ndarray:
-        dparam = self.get_dparam(0, coefs)
-        d2param = self.get_d2param(0, coefs)
+    def __repr__(self) -> str:
+        return f"LinearModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
 
-        hess = np.tensordot(self.data.weights*self.residual(coefs), d2param, axes=1)
-        hess += (dparam.T*self.data.weights).dot(dparam)
-        hess += self.hessian_from_gprior()
-        return hess
+
+class PoissonModel(Model):
+    def __init__(self, data: Data, variables: List[Variable],
+                 inv_link: Union[str, SmoothFunction] = "exp",
+                 use_offset: bool = False):
+        lam = Parameter(name="lam",
+                        variables=variables,
+                        inv_link=inv_link,
+                        use_offset=use_offset)
+        assert all(data.obs >= 0), \
+            "Poisson model require observations to be non-negagive."
+        super().__init__(data, [lam])
+
+    def nll(self, params: List[np.ndarray]) -> np.ndarray:
+        return self.data.weights*(params[0] - self.data.obs*np.log(params[0]))
+
+    def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
+        return [self.data.weights*(1.0 - self.data.obs/params[0])]
+
+    def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
+        return [[np.diag(self.data.weights*self.data.obs/params[0]**2)]]
+
+    def __repr__(self) -> str:
+        return f"PoissonModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
