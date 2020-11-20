@@ -28,7 +28,7 @@ class Data:
         if self.is_empty():
             self.df = pd.DataFrame(columns=self.cols)
         else:
-            self.df = self.df.loc[:, self.df.columns.isin(self.cols)]
+            self.df = self.df.loc[:, self.df.columns.isin(self.cols)].copy()
             self.fill_df()
             self.check_cols()
 
@@ -47,6 +47,11 @@ class Data:
             self.df[self.col_weights] = 1.0
         if self.col_offset not in self.df.columns:
             self.df[self.col_offset] = 0.0
+        if self.col_obs is not None:
+            cols = self.col_obs if isinstance(self.col_obs, list) else [self.col_obs]
+            for col in cols:
+                if col not in self.df.columns:
+                    self.df[col] = np.nan
 
     def detach_df(self):
         self.df = pd.DataFrame(columns=self.cols)

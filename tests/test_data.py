@@ -97,3 +97,9 @@ def test_mult_obs(df):
     assert len(data.col_obs) == 2
     obs = data.obs
     assert obs.shape == (data.num_obs, 2)
+
+
+def test_no_match_col_obs(df):
+    df = df.drop(COL_OBS, axis=1)
+    data = Data(col_obs=COL_OBS, df=df)
+    assert all(np.isnan(data.obs))
