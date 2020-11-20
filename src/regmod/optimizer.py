@@ -16,7 +16,7 @@ def scipy_optimize(model: Model, x0: np.ndarray = None,
         model.spline_umat,
         model.spline_uvec[0],
         model.spline_uvec[1]
-    )] if model.has_spline_uprior() else []
+    )] if model.has_linear_uprior() else []
 
     result = minimize(model.objective, x0,
                       method="trust-constr",

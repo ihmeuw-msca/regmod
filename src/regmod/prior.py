@@ -48,7 +48,23 @@ class UniformPrior(Prior):
 
 
 @dataclass
-class SplinePrior:
+class LinearPrior:
+    mat: np.ndarray = field(default_factory=lambda: np.empty(shape=(0, 1)),
+                            repr=False)
+    size: int = None
+
+    def __post_init__(self):
+        if self.size is None:
+            self.size = self.mat.shape[0]
+        else:
+            assert self.size == self.mat.shape[0], "`mat` and `size` not match."
+
+    def is_empty(self) -> bool:
+        return self.mat.size == 0.0
+
+
+@dataclass
+class SplinePrior(LinearPrior):
     size: int = 100
     order: int = 0
     domain_lb: float = field(default=0.0, repr=False)
@@ -64,7 +80,7 @@ class SplinePrior:
             assert self.domain_lb >= 0.0 and self.domain_ub <= 1.0, \
                 "Using relative domain, bounds must be numbers between 0 and 1."
 
-    def get_mat(self, spline: XSpline) -> np.ndarray:
+    def attach_spline(self, spline: XSpline) -> np.ndarray:
         knots_lb = spline.knots[0]
         knots_ub = spline.knots[-1]
         if self.domain_type == "rel":
@@ -74,7 +90,23 @@ class SplinePrior:
             points_lb = self.domain_lb
             points_ub = self.domain_ub
         points = np.linspace(points_lb, points_ub, self.size)
-        return spline.design_dmat(points, order=self.order)
+        self.mat = spline.design_dmat(points, order=self.order,
+                                      l_extra=True, r_extra=True)
+        super().__post_init__()
+
+
+@dataclass
+class LinearGaussianPrior(LinearPrior, GaussianPrior):
+    def __post_init__(self):
+        LinearPrior.__post_init__(self)
+        GaussianPrior.__post_init__(self)
+
+
+@dataclass
+class LinearUniformPrior(LinearPrior, UniformPrior):
+    def __post_init__(self):
+        LinearPrior.__post_init__(self)
+        UniformPrior.__post_init__(self)
 
 
 @dataclass

@@ -40,30 +40,30 @@ class Parameter:
     def get_gvec(self) -> np.ndarray:
         return np.hstack([var.get_gvec() for var in self.variables])
 
-    def get_spline_uvec(self) -> np.ndarray:
+    def get_linear_uvec(self) -> np.ndarray:
         uvec = np.hstack([
-            var.get_spline_uvec() if isinstance(var, SplineVariable) else np.empty((2, 0))
+            var.get_linear_uvec() if isinstance(var, SplineVariable) else np.empty((2, 0))
             for var in self.variables
         ])
         return uvec
 
-    def get_spline_gvec(self) -> np.ndarray:
+    def get_linear_gvec(self) -> np.ndarray:
         gvec = np.hstack([
-            var.get_spline_gvec() if isinstance(var, SplineVariable) else np.empty((2, 0))
+            var.get_linear_gvec() if isinstance(var, SplineVariable) else np.empty((2, 0))
             for var in self.variables
         ])
         return gvec
 
-    def get_spline_umat(self) -> np.ndarray:
+    def get_linear_umat(self) -> np.ndarray:
         umat = block_diag(*[
-            var.get_spline_umat() if isinstance(var, SplineVariable) else np.empty((0, 1))
+            var.get_linear_umat() if isinstance(var, SplineVariable) else np.empty((0, 1))
             for var in self.variables
         ])
         return umat
 
-    def get_spline_gmat(self) -> np.ndarray:
+    def get_linear_gmat(self) -> np.ndarray:
         gmat = block_diag(*[
-            var.get_spline_gmat() if isinstance(var, SplineVariable) else np.empty((0, 1))
+            var.get_linear_gmat() if isinstance(var, SplineVariable) else np.empty((0, 1))
             for var in self.variables
         ])
         return gmat

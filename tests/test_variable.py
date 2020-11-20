@@ -117,17 +117,17 @@ def test_copy(variable, gprior, uprior):
     assert variable_copy is not variable
 
 
-def test_spline_variable_check_data(spline_variable, data):
+def test_linear_variable_check_data(spline_variable, data):
     spline_variable.check_data(data)
     assert spline_variable.spline is not None
 
 
-def test_spline_variable_get_mat(spline_variable, data):
+def test_linear_variable_get_mat(spline_variable, data):
     mat = spline_variable.get_mat(data)
     assert mat.shape == (data.num_obs, spline_variable.size)
 
 
-def test_spline_variable_get_vec(spline_variable):
+def test_linear_variable_get_vec(spline_variable):
     uprior = UniformPrior(lb=0.0, ub=1.0, size=spline_variable.size)
     gprior = GaussianPrior(mean=0.0, sd=1.0, size=spline_variable.size)
     spline_variable.add_priors([uprior, gprior])
@@ -139,26 +139,26 @@ def test_spline_variable_get_vec(spline_variable):
     assert gvec.shape == (2, spline_variable.size)
 
 
-def test_spline_variable_get_spline_vec(spline_variable):
+def test_linear_variable_get_linear_vec(spline_variable):
     spline_uprior = SplineUniformPrior(lb=0.0, ub=np.inf, order=1)
     spline_gprior = SplineGaussianPrior(mean=0.0, sd=1.0, order=1)
     spline_variable.add_priors([spline_uprior, spline_gprior])
 
-    uvec = spline_variable.get_spline_uvec()
-    gvec = spline_variable.get_spline_gvec()
+    uvec = spline_variable.get_linear_uvec()
+    gvec = spline_variable.get_linear_gvec()
 
     assert uvec.shape == (2, spline_uprior.size)
     assert gvec.shape == (2, spline_gprior.size)
 
 
-def test_spline_variable_get_spline_mat(spline_variable, data):
+def test_linear_variable_get_linear_mat(spline_variable, data):
     spline_uprior = SplineUniformPrior(lb=0.0, ub=np.inf, order=1)
     spline_gprior = SplineGaussianPrior(mean=0.0, sd=1.0, order=1)
-    spline_variable.check_data(data)
     spline_variable.add_priors([spline_uprior, spline_gprior])
+    spline_variable.check_data(data)
 
-    umat = spline_variable.get_spline_umat()
-    gmat = spline_variable.get_spline_gmat()
+    umat = spline_variable.get_linear_umat()
+    gmat = spline_variable.get_linear_gmat()
 
     assert umat.shape == (spline_uprior.size, spline_variable.size)
     assert gmat.shape == (spline_gprior.size, spline_variable.size)
