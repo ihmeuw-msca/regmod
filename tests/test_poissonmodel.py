@@ -95,14 +95,14 @@ def test_gvec(model):
     assert model.gvec.shape == (2, model.size)
 
 
-def test_spline_uprior(model):
-    assert model.spline_uvec.shape[1] == model.spline_umat.shape[0]
-    assert model.spline_umat.shape[1] == model.size
+def test_linear_uprior(model):
+    assert model.linear_uvec.shape[1] == model.linear_umat.shape[0]
+    assert model.linear_umat.shape[1] == model.size
 
 
-def test_spline_gprior(model):
-    assert model.spline_gvec.shape[1] == model.spline_gmat.shape[0]
-    assert model.spline_gmat.shape[1] == model.size
+def test_linear_gprior(model):
+    assert model.linear_gvec.shape[1] == model.linear_gmat.shape[0]
+    assert model.linear_gmat.shape[1] == model.size
 
 
 def test_model_objective(model):

@@ -94,25 +94,25 @@ def test_get_gvec(param):
     assert gvec.shape == (2, param.size)
 
 
-def test_get_spline_uvec(param, spline_uprior):
-    uvec = param.get_spline_uvec()
+def test_get_linear_uvec(param, spline_uprior):
+    uvec = param.get_linear_uvec()
     assert uvec.shape == (2, spline_uprior.size)
 
 
-def test_get_spline_gvec(param, spline_gprior):
-    gvec = param.get_spline_gvec()
+def test_get_linear_gvec(param, spline_gprior):
+    gvec = param.get_linear_gvec()
     assert gvec.shape == (2, spline_gprior.size)
 
 
-def test_get_spline_umat(param, data, spline_uprior):
+def test_get_linear_umat(param, data, spline_uprior):
     param.check_data(data)
-    umat = param.get_spline_umat()
+    umat = param.get_linear_umat()
     assert umat.shape == (spline_uprior.size, param.size)
 
 
-def test_get_spline_gmat(param, data, spline_gprior):
+def test_get_linear_gmat(param, data, spline_gprior):
     param.check_data(data)
-    gmat = param.get_spline_gmat()
+    gmat = param.get_linear_gmat()
     assert gmat.shape == (spline_gprior.size, param.size)
 
 

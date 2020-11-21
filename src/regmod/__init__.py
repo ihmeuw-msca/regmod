@@ -1,7 +1,7 @@
-from .data import Data
-from .prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
-from .variable import Variable, SplineVariable
-from .parameter import Parameter
-from .function import SmoothFunction
-from .model import LinearModel
-from .optimizer import scipy_optimize
+from . import data
+from . import variable
+from . import parameter
+from . import model
+from . import optimizer
+from . import function
+from . import utils

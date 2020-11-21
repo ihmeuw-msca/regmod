@@ -28,7 +28,7 @@ class Data:
         if self.is_empty():
             self.df = pd.DataFrame(columns=self.cols)
         else:
-            self.df = self.df.loc[:, self.df.columns.isin(self.cols)]
+            self.parse_df()
             self.fill_df()
             self.check_cols()
 
@@ -40,6 +40,10 @@ class Data:
             if col not in self.df.columns:
                 raise ValueError(f"Missing columnn {col}.")
 
+    def parse_df(self, df: pd.DataFrame = None):
+        df = self.df if df is None else df
+        self.df = df.loc[:, df.columns.isin(self.cols)].copy()
+
     def fill_df(self):
         if "intercept" not in self.df.columns:
             self.df["intercept"] = 1.0
@@ -47,12 +51,17 @@ class Data:
             self.df[self.col_weights] = 1.0
         if self.col_offset not in self.df.columns:
             self.df[self.col_offset] = 0.0
+        if self.col_obs is not None:
+            cols = self.col_obs if isinstance(self.col_obs, list) else [self.col_obs]
+            for col in cols:
+                if col not in self.df.columns:
+                    self.df[col] = np.nan
 
     def detach_df(self):
         self.df = pd.DataFrame(columns=self.cols)
 
     def attach_df(self, df: pd.DataFrame):
-        self.df = df.loc[:, df.columns.isin(self.cols)]
+        self.parse_df(df)
         self.fill_df()
         self.check_cols()
 

@@ -10,7 +10,10 @@ import numpy as np
 from xspline import XSpline
 from .utils import SplineSpecs
 from .data import Data
-from .prior import Prior, GaussianPrior, UniformPrior, SplinePrior, SplineGaussianPrior, SplineUniformPrior
+from .prior import Prior
+from .prior import GaussianPrior, UniformPrior
+from .prior import LinearPrior, LinearGaussianPrior, LinearUniformPrior
+from .prior import SplinePrior, SplineGaussianPrior, SplineUniformPrior
 
 
 @dataclass
@@ -25,7 +28,7 @@ class Variable:
 
     def process_priors(self):
         for prior in self.priors:
-            if isinstance(prior, SplinePrior):
+            if isinstance(prior, LinearPrior):
                 continue
             if isinstance(prior, GaussianPrior):
                 if self.gprior is not None and self.gprior != prior:
@@ -104,8 +107,8 @@ class Variable:
 class SplineVariable(Variable):
     spline: XSpline = field(default=None, repr=False)
     spline_specs: SplineSpecs = field(default=None, repr=False)
-    spline_gpriors: List[Prior] = field(default_factory=list, repr=False)
-    spline_upriors: List[Prior] = field(default_factory=list, repr=False)
+    linear_gpriors: List[LinearPrior] = field(default_factory=list, repr=False)
+    linear_upriors: List[LinearPrior] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
         if (self.spline is None) and (self.spline_specs is None):
@@ -117,13 +120,16 @@ class SplineVariable(Variable):
         if self.spline is None:
             cov = data.get_cols(self.name)
             self.spline = self.spline_specs.create_spline(cov)
+            for prior in self.linear_upriors + self.linear_gpriors:
+                if isinstance(prior, SplinePrior):
+                    prior.attach_spline(self.spline)
 
     def process_priors(self):
         for prior in self.priors:
-            if isinstance(prior, SplineGaussianPrior):
-                self.spline_gpriors.append(prior)
-            elif isinstance(prior, SplineUniformPrior):
-                self.spline_upriors.append(prior)
+            if isinstance(prior, (SplineGaussianPrior, LinearGaussianPrior)):
+                self.linear_gpriors.append(prior)
+            elif isinstance(prior, (SplineUniformPrior, LinearUniformPrior)):
+                self.linear_upriors.append(prior)
             elif isinstance(prior, GaussianPrior):
                 if self.gprior is not None and self.gprior != prior:
                     raise ValueError("Can only provide one Gaussian prior.")
@@ -150,56 +156,54 @@ class SplineVariable(Variable):
     def reset_priors(self):
         self.gprior = None
         self.uprior = None
-        self.spline_gpriors = list()
-        self.spline_upriors = list()
+        self.linear_gpriors = list()
+        self.linear_upriors = list()
 
     def get_mat(self, data: Data) -> np.ndarray:
         self.check_data(data)
         cov = data.get_cols(self.name)
-        return self.spline.design_mat(cov)
+        return self.spline.design_mat(cov, l_extra=True, r_extra=True)
 
-    def get_spline_uvec(self) -> np.ndarray:
-        if not self.spline_upriors:
+    def get_linear_uvec(self) -> np.ndarray:
+        if not self.linear_upriors:
             uvec = np.empty((2, 0))
         else:
             uvec = np.hstack([
                 np.vstack([prior.lb, prior.ub])
-                for prior in self.spline_upriors
+                for prior in self.linear_upriors
             ])
         return uvec
 
-    def get_spline_gvec(self) -> np.ndarray:
-        if not self.spline_gpriors:
+    def get_linear_gvec(self) -> np.ndarray:
+        if not self.linear_gpriors:
             gvec = np.empty((2, 0))
         else:
             gvec = np.hstack([
                 np.vstack([prior.mean, prior.sd])
-                for prior in self.spline_gpriors
+                for prior in self.linear_gpriors
             ])
         return gvec
 
-    def get_spline_umat(self, data: Data = None) -> np.ndarray:
-        if not self.spline_upriors:
+    def get_linear_umat(self, data: Data = None) -> np.ndarray:
+        if not self.linear_upriors:
             umat = np.empty((0, self.size))
         else:
             if self.spline is None:
                 assert data is not None, "Must check data to create spline first."
                 self.check_data(data)
             umat = np.vstack([
-                prior.get_mat(self.spline)
-                for prior in self.spline_upriors
+                prior.mat for prior in self.linear_upriors
             ])
         return umat
 
-    def get_spline_gmat(self, data: Data = None) -> np.ndarray:
-        if not self.spline_gpriors:
+    def get_linear_gmat(self, data: Data = None) -> np.ndarray:
+        if not self.linear_gpriors:
             gmat = np.empty((0, self.size))
         else:
             if self.spline is None:
                 assert data is not None, "Must check data to create spline first."
                 self.check_data(data)
             gmat = np.vstack([
-                prior.get_mat(self.spline)
-                for prior in self.spline_gpriors
+                prior.mat for prior in self.linear_gpriors
             ])
         return gmat

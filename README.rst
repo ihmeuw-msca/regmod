@@ -20,3 +20,17 @@ Current model pool contains:
 * Linear model
 * Poisson model
 * Binomial model
+
+Install
+-------
+To install the package, the simplest way is through ``pip``,
+
+.. code-block:: bash
+
+    pip install regmod
+
+Or you could clone this repository and do,
+
+.. code-block:: bash
+
+    python setup.py install
