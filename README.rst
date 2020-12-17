@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.com/zhengp0/regmod.svg?branch=main
-    :target: https://travis-ci.com/zhengp0/regmod
+.. image:: https://github.com/zhengp0/regmod/workflows/python-build/badge.svg
+    :target: https://github.com/zhengp0/regmod/actions
 
 .. image:: https://badge.fury.io/py/regmod.svg
     :target: https://badge.fury.io/py/regmod
