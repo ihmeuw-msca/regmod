@@ -30,6 +30,7 @@ class SplineSpecs:
     degree: int = 3
     l_linear: bool = False
     r_linear: bool = False
+    include_first_basis: bool = True
     knots_type: str = "abs"
 
     def __post_init__(self):
@@ -40,7 +41,7 @@ class SplineSpecs:
     def num_spline_bases(self) -> int:
         inner_knots = self.knots[int(self.l_linear):
                                  len(self.knots) - int(self.r_linear)]
-        return len(inner_knots) - 1 + self.degree
+        return len(inner_knots) - 2 + self.degree + int(self.include_first_basis)
 
     def create_spline(self, vec: np.ndarray = None) -> XSpline:
         if self.knots_type == "abs":
@@ -57,7 +58,8 @@ class SplineSpecs:
 
         return XSpline(knots, self.degree,
                        l_linear=self.l_linear,
-                       r_linear=self.r_linear)
+                       r_linear=self.r_linear,
+                       include_first_basis=self.include_first_basis)
 
 
 def sizes_to_sclices(sizes: np.array) -> List[slice]:
