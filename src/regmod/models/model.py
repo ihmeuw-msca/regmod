@@ -44,24 +44,34 @@ class Model:
         self.size = sum(self.sizes)
         self.num_params = len(self.params)
 
-        self.mat = [
-            param.get_mat(self.data)
-            for param in self.params
-        ]
-        self.uvec = np.hstack([param.get_uvec() for param in self.params])
-        self.gvec = np.hstack([param.get_gvec() for param in self.params])
-        self.linear_uvec = np.hstack([
-            param.get_linear_uvec() for param in self.params
-        ])
-        self.linear_gvec = np.hstack([
-            param.get_linear_gvec() for param in self.params
-        ])
-        self.linear_umat = block_diag(*[
-            param.get_linear_umat() for param in self.params
-        ])
-        self.linear_gmat = block_diag(*[
-            param.get_linear_gmat() for param in self.params
-        ])
+        self.mat = self.get_mat()
+        self.uvec = self.get_uvec()
+        self.gvec = self.get_gvec()
+        self.linear_uvec = self.get_linear_uvec()
+        self.linear_gvec = self.get_linear_gvec()
+        self.linear_umat = self.get_linear_umat()
+        self.linear_gmat = self.get_linear_gmat()
+
+    def get_mat(self) -> List[np.ndarray]:
+        return [param.get_mat(self.data) for param in self.params]
+
+    def get_uvec(self) -> np.ndarray:
+        return np.hstack([param.get_uvec() for param in self.params])
+
+    def get_gvec(self) -> np.ndarray:
+        return np.hstack([param.get_gvec() for param in self.params])
+
+    def get_linear_uvec(self) -> np.ndarray:
+        return np.hstack([param.get_linear_uvec() for param in self.params])
+
+    def get_linear_gvec(self) -> np.ndarray:
+        return np.hstack([param.get_linear_gvec() for param in self.params])
+
+    def get_linear_umat(self) -> np.ndarray:
+        return block_diag(*[param.get_linear_umat() for param in self.params])
+
+    def get_linear_gmat(self) -> np.ndarray:
+        return block_diag(*[param.get_linear_gmat() for param in self.params])
 
     def split_coefs(self, coefs: np.ndarray) -> List[np.ndarray]:
         assert len(coefs) == self.size
