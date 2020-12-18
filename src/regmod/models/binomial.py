@@ -19,13 +19,12 @@ class BinomialModel(Model):
         if len(data.col_obs) != 2:
             raise ValueError("Binomial model need 2 columns of observations, "
                              "one for number of events, one for sample size.")
-        self.obs_1s = data.get_cols(data.col_obs[0])
-        self.obs_sample_sizes = data.get_cols(data.col_obs[1])
-
-        if any(self.obs_1s > self.obs_sample_sizes):
+        if any(np.diff(data.get_cols(data.col_obs), axis=1) < 0):
             raise ValueError("Binomial model requires number of events less or equal than sample size.")
 
-        self.obs_0s = self.obs_sample_sizes - self.obs_1s
+        self.obs_1s = data.get_cols(data.col_obs[0])
+        self.obs_0s = np.diff(data.get_cols(data.col_obs), axis=1).ravel()
+        self.obs_sample_sizes = data.get_cols(data.col_obs[1])
 
         super().__init__(data, **kwargs)
 
