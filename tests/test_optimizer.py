@@ -31,7 +31,7 @@ def test_scipy_optimizer(seed):
     var_cov0 = Variable(name="cov0")
     var_cov1 = SplineVariable(name="cov1", spline_specs=spline_specs)
 
-    model = GaussianModel(data, [var_cov0, var_cov1])
+    model = GaussianModel(data, param_specs={"mu": {"variables": [var_cov0, var_cov1]}})
 
     result = scipy_optimize(model)
 

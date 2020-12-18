@@ -1,37 +1,24 @@
 """
 Negative Binomial Model
 """
-from typing import List, Union, Dict
+from typing import List
 
 import numpy as np
 from scipy.special import digamma, loggamma, polygamma
 from regmod.data import Data
-from regmod.function import SmoothFunction
-from regmod.parameter import Parameter
-from regmod.variable import Variable
 
 from .model import Model
 
 
 class NegativeBinomialModel(Model):
-    def __init__(self,
-                 data: Data,
-                 variables: Dict[str, List[Variable]],
-                 inv_link: Dict[str, Union[str, SmoothFunction]] = {"r": "exp", "p": "expit"},
-                 use_offset: Dict[str, bool] = {"r": False, "p": False}):
-        if not all([param_name in variables for param_name in ["r", "p"]]):
-            raise ValueError(f"'r' and 'p' must be keys in `variables`.")
-        assert np.all(data.obs >= 0), \
-            "Negative-Binomial model requires observations to be non-negative."
+    param_names: List[str] = ("r", "p")
+    default_param_specs = {"r": {"inv_link": "exp"},
+                           "p": {"inv_link": "expit"}}
 
-        params = [
-            Parameter(name=param_name,
-                      variables=variables[param_name],
-                      inv_link=inv_link[param_name],
-                      use_offset=use_offset[param_name])
-            for param_name in ["r", "p"]
-        ]
-        super().__init__(data, params)
+    def __init__(self, data: Data, **kwargs):
+        if not np.all(data.obs >= 0):
+            raise ValueError("Negative-Binomial model requires observations to be non-negative.")
+        super().__init__(data, **kwargs)
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
         return -self.data.weights*(loggamma(params[0] + self.data.obs) -

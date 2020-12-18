@@ -16,7 +16,7 @@ def scipy_optimize(model: Model, x0: np.ndarray = None,
         model.linear_umat,
         model.linear_uvec[0],
         model.linear_uvec[1]
-    )] if model.has_linear_uprior() else []
+    )] if model.linear_uvec.size > 0 else []
 
     result = minimize(model.objective, x0,
                       method="trust-constr",

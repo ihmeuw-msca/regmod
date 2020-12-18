@@ -1,26 +1,16 @@
 """
 Gaussian Model
 """
-from typing import List, Union
+from typing import List
 
 import numpy as np
-from regmod.data import Data
-from regmod.function import SmoothFunction
-from regmod.parameter import Parameter
-from regmod.variable import Variable
 
 from .model import Model
 
 
 class GaussianModel(Model):
-    def __init__(self, data: Data, variables: List[Variable],
-                 inv_link: Union[str, SmoothFunction] = "identity",
-                 use_offset: bool = False):
-        mu = Parameter(name="mu",
-                       variables=variables,
-                       inv_link=inv_link,
-                       use_offset=use_offset)
-        super().__init__(data, [mu])
+    param_names = ("mu",)
+    default_param_specs = {"mu": {"inv_link": "identity"}}
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
         return 0.5*self.data.weights*(params[0] - self.data.obs)**2

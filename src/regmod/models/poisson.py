@@ -1,28 +1,22 @@
 """
 Poisson Model
 """
-from typing import List, Union
+from typing import List
 
 import numpy as np
 from regmod.data import Data
-from regmod.function import SmoothFunction
-from regmod.parameter import Parameter
-from regmod.variable import Variable
 
 from .model import Model
 
 
 class PoissonModel(Model):
-    def __init__(self, data: Data, variables: List[Variable],
-                 inv_link: Union[str, SmoothFunction] = "exp",
-                 use_offset: bool = False):
-        lam = Parameter(name="lam",
-                        variables=variables,
-                        inv_link=inv_link,
-                        use_offset=use_offset)
-        assert all(data.obs >= 0), \
-            "Poisson model requires observations to be non-negagive."
-        super().__init__(data, [lam])
+    param_names = ("lam",)
+    default_param_specs = {"lam": {"inv_link": "exp"}}
+
+    def __init__(self, data: Data, **kwargs):
+        if not all(data.obs >= 0):
+            raise ValueError("Poisson model requires observations to be non-negagive.")
+        super().__init__(data, **kwargs)
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
         return self.data.weights*(params[0] - self.data.obs*np.log(params[0]))
