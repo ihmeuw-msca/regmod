@@ -1,14 +1,17 @@
 """
 Model module
 """
-from typing import List, Union
+from typing import Dict, List, Union
+
 import numpy as np
 from scipy.linalg import block_diag
+from scipy.special import digamma, loggamma, polygamma
+
 from .data import Data
-from .variable import Variable
-from .parameter import Parameter
 from .function import SmoothFunction
+from .parameter import Parameter
 from .utils import sizes_to_sclices
+from .variable import Variable
 
 
 class Model:
@@ -53,15 +56,18 @@ class Model:
         return [coefs[index] for index in self.indices]
 
     def get_params(self, coefs: np.ndarray) -> np.ndarray:
-        return [param.get_param(coefs, self.data, mat=self.mat[i])
+        coefs = self.split_coefs(coefs)
+        return [param.get_param(coefs[i], self.data, mat=self.mat[i])
                 for i, param in enumerate(self.parameters)]
 
     def get_dparams(self, coefs: np.ndarray) -> np.ndarray:
-        return [param.get_dparam(coefs, self.data, mat=self.mat[i])
+        coefs = self.split_coefs(coefs)
+        return [param.get_dparam(coefs[i], self.data, mat=self.mat[i])
                 for i, param in enumerate(self.parameters)]
 
     def get_d2params(self, coefs: np.ndarray) -> np.ndarray:
-        return [param.get_d2param(coefs, self.data, mat=self.mat[i])
+        coefs = self.split_coefs(coefs)
+        return [param.get_d2param(coefs[i], self.data, mat=self.mat[i])
                 for i, param in enumerate(self.parameters)]
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
@@ -201,3 +207,48 @@ class BinomialModel(Model):
 
     def __repr__(self) -> str:
         return f"BinomialModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
+
+
+class NegativeBinomialModel(Model):
+    def __init__(self,
+                 data: Data,
+                 variables: Dict[str, List[Variable]],
+                 inv_link: Dict[str, Union[str, SmoothFunction]] = {"r": "exp", "p": "expit"},
+                 use_offset: Dict[str, bool] = {"r": False, "p": False}):
+        if not all([param_name in variables for param_name in ["r", "p"]]):
+            raise ValueError(f"'r' and 'p' must be keys in `variables`.")
+        assert np.all(data.obs >= 0), \
+            "Negative-Binomial model requires observations to be non-negative."
+
+        params = [
+            Parameter(name=param_name,
+                      variables=variables[param_name],
+                      inv_link=inv_link[param_name],
+                      use_offset=use_offset[param_name])
+            for param_name in ["r", "p"]
+        ]
+        super().__init__(data, params)
+
+    def nll(self, params: List[np.ndarray]) -> np.ndarray:
+        return -self.data.weights*(loggamma(params[0] + self.data.obs) -
+                                   loggamma(params[0]) +
+                                   self.data.obs*np.log(params[1]) +
+                                   params[0]*np.log(1 - params[1]))
+
+    def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
+        return [-self.data.weights*(digamma(params[0] + self.data.obs) -
+                                    digamma(params[0]) +
+                                    np.log(1 - params[1])),
+                -self.data.weights*(self.data.obs/params[1] -
+                                    params[0]/(1 - params[1]))]
+
+    def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
+        return [[self.data.weights*(polygamma(1, params[0]) -
+                                    polygamma(1, params[0] + self.data.obs)),
+                 self.data.weights/(1 - params[1])],
+                [self.data.weights/(1 - params[1]),
+                 self.data.weights*(params[0]/(1 - params[1])**2 +
+                                    self.data.obs/params[1]**2)]]
+
+    def __repr__(self) -> str:
+        return f"NegativeBinomialModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
