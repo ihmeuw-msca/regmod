@@ -1,8 +1,6 @@
 """
 Variable module
 """
-from __future__ import annotations
-
 from collections.abc import Iterable
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -12,9 +10,9 @@ import numpy as np
 from xspline import XSpline
 
 from regmod.data import Data
-from regmod.prior import (GaussianPrior, LinearGaussianPrior, LinearPrior,
-                          LinearUniformPrior, Prior, SplineGaussianPrior,
-                          SplinePrior, SplineUniformPrior, UniformPrior)
+from regmod.prior import (Prior, GaussianPrior, UniformPrior,
+                          LinearPrior, LinearGaussianPrior, LinearUniformPrior,
+                          SplinePrior, SplineGaussianPrior, SplineUniformPrior)
 from regmod.utils import SplineSpecs
 
 
@@ -101,7 +99,7 @@ class Variable:
             uvec = np.vstack([self.uprior.lb, self.uprior.ub])
         return uvec
 
-    def copy(self) -> Variable:
+    def copy(self) -> "Variable":
         return deepcopy(self)
 
 
