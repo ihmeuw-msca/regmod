@@ -1,5 +1,5 @@
 """
-Test Linear Model
+Test Gaussian Model
 """
 import pytest
 import numpy as np
@@ -8,7 +8,7 @@ from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
-from regmod.model import LinearModel
+from regmod.models import GaussianModel
 from regmod.utils import SplineSpecs
 
 
@@ -67,7 +67,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return LinearModel(data, [var_cov0, var_cov1])
+    return GaussianModel(data, [var_cov0, var_cov1])
 
 
 def test_model_size(model, var_cov0, var_cov1):

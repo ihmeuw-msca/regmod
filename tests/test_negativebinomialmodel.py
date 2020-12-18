@@ -8,7 +8,7 @@ from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
-from regmod.model import NegativeBinomialModel
+from regmod.models import NegativeBinomialModel
 from regmod.utils import SplineSpecs
 
 

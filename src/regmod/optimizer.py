@@ -2,9 +2,9 @@
 Optimizer module
 """
 import numpy as np
-from scipy.optimize import minimize
-from scipy.optimize import LinearConstraint
-from .model import Model
+from scipy.optimize import LinearConstraint, minimize
+
+from regmod.models import Model
 
 
 def scipy_optimize(model: Model, x0: np.ndarray = None,

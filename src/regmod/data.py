@@ -1,9 +1,9 @@
 """
 Data Module
 """
-from __future__ import annotations
-from typing import List, Dict, Union
 from dataclasses import dataclass, field
+from typing import Dict, List, Union
+
 import numpy as np
 import pandas as pd
 
@@ -65,7 +65,7 @@ class Data:
         self.fill_df()
         self.check_cols()
 
-    def copy(self, with_df=False) -> Data:
+    def copy(self, with_df=False) -> "Data":
         df = self.df.copy() if with_df else pd.DataFrame(columns=self.cols)
         return Data(self.col_obs,
                     self.col_covs,

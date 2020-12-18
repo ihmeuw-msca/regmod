@@ -1,8 +1,9 @@
 """
 Utility classes and functions
 """
-from typing import List, Any
 from dataclasses import dataclass
+from typing import Any, List
+
 import numpy as np
 from xspline import XSpline
 

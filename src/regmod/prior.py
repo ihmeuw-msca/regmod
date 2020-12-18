@@ -1,12 +1,14 @@
 """
 Prior module
 """
-from typing import List, Any
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import Any, List
+
 import numpy as np
 from xspline import XSpline
-from .utils import default_vec_factory
+
+from regmod.utils import default_vec_factory
 
 
 @dataclass

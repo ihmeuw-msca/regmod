@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from regmod.data import Data
 from regmod.variable import Variable, SplineVariable
-from regmod.model import LinearModel
+from regmod.models import GaussianModel
 from regmod.utils import SplineSpecs
 from regmod.optimizer import scipy_optimize
 
@@ -31,7 +31,7 @@ def test_scipy_optimizer(seed):
     var_cov0 = Variable(name="cov0")
     var_cov1 = SplineVariable(name="cov1", spline_specs=spline_specs)
 
-    model = LinearModel(data, [var_cov0, var_cov1])
+    model = GaussianModel(data, [var_cov0, var_cov1])
 
     result = scipy_optimize(model)
 
