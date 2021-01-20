@@ -1,13 +1,15 @@
 """
 Parameter module
 """
-from typing import List, Tuple, Union
 from dataclasses import dataclass, field
+from typing import List, Tuple, Union
+
 import numpy as np
 from scipy.linalg import block_diag
-from .data import Data
-from .variable import Variable, SplineVariable
-from .function import SmoothFunction, fun_dict
+
+from regmod.data import Data
+from regmod.function import SmoothFunction, fun_dict
+from regmod.variable import SplineVariable, Variable
 
 
 @dataclass

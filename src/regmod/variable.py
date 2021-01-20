@@ -1,19 +1,19 @@
 """
 Variable module
 """
-from __future__ import annotations
-from typing import List, Union
 from collections.abc import Iterable
-from dataclasses import dataclass, field
 from copy import deepcopy
+from dataclasses import dataclass, field
+from typing import List, Union
+
 import numpy as np
 from xspline import XSpline
-from .utils import SplineSpecs
-from .data import Data
-from .prior import Prior
-from .prior import GaussianPrior, UniformPrior
-from .prior import LinearPrior, LinearGaussianPrior, LinearUniformPrior
-from .prior import SplinePrior, SplineGaussianPrior, SplineUniformPrior
+
+from regmod.data import Data
+from regmod.prior import (Prior, GaussianPrior, UniformPrior,
+                          LinearPrior, LinearGaussianPrior, LinearUniformPrior,
+                          SplinePrior, SplineGaussianPrior, SplineUniformPrior)
+from regmod.utils import SplineSpecs
 
 
 @dataclass
@@ -99,7 +99,7 @@ class Variable:
             uvec = np.vstack([self.uprior.lb, self.uprior.ub])
         return uvec
 
-    def copy(self) -> Variable:
+    def copy(self) -> "Variable":
         return deepcopy(self)
 
 

@@ -1,5 +1,5 @@
 """
-Test Poisson Model
+Test Gaussian Model
 """
 import pytest
 import numpy as np
@@ -8,25 +8,12 @@ from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
-from regmod.models import PoissonModel
+from regmod.models import GaussianModel
 from regmod.utils import SplineSpecs
 
 
 @pytest.fixture
 def data():
-    num_obs = 5
-    df = pd.DataFrame({
-        "obs": np.random.rand(num_obs)*10,
-        "cov0": np.random.randn(num_obs),
-        "cov1": np.random.randn(num_obs)
-    })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
-
-
-@pytest.fixture
-def wrong_data():
     num_obs = 5
     df = pd.DataFrame({
         "obs": np.random.randn(num_obs),
@@ -80,7 +67,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return PoissonModel(data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})
+    return GaussianModel(data, param_specs={"mu": {"variables": [var_cov0, var_cov1]}})
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -108,10 +95,10 @@ def test_linear_gprior(model):
 def test_model_objective(model):
     coefs = np.random.randn(model.size)
     my_obj = model.objective(coefs)
-    assert np.isscalar(my_obj)
+    assert my_obj > 0.0
 
 
-@pytest.mark.parametrize("inv_link", ["expit", "exp"])
+@pytest.mark.parametrize("inv_link", ["identity", "exp"])
 def test_model_gradient(model, inv_link):
     model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
@@ -125,7 +112,7 @@ def test_model_gradient(model, inv_link):
     assert np.allclose(my_grad, tr_grad)
 
 
-@pytest.mark.parametrize("inv_link", ["expit", "exp"])
+@pytest.mark.parametrize("inv_link", ["identity", "exp"])
 def test_model_hessian(model, inv_link):
     model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
@@ -139,8 +126,3 @@ def test_model_hessian(model, inv_link):
             coefs_c[j] -= 1e-16j
 
     assert np.allclose(my_hess, tr_hess)
-
-
-def test_wrong_data(wrong_data, var_cov0, var_cov1):
-    with pytest.raises(ValueError):
-        PoissonModel(wrong_data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})

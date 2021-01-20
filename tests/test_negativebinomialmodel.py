@@ -1,5 +1,5 @@
 """
-Test Poisson Model
+Test Negative Binomial Model
 """
 import pytest
 import numpy as np
@@ -8,7 +8,7 @@ from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
-from regmod.models import PoissonModel
+from regmod.models import NegativeBinomialModel
 from regmod.utils import SplineSpecs
 
 
@@ -80,7 +80,8 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return PoissonModel(data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})
+    return NegativeBinomialModel(data, param_specs={"r": {"variables": [var_cov0]},
+                                                    "p": {"variables": [var_cov1]}})
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -143,4 +144,5 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        PoissonModel(wrong_data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})
+        NegativeBinomialModel(wrong_data, param_specs={"r": {"variables": [var_cov0]},
+                                                       "p": {"variables": [var_cov1]}})

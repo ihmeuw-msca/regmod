@@ -1,5 +1,5 @@
 """
-Test Linear Model
+Test Pogit Model
 """
 import pytest
 import numpy as np
@@ -8,12 +8,28 @@ from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
-from regmod.model import LinearModel
+from regmod.models import PogitModel
 from regmod.utils import SplineSpecs
+
+
+# pylint:disable=redefined-outer-name
 
 
 @pytest.fixture
 def data():
+    num_obs = 5
+    df = pd.DataFrame({
+        "obs": np.random.rand(num_obs)*10,
+        "cov0": np.random.randn(num_obs),
+        "cov1": np.random.randn(num_obs)
+    })
+    return Data(col_obs="obs",
+                col_covs=["cov0", "cov1"],
+                df=df)
+
+
+@pytest.fixture
+def wrong_data():
     num_obs = 5
     df = pd.DataFrame({
         "obs": np.random.randn(num_obs),
@@ -67,7 +83,8 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return LinearModel(data, [var_cov0, var_cov1])
+    return PogitModel(data, param_specs={"p": {"variables": [var_cov0]},
+                                         "lam": {"variables": [var_cov1]}})
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -95,12 +112,12 @@ def test_linear_gprior(model):
 def test_model_objective(model):
     coefs = np.random.randn(model.size)
     my_obj = model.objective(coefs)
-    assert my_obj > 0.0
+    assert np.isscalar(my_obj)
 
 
-@pytest.mark.parametrize("inv_link", ["identity", "exp"])
+@pytest.mark.parametrize("inv_link", ["expit", "exp"])
 def test_model_gradient(model, inv_link):
-    model.parameters[0].inv_link = fun_dict[inv_link]
+    model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
     coefs_c = coefs + 0j
     my_grad = model.gradient(coefs)
@@ -112,9 +129,9 @@ def test_model_gradient(model, inv_link):
     assert np.allclose(my_grad, tr_grad)
 
 
-@pytest.mark.parametrize("inv_link", ["identity", "exp"])
+@pytest.mark.parametrize("inv_link", ["expit", "exp"])
 def test_model_hessian(model, inv_link):
-    model.parameters[0].inv_link = fun_dict[inv_link]
+    model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
     coefs_c = coefs + 0j
     my_hess = model.hessian(coefs)
@@ -126,3 +143,8 @@ def test_model_hessian(model, inv_link):
             coefs_c[j] -= 1e-16j
 
     assert np.allclose(my_hess, tr_hess)
+
+
+def test_wrong_data(wrong_data, var_cov0, var_cov1):
+    with pytest.raises(ValueError):
+        PogitModel(wrong_data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})

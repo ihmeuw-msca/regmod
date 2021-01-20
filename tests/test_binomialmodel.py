@@ -8,7 +8,7 @@ from regmod.data import Data
 from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
 from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
-from regmod.model import BinomialModel
+from regmod.models import BinomialModel
 from regmod.utils import SplineSpecs
 
 
@@ -82,7 +82,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return BinomialModel(data, [var_cov0, var_cov1])
+    return BinomialModel(data, param_specs={"p": {"variables": [var_cov0, var_cov1]}})
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -115,7 +115,7 @@ def test_model_objective(model):
 
 @pytest.mark.parametrize("inv_link", ["expit"])
 def test_model_gradient(model, inv_link):
-    model.parameters[0].inv_link = fun_dict[inv_link]
+    model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
     coefs_c = coefs + 0j
     my_grad = model.gradient(coefs)
@@ -129,7 +129,7 @@ def test_model_gradient(model, inv_link):
 
 @pytest.mark.parametrize("inv_link", ["expit"])
 def test_model_hessian(model, inv_link):
-    model.parameters[0].inv_link = fun_dict[inv_link]
+    model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
     coefs_c = coefs + 0j
     my_hess = model.hessian(coefs)
@@ -144,5 +144,5 @@ def test_model_hessian(model, inv_link):
 
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
-    with pytest.raises(AssertionError):
-        BinomialModel(wrong_data, [var_cov0, var_cov1])
+    with pytest.raises(ValueError):
+        BinomialModel(wrong_data, param_specs={"p": {"variables": [var_cov0, var_cov1]}})
