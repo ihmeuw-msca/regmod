@@ -1,6 +1,7 @@
 """
 Negative Binomial Model
 """
+# pylint: disable=no-name-in-module
 from typing import List
 
 import numpy as np
