@@ -23,7 +23,7 @@ Current model pool contains:
 
 Install
 -------
-Package requires Python version above `3.7`, recommend using version `3.8`.
+Package requires Python version above ``3.7``, recommend using version ``3.8``.
 
 To install the package, the simplest way is through ``pip``,
 
