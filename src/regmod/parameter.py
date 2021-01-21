@@ -31,9 +31,9 @@ class Parameter:
             "linear_gpriors has to be a list of LinearGaussianPrior."
         assert all([isinstance(prior, LinearUniformPrior) for prior in self.linear_upriors]), \
             "linear_upriors has to be a list of LinearUniformPrior."
-        assert all([prior.size == self.size for prior in self.linear_gpriors]), \
+        assert all([prior.mat.shape[1] == self.size for prior in self.linear_gpriors]), \
             "linear_gpriors size not match."
-        assert all([prior.size == self.size for prior in self.linear_upriors]), \
+        assert all([prior.mat.shape[1] == self.size for prior in self.linear_upriors]), \
             "linear_upriors size not match."
 
     @property
