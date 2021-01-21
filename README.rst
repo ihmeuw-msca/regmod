@@ -23,6 +23,7 @@ Current model pool contains:
 
 Install
 -------
+Package requires Python version above 3.7, recommend using version 3.8.
 To install the package, the simplest way is through ``pip``,
 
 .. code-block:: bash
@@ -34,3 +35,9 @@ Or you could clone this repository and do,
 .. code-block:: bash
 
     python setup.py install
+
+Acknowledgement
+---------------
+Design idea of this package comes from
+` "Animal" package<https://github.com/ihmeuw-msca/anml>`_.
+It is a general tool building template, for more detail please check the link above.
