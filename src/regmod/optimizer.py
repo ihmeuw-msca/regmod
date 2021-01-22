@@ -34,6 +34,12 @@ def scipy_optimize(model: Model,
     return {"coefs": coefs, "vcov": vcov}
 
 
+def set_trim_weights(model: Model, index: ndarray, mask: float):
+    weights = np.ones(model.data.num_obs)
+    weights[index] = mask
+    model.data.trim_weights = weights
+
+
 def trimming(optimize: Callable) -> Callable:
     def optimize_with_trimming(model: Model,
                                x0: ndarray = None,
@@ -49,10 +55,9 @@ def trimming(optimize: Callable) -> Callable:
             bounds = (0.5 - 0.5*inlier_pct, 0.5 + 0.5*inlier_pct)
             index = model.detect_outliers(result["coefs"], bounds)
             if index.sum() > 0:
-                for mask in np.linspace(1.0, 0.0, trim_steps)[1:]:
-                    weights = np.ones(model.data.num_obs)
-                    weights[index] = mask
-                    model.data.trim_weights = weights
+                masks = np.append(np.linspace(1.0, 0.0, trim_steps)[1:], 0.0)
+                for mask in masks:
+                    set_trim_weights(model, index, mask)
                     result = optimize(model, result["coefs"], options)
                     index = model.detect_outliers(result["coefs"], bounds)
         return result
