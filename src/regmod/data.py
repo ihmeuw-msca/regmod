@@ -19,7 +19,7 @@ class Data:
 
     def __post_init__(self):
         self.col_covs = list(set(self.col_covs).union({'intercept'}))
-        self.cols = self.col_covs + [self.col_weights, self.col_offset]
+        self.cols = self.col_covs + [self.col_weights, self.col_offset, "trim_weights"]
         if self.col_obs is not None:
             if isinstance(self.col_obs, str):
                 self.cols.insert(0, self.col_obs)
@@ -57,6 +57,7 @@ class Data:
             for col in cols:
                 if col not in self.df.columns:
                     self.df[col] = np.nan
+        self.df["trim_weights"] = 1.0
 
     def detach_df(self):
         self.df = DataFrame(columns=self.cols)
@@ -95,15 +96,19 @@ class Data:
     def weights(self) -> ndarray:
         return self.get_cols(self.col_weights)
 
-    @weights.setter
-    def weights(self, weights: ndarray):
-        if any(weights < 0.0) or any(weights > 1.0):
-            raise ValueError("weights has to be between 0 and 1.")
-        self.df[self.col_weights] = weights
-
     @property
     def offset(self) -> ndarray:
         return self.get_cols(self.col_offset)
+
+    @property
+    def trim_weights(self) -> ndarray:
+        return self.get_cols("trim_weights")
+
+    @trim_weights.setter
+    def trim_weights(self, weights: Union[float, ndarray]):
+        if np.any(weights < 0.0) or np.any(weights > 1.0):
+            raise ValueError("trim_weights has to be between 0 and 1.")
+        self.df["trim_weights"] = weights
 
     def get_covs(self, col_covs: Union[List[str], str]) -> ndarray:
         if not isinstance(col_covs, list):

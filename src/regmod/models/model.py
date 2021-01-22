@@ -122,14 +122,14 @@ class Model:
     def objective(self, coefs: np.ndarray) -> float:
         params = self.get_params(coefs)
         obj_params = self.nll(params)
-        weights = self.data.weights
+        weights = self.data.weights*self.data.trim_weights
         return weights.dot(obj_params) + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
-        weights = self.data.weights
+        weights = self.data.weights*self.data.trim_weights
         return np.hstack([
             dparams[i].T.dot(weights*grad_params[i])
             for i in range(self.num_params)
@@ -141,7 +141,7 @@ class Model:
         d2params = self.get_d2params(coefs)
         grad_params = self.dnll(params)
         hess_params = self.d2nll(params)
-        weights = self.data.weights
+        weights = self.data.weights*self.data.trim_weights
         hess = [
             [(dparams[i].T*(weights*hess_params[i][j])).dot(dparams[j])
              for j in range(self.num_params)]
