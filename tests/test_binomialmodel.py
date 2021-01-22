@@ -12,6 +12,9 @@ from regmod.models import BinomialModel
 from regmod.utils import SplineSpecs
 
 
+# pylint:disable=redefined-outer-name
+
+
 @pytest.fixture
 def data():
     num_obs = 5
@@ -146,3 +149,12 @@ def test_model_hessian(model, inv_link):
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         BinomialModel(wrong_data, param_specs={"p": {"variables": [var_cov0, var_cov1]}})
+
+
+def test_get_ui(model):
+    model.obs_sample_sizes = np.array([100]*5)
+    params = [np.full(5, 0.5)]
+    bounds = [0.025, 0.975]
+    ui = model.get_ui(params, bounds)
+    assert np.allclose(ui[0], 40)
+    assert np.allclose(ui[1], 60)

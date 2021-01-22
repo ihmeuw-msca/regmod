@@ -52,7 +52,7 @@ def test_init(df):
     assert data.num_obs == NUM_OBS
 
 
-def test_post_init_empty(df):
+def test_post_init_empty():
     data = Data(COL_OBS)
     assert data.is_empty()
 
