@@ -7,6 +7,9 @@ import pytest
 from regmod.data import Data
 
 
+# pylint:disable=redefined-outer-name
+
+
 NUM_OBS = 10
 COL_OBS = 'obs'
 COL_COVS = ['cov1', 'cov2']
@@ -49,7 +52,7 @@ def test_init(df):
     assert data.num_obs == NUM_OBS
 
 
-def test_post_init_empty(df):
+def test_post_init_empty():
     data = Data(COL_OBS)
     assert data.is_empty()
 
@@ -103,3 +106,18 @@ def test_no_match_col_obs(df):
     df = df.drop(COL_OBS, axis=1)
     data = Data(col_obs=COL_OBS, df=df)
     assert all(np.isnan(data.obs))
+
+
+def test_default_trim_weights(data):
+    assert all(data.trim_weights == 1.0)
+
+
+def test_trim_weights_setter_value_error(data):
+    with pytest.raises(ValueError):
+        data.trim_weights = 2.0
+
+
+@pytest.mark.parametrize("weights", [0.0, np.zeros(NUM_OBS)])
+def test_trim_weights_setter(data, weights):
+    data.trim_weights = weights
+    assert all(data.trim_weights == 0)

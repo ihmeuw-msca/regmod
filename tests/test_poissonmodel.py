@@ -12,6 +12,9 @@ from regmod.models import PoissonModel
 from regmod.utils import SplineSpecs
 
 
+# pylint:disable=redefined-outer-name
+
+
 @pytest.fixture
 def data():
     num_obs = 5
@@ -144,3 +147,11 @@ def test_model_hessian(model, inv_link):
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         PoissonModel(wrong_data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})
+
+
+def test_get_ui(model):
+    params = [np.full(5, 20.0)]
+    bounds = (0.025, 0.075)
+    ui = model.get_ui(params, bounds)
+    assert np.allclose(ui[0], 12)
+    assert np.allclose(ui[1], 14)
