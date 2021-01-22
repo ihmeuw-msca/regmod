@@ -21,17 +21,16 @@ class PogitModel(Model):
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
         mean = params[0]*params[1]
-        return self.data.weights*(mean - self.data.obs*np.log(mean))
+        return mean - self.data.obs*np.log(mean)
 
     def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
-        return [self.data.weights*(params[1] - self.data.obs/params[0]),
-                self.data.weights*(params[0] - self.data.obs/params[1])]
+        return [params[1] - self.data.obs/params[0],
+                params[0] - self.data.obs/params[1]]
 
     def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
-        return [[self.data.weights*self.data.obs/params[0]**2,
-                 self.data.weights],
-                [self.data.weights,
-                 self.data.weights*self.data.obs/params[1]**2]]
+        ones = np.ones(self.data.num_obs)
+        return [[self.data.obs/params[0]**2, ones],
+                [ones, self.data.obs/params[1]**2]]
 
     def __repr__(self) -> str:
         return f"PogitModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"

@@ -12,6 +12,9 @@ from regmod.models import NegativeBinomialModel
 from regmod.utils import SplineSpecs
 
 
+# pylint:disable=redefined-outer-name
+
+
 @pytest.fixture
 def data():
     num_obs = 5

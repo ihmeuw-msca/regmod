@@ -121,14 +121,17 @@ class Model:
 
     def objective(self, coefs: np.ndarray) -> float:
         params = self.get_params(coefs)
-        return np.sum(self.nll(params)) + self.objective_from_gprior(coefs)
+        obj_params = self.nll(params)
+        weights = self.data.weights
+        return weights.dot(obj_params) + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: np.ndarray) -> np.ndarray:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
+        weights = self.data.weights
         return np.hstack([
-            dparams[i].T.dot(grad_params[i])
+            dparams[i].T.dot(weights*grad_params[i])
             for i in range(self.num_params)
         ]) + self.gradient_from_gprior(coefs)
 
@@ -138,11 +141,12 @@ class Model:
         d2params = self.get_d2params(coefs)
         grad_params = self.dnll(params)
         hess_params = self.d2nll(params)
+        weights = self.data.weights
         hess = [
-            [(dparams[i].T*hess_params[i][j]).dot(dparams[j])
+            [(dparams[i].T*(weights*hess_params[i][j])).dot(dparams[j])
              for j in range(self.num_params)]
             for i in range(self.num_params)
         ]
         for i in range(self.num_params):
-            hess[i][i] += np.tensordot(grad_params[i], d2params[i], axes=1)
+            hess[i][i] += np.tensordot(weights*grad_params[i], d2params[i], axes=1)
         return np.block(hess) + self.hessian_from_gprior()

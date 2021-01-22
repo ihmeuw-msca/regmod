@@ -22,25 +22,18 @@ class NegativeBinomialModel(Model):
         super().__init__(data, **kwargs)
 
     def nll(self, params: List[np.ndarray]) -> np.ndarray:
-        return -self.data.weights*(loggamma(params[0] + self.data.obs) -
-                                   loggamma(params[0]) +
-                                   self.data.obs*np.log(params[1]) +
-                                   params[0]*np.log(1 - params[1]))
+        return -(loggamma(params[0] + self.data.obs) -
+                 loggamma(params[0]) +
+                 self.data.obs*np.log(params[1]) +
+                 params[0]*np.log(1 - params[1]))
 
     def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
-        return [-self.data.weights*(digamma(params[0] + self.data.obs) -
-                                    digamma(params[0]) +
-                                    np.log(1 - params[1])),
-                -self.data.weights*(self.data.obs/params[1] -
-                                    params[0]/(1 - params[1]))]
+        return [-(digamma(params[0] + self.data.obs) - digamma(params[0]) + np.log(1 - params[1])),
+                -(self.data.obs/params[1] - params[0]/(1 - params[1]))]
 
     def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
-        return [[self.data.weights*(polygamma(1, params[0]) -
-                                    polygamma(1, params[0] + self.data.obs)),
-                 self.data.weights/(1 - params[1])],
-                [self.data.weights/(1 - params[1]),
-                 self.data.weights*(params[0]/(1 - params[1])**2 +
-                                    self.data.obs/params[1]**2)]]
+        return [[polygamma(1, params[0]) - polygamma(1, params[0] + self.data.obs), 1/(1 - params[1])],
+                [1/(1 - params[1]), params[0]/(1 - params[1])**2 + self.data.obs/params[1]**2]]
 
     def __repr__(self) -> str:
         return f"NegativeBinomialModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
