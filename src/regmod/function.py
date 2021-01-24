@@ -60,7 +60,7 @@ def expit_fun(x):
             y = 1 - y
     else:
         y[neg_indices] = 1 - y[neg_indices]
-    return 1/(1 + np.exp(-x))
+    return y
 
 
 def expit_dfun(x):
