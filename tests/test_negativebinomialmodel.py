@@ -12,6 +12,9 @@ from regmod.models import NegativeBinomialModel
 from regmod.utils import SplineSpecs
 
 
+# pylint:disable=redefined-outer-name
+
+
 @pytest.fixture
 def data():
     num_obs = 5
@@ -80,7 +83,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return NegativeBinomialModel(data, param_specs={"r": {"variables": [var_cov0]},
+    return NegativeBinomialModel(data, param_specs={"n": {"variables": [var_cov0]},
                                                     "p": {"variables": [var_cov1]}})
 
 
@@ -144,5 +147,13 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        NegativeBinomialModel(wrong_data, param_specs={"r": {"variables": [var_cov0]},
+        NegativeBinomialModel(wrong_data, param_specs={"n": {"variables": [var_cov0]},
                                                        "p": {"variables": [var_cov1]}})
+
+
+def test_get_ui(model):
+    params = [np.full(5, 10), np.full(5, 0.5)]
+    bounds = (0.025, 0.975)
+    ui = model.get_ui(params, bounds)
+    assert np.allclose(ui[0], 3.0)
+    assert np.allclose(ui[1], 20.0)

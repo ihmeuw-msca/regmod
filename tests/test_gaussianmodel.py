@@ -12,6 +12,9 @@ from regmod.models import GaussianModel
 from regmod.utils import SplineSpecs
 
 
+# pylint:disable=redefined-outer-name
+
+
 @pytest.fixture
 def data():
     num_obs = 5
@@ -126,3 +129,11 @@ def test_model_hessian(model, inv_link):
             coefs_c[j] -= 1e-16j
 
     assert np.allclose(my_hess, tr_hess)
+
+
+def test_model_get_ui(model):
+    params = [np.zeros(5)]
+    bounds = (0.025, 0.975)
+    ui = model.get_ui(params, bounds)
+    assert np.allclose(ui[0], -1.95996)
+    assert np.allclose(ui[1], 1.95996)

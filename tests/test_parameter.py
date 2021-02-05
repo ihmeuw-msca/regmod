@@ -5,10 +5,18 @@ import pytest
 import numpy as np
 import pandas as pd
 from regmod.data import Data
-from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
+from regmod.prior import (GaussianPrior,
+                          UniformPrior,
+                          SplineGaussianPrior,
+                          SplineUniformPrior,
+                          LinearGaussianPrior,
+                          LinearUniformPrior)
 from regmod.variable import Variable, SplineVariable
 from regmod.parameter import Parameter
 from regmod.utils import SplineSpecs
+
+
+# pylint:disable=redefined-outer-name
 
 
 @pytest.fixture
@@ -52,6 +60,20 @@ def spline_uprior():
 
 
 @pytest.fixture
+def linear_gprior():
+    np.random.seed(123)
+    mat = np.random.randn(2, 8)
+    return LinearGaussianPrior(mat=mat, mean=0.0, sd=1.0)
+
+
+@pytest.fixture
+def linear_uprior():
+    np.random.seed(123)
+    mat = np.random.randn(2, 8)
+    return LinearUniformPrior(mat=mat, lb=0.0, ub=0.0)
+
+
+@pytest.fixture
 def var_cov0(gprior, uprior):
     return Variable(name="cov0",
                     priors=[gprior, uprior])
@@ -65,10 +87,12 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 
 @pytest.fixture
-def param(var_cov0, var_cov1):
+def param(var_cov0, var_cov1, linear_gprior, linear_uprior):
     return Parameter(name="mu",
                      variables=[var_cov0, var_cov1],
-                     inv_link="exp")
+                     inv_link="exp",
+                     linear_gpriors=[linear_gprior],
+                     linear_upriors=[linear_uprior])
 
 
 def test_check_data(param, data):
@@ -96,24 +120,24 @@ def test_get_gvec(param):
 
 def test_get_linear_uvec(param, spline_uprior):
     uvec = param.get_linear_uvec()
-    assert uvec.shape == (2, spline_uprior.size)
+    assert uvec.shape == (2, spline_uprior.size + 2)
 
 
 def test_get_linear_gvec(param, spline_gprior):
     gvec = param.get_linear_gvec()
-    assert gvec.shape == (2, spline_gprior.size)
+    assert gvec.shape == (2, spline_gprior.size + 2)
 
 
 def test_get_linear_umat(param, data, spline_uprior):
     param.check_data(data)
     umat = param.get_linear_umat()
-    assert umat.shape == (spline_uprior.size, param.size)
+    assert umat.shape == (spline_uprior.size + 2, param.size)
 
 
 def test_get_linear_gmat(param, data, spline_gprior):
     param.check_data(data)
     gmat = param.get_linear_gmat()
-    assert gmat.shape == (spline_gprior.size, param.size)
+    assert gmat.shape == (spline_gprior.size + 2, param.size)
 
 
 def test_get_lin_param(param, data):

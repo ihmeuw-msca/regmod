@@ -4,6 +4,7 @@ Model module
 from typing import Dict, List, Tuple
 
 import numpy as np
+from numpy import ndarray
 from scipy.linalg import block_diag
 
 from regmod.data import Data
@@ -52,97 +53,114 @@ class Model:
         self.linear_umat = self.get_linear_umat()
         self.linear_gmat = self.get_linear_gmat()
 
-    def get_mat(self) -> List[np.ndarray]:
+    def get_mat(self) -> List[ndarray]:
         return [param.get_mat(self.data) for param in self.params]
 
-    def get_uvec(self) -> np.ndarray:
+    def get_uvec(self) -> ndarray:
         return np.hstack([param.get_uvec() for param in self.params])
 
-    def get_gvec(self) -> np.ndarray:
+    def get_gvec(self) -> ndarray:
         return np.hstack([param.get_gvec() for param in self.params])
 
-    def get_linear_uvec(self) -> np.ndarray:
+    def get_linear_uvec(self) -> ndarray:
         return np.hstack([param.get_linear_uvec() for param in self.params])
 
-    def get_linear_gvec(self) -> np.ndarray:
+    def get_linear_gvec(self) -> ndarray:
         return np.hstack([param.get_linear_gvec() for param in self.params])
 
-    def get_linear_umat(self) -> np.ndarray:
+    def get_linear_umat(self) -> ndarray:
         return block_diag(*[param.get_linear_umat() for param in self.params])
 
-    def get_linear_gmat(self) -> np.ndarray:
+    def get_linear_gmat(self) -> ndarray:
         return block_diag(*[param.get_linear_gmat() for param in self.params])
 
-    def split_coefs(self, coefs: np.ndarray) -> List[np.ndarray]:
+    def split_coefs(self, coefs: ndarray) -> List[ndarray]:
         assert len(coefs) == self.size
         return [coefs[index] for index in self.indices]
 
-    def get_params(self, coefs: np.ndarray) -> np.ndarray:
+    def get_params(self, coefs: ndarray) -> ndarray:
         coefs = self.split_coefs(coefs)
         return [param.get_param(coefs[i], self.data, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
-    def get_dparams(self, coefs: np.ndarray) -> np.ndarray:
+    def get_dparams(self, coefs: ndarray) -> ndarray:
         coefs = self.split_coefs(coefs)
         return [param.get_dparam(coefs[i], self.data, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
-    def get_d2params(self, coefs: np.ndarray) -> np.ndarray:
+    def get_d2params(self, coefs: ndarray) -> ndarray:
         coefs = self.split_coefs(coefs)
         return [param.get_d2param(coefs[i], self.data, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
-    def nll(self, params: List[np.ndarray]) -> np.ndarray:
+    def nll(self, params: List[ndarray]) -> ndarray:
         raise NotImplementedError()
 
-    def dnll(self, params: List[np.ndarray]) -> List[np.ndarray]:
+    def dnll(self, params: List[ndarray]) -> List[ndarray]:
         raise NotImplementedError()
 
-    def d2nll(self, params: List[np.ndarray]) -> List[List[np.ndarray]]:
+    def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
         raise NotImplementedError()
 
-    def objective_from_gprior(self, coefs: np.ndarray) -> float:
+    def get_ui(self,
+               params: List[ndarray],
+               bounds: Tuple[float, float]) -> ndarray:
+        raise NotImplementedError()
+
+    def detect_outliers(self,
+                        coefs: ndarray,
+                        bounds: Tuple[float, float]) -> ndarray:
+        params = self.get_params(coefs)
+        ui = self.get_ui(params, bounds)
+        return (self.data.obs < ui[0]) | (self.data.obs > ui[1])
+
+    def objective_from_gprior(self, coefs: ndarray) -> float:
         val = 0.5*np.sum((coefs - self.gvec[0])**2/self.gvec[1]**2)
         if self.linear_gvec.size > 0:
             val += 0.5*np.sum((self.linear_gmat.dot(coefs) - self.linear_gvec[0])**2/self.linear_gvec[1]**2)
         return val
 
-    def gradient_from_gprior(self, coefs: np.ndarray) -> np.ndarray:
+    def gradient_from_gprior(self, coefs: ndarray) -> ndarray:
         grad = (coefs - self.gvec[0])/self.gvec[1]**2
         if self.linear_gvec.size > 0:
             grad += (self.linear_gmat.T/self.linear_gvec[1]**2).dot(self.linear_gmat.dot(coefs) - self.linear_gvec[0])
         return grad
 
-    def hessian_from_gprior(self) -> np.ndarray:
+    def hessian_from_gprior(self) -> ndarray:
         hess = np.diag(1.0/self.gvec[1]**2)
         if self.linear_gvec.size > 0:
             hess += (self.linear_gmat.T/self.linear_gvec[1]**2).dot(self.linear_gmat)
         return hess
 
-    def objective(self, coefs: np.ndarray) -> float:
+    def objective(self, coefs: ndarray) -> float:
         params = self.get_params(coefs)
-        return np.sum(self.nll(params)) + self.objective_from_gprior(coefs)
+        obj_params = self.nll(params)
+        weights = self.data.weights*self.data.trim_weights
+        return weights.dot(obj_params)/self.data.num_obs + \
+            self.objective_from_gprior(coefs)
 
-    def gradient(self, coefs: np.ndarray) -> np.ndarray:
+    def gradient(self, coefs: ndarray) -> ndarray:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
+        weights = self.data.weights*self.data.trim_weights
         return np.hstack([
-            dparams[i].T.dot(grad_params[i])
+            dparams[i].T.dot(weights*grad_params[i])
             for i in range(self.num_params)
-        ]) + self.gradient_from_gprior(coefs)
+        ])/self.data.num_obs + self.gradient_from_gprior(coefs)
 
-    def hessian(self, coefs: np.ndarray) -> np.ndarray:
+    def hessian(self, coefs: ndarray) -> ndarray:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         d2params = self.get_d2params(coefs)
         grad_params = self.dnll(params)
         hess_params = self.d2nll(params)
+        weights = self.data.weights*self.data.trim_weights
         hess = [
-            [(dparams[i].T*hess_params[i][j]).dot(dparams[j])
+            [(dparams[i].T*(weights*hess_params[i][j])).dot(dparams[j])
              for j in range(self.num_params)]
             for i in range(self.num_params)
         ]
         for i in range(self.num_params):
-            hess[i][i] += np.tensordot(grad_params[i], d2params[i], axes=1)
-        return np.block(hess) + self.hessian_from_gprior()
+            hess[i][i] += np.tensordot(weights*grad_params[i], d2params[i], axes=1)
+        return np.block(hess)/self.data.num_obs + self.hessian_from_gprior()
