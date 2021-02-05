@@ -112,8 +112,6 @@ fun_list = [
     SmoothFunction(name="expit", fun=expit_fun, dfun=expit_dfun, d2fun=expit_d2fun),
     SmoothFunction(name="log", fun=log_fun, dfun=log_dfun, d2fun=log_d2fun),
     SmoothFunction(name="logit", fun=logit_fun, dfun=logit_dfun, d2fun=logit_d2fun),
-
-
 ]
 
 
