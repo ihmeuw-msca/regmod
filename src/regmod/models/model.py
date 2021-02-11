@@ -136,7 +136,7 @@ class Model:
         params = self.get_params(coefs)
         obj_params = self.nll(params)
         weights = self.data.weights*self.data.trim_weights
-        return weights.dot(obj_params)/self.data.num_obs + \
+        return weights.dot(obj_params) + \
             self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: ndarray) -> ndarray:
@@ -147,7 +147,7 @@ class Model:
         return np.hstack([
             dparams[i].T.dot(weights*grad_params[i])
             for i in range(self.num_params)
-        ])/self.data.num_obs + self.gradient_from_gprior(coefs)
+        ]) + self.gradient_from_gprior(coefs)
 
     def hessian(self, coefs: ndarray) -> ndarray:
         params = self.get_params(coefs)
@@ -163,4 +163,4 @@ class Model:
         ]
         for i in range(self.num_params):
             hess[i][i] += np.tensordot(weights*grad_params[i], d2params[i], axes=1)
-        return np.block(hess)/self.data.num_obs + self.hessian_from_gprior()
+        return np.block(hess) + self.hessian_from_gprior()
