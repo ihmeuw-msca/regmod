@@ -7,10 +7,10 @@ __title__ = "regmod"
 __summary__ = "regmod: General regression models."
 __uri__ = "https://github.com/zhengp0/regmod"
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 __author__ = "Peng Zheng"
 __email__ = "zhengp@uw.edu"
 
 __license__ = "BSD 2-Clause License"
-__copyright__ = f"Copyright 2020 {__author__}"
+__copyright__ = f"Copyright 2021 {__author__}"
