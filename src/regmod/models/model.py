@@ -164,3 +164,15 @@ class Model:
         for i in range(self.num_params):
             hess[i][i] += np.tensordot(weights*grad_params[i], d2params[i], axes=1)
         return np.block(hess) + self.hessian_from_gprior()
+
+    def jacobian2(self, coefs: ndarray) -> ndarray:
+        params = self.get_params(coefs)
+        dparams = self.get_dparams(coefs)
+        grad_params = self.dnll(params)
+        weights = self.data.weights*self.data.trim_weights
+        jacobian = np.vstack([
+            dparams[i].T*(weights*grad_params[i])
+            for i in range(self.num_params)
+        ])
+        jacobian2 = jacobian.dot(jacobian.T) + self.hessian_from_gprior()
+        return jacobian2
