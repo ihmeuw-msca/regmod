@@ -30,7 +30,10 @@ def scipy_optimize(model: Model,
                       options=options)
 
     coefs = result.x
-    vcov = np.linalg.inv(model.hessian(coefs))
+    hessian = model.hessian(coefs)
+    jacobian2 = model.jacobian2(coefs)
+    vcov = np.linalg.solve(hessian, jacobian2)
+    vcov = np.linalg.solve(hessian, vcov.T)
     return {"coefs": coefs, "vcov": vcov}
 
 
