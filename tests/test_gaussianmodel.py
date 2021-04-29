@@ -137,3 +137,16 @@ def test_model_get_ui(model):
     ui = model.get_ui(params, bounds)
     assert np.allclose(ui[0], -1.95996)
     assert np.allclose(ui[1], 1.95996)
+
+
+def test_model_jacobian2(model):
+    beta = np.zeros(model.size)
+    jacobian2 = model.jacobian2(beta)
+
+    mat = model.mat[0]
+    param = model.get_params(beta)[0]
+    residual = (model.data.obs - param)*np.sqrt(model.data.weights)
+    jacobian = mat.T*residual
+    true_jacobian2 = jacobian.dot(jacobian.T) + model.hessian_from_gprior()
+
+    assert np.allclose(jacobian2, true_jacobian2)
