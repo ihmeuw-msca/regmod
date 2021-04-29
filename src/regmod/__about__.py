@@ -7,7 +7,7 @@ __title__ = "regmod"
 __summary__ = "regmod: General regression models."
 __uri__ = "https://github.com/zhengp0/regmod"
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 __author__ = "Peng Zheng"
 __email__ = "zhengp@uw.edu"
