@@ -1,7 +1,7 @@
 """
 Model module
 """
-from typing import Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -10,6 +10,7 @@ from scipy.linalg import block_diag
 from regmod.data import Data
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_sclices
+from regmod.optimizer import scipy_optimize
 
 
 class Model:
@@ -201,3 +202,8 @@ class Model:
         ])
         jacobian2 = jacobian.dot(jacobian.T) + self.hessian_from_gprior()
         return jacobian2
+
+    def fit_model(self,
+                  optimizer: Callable = scipy_optimize,
+                  **optimizer_options):
+        optimizer(self, **optimizer_options)
