@@ -203,7 +203,7 @@ class Model:
         jacobian2 = jacobian.dot(jacobian.T) + self.hessian_from_gprior()
         return jacobian2
 
-    def fit_model(self,
-                  optimizer: Callable = scipy_optimize,
-                  **optimizer_options):
+    def fit(self,
+            optimizer: Callable = scipy_optimize,
+            **optimizer_options):
         optimizer(self, **optimizer_options)
