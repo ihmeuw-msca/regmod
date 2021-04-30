@@ -1,7 +1,7 @@
 """
 Model module
 """
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -52,6 +52,31 @@ class Model:
         self.linear_gvec = self.get_linear_gvec()
         self.linear_umat = self.get_linear_umat()
         self.linear_gmat = self.get_linear_gmat()
+
+        # optimization result placeholder
+        self.opt_result = None
+        self._opt_coefs = None
+
+    @property
+    def opt_coefs(self) -> Union[None, ndarray]:
+        return self._opt_coefs
+
+    @opt_coefs.setter
+    def opt_coefs(self, coefs: ndarray):
+        coefs = np.asarray(coefs)
+        if coefs.size != self.size:
+            raise ValueError("Coefficients size not match.")
+        self._opt_coefs = coefs
+
+    @property
+    def opt_vcov(self) -> Union[None, ndarray]:
+        if self.opt_coefs is None:
+            return None
+        inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs))
+        jacobian2 = self.jacobian2(self.opt_coefs)
+        vcov = inv_hessian.dot(jacobian2)
+        vcov = inv_hessian.dot(vcov.T)
+        return vcov
 
     def get_mat(self) -> List[ndarray]:
         return [param.get_mat(self.data) for param in self.params]
