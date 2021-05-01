@@ -51,7 +51,7 @@ class ChainModel(CompositeModel):
                 df = self.models[i + 1].set_offset(df, f"{model.name}_pred")
                 self.models[i + 1].set_data(df)
 
-    def predict(self, df):
+    def predict(self, df=None):
         for i, model in enumerate(self.models):
             df = model.predict(df)
             if i < self.num_models - 1:

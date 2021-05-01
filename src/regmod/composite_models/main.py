@@ -49,7 +49,7 @@ class Link:
     def check_links(links: Union["Link", List["Link"]]) -> List["Link"]:
         if isinstance(links, Link):
             links = [links]
-        if not all(isinstance(link) for link in links):
+        if not all(isinstance(link, Link) for link in links):
             raise TypeError("Can only connect Link object to Link object.")
         return links
 

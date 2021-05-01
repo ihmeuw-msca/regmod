@@ -38,6 +38,8 @@ class Model:
                            for param_name in self.param_names]
 
         self.data = data
+        if self.data.is_empty():
+            raise ValueError("Please attach dataframe before creating model.")
         for param in self.params:
             param.check_data(self.data)
 

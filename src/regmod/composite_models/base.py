@@ -39,11 +39,13 @@ class BaseModel(NodeModel):
 
     def get_gaussian_model(self) -> GaussianModel:
         return GaussianModel(self.data,
-                             param_specs={"mu": {"variables": self.variables}})
+                             param_specs={"mu": {"variables": self.variables,
+                                                 "use_offset": True}})
 
     def get_poisson_model(self) -> PoissonModel:
         return PoissonModel(self.data,
-                            param_specs={"lam": {"variables": self.variables}})
+                            param_specs={"lam": {"variables": self.variables,
+                                                 "use_offset": True}})
 
     def set_data(self, df: DataFrame) -> DataFrame:
         self.df = df
@@ -79,6 +81,6 @@ class BaseModel(NodeModel):
         sd = np.sqrt(np.diag(self.model.opt_vcov))
         slices = sizes_to_sclices([v.size for v in self.variables])
         return {
-            name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])
-            for i, name in enumerate(self.variables)
+            v.name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])
+            for i, v in enumerate(self.variables)
         }
