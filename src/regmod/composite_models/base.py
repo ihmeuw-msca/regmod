@@ -49,10 +49,18 @@ class BaseModel(NodeModel):
         self.df = df
         self.model.data.df = df
 
+    def set_offset(self, df: DataFrame, col: str):
+        df[self.model.data.col_offset] = self.model.params[0].inv_link.inv_fun(
+            df[col].values
+        )
+        return df
+
     def fit(self, **fit_options):
         self.model.fit(**fit_options)
 
-    def predict(self, df: DataFrame):
+    def predict(self, df: DataFrame = None):
+        if df is None:
+            df = self.df.copy()
         pred_data = self.model.data.copy()
         pred_data.df = df
 
