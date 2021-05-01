@@ -40,10 +40,15 @@ class CompositeModel(NodeModel):
     def num_models(self) -> int:
         return len(self.models)
 
-    # pylint: disable=arguments-differ
-    def set_data(self, dfs):
-        for name, df in dfs.items():
-            self.model_dict[name].set_data(df)
+    def set_data(self, df: Dict):
+        for name in df.keys():
+            self.model_dict[name].set_data(df[name])
+
+    def set_offset(self, df: Dict, col: str):
+        return {
+            name: self.model_dict[name].set_offset(df[name], col)
+            for name in df.keys()
+        }
 
     def get_posterior(self) -> Dict:
         return {
@@ -51,16 +56,19 @@ class CompositeModel(NodeModel):
             for model in self.models
         }
 
-    def set_prior(self, priors):
+    def set_prior(self, priors: Dict, masks: Dict = None):
         for name, prior in priors.items():
-            self.model_dict[name].set_prior(prior)
+            mask = None if masks is None or name not in masks else masks[name]
+            self.model_dict[name].set_prior(prior, mask)
 
     def fit(self, **fit_options):
         for model in self.models:
             model.fit(**fit_options)
 
-    def predict(self, df):
+    def predict(self, df: Dict = None, col: str = None):
+        if df is None:
+            df = {model.name: None for model in self.models}
         return {
-            model_name: model.predict(df[model_name])
-            for model_name, model in self.model_dict.items()
+            name: model.predict(df=df[name], col=col)
+            for name, model in self.model_dict.items()
         }

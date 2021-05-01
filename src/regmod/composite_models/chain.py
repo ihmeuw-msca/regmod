@@ -47,13 +47,13 @@ class ChainModel(CompositeModel):
         for i, model in enumerate(self.models):
             model.fit(**fit_options)
             if i < self.num_models - 1:
-                df = model.predict()
-                df = self.models[i + 1].set_offset(df, f"{model.name}_pred")
+                df = model.predict(col=f"{self.name}_pred")
+                df = self.models[i + 1].set_offset(df, f"{self.name}_pred")
                 self.models[i + 1].set_data(df)
 
     def predict(self, df=None):
         for i, model in enumerate(self.models):
-            df = model.predict(df)
+            df = model.predict(df, col=f"{self.name}_pred")
             if i < self.num_models - 1:
-                df = self.models[i + 1].set_offset(df, f"{model.name}_pred")
+                df = self.models[i + 1].set_offset(df, f"{self.name}_pred")
         return df

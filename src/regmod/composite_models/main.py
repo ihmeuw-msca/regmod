@@ -23,13 +23,16 @@ class NodeModel:
     def get_data(self):
         return self.df
 
+    def set_offset(self, df: DataFrame, col: str):
+        raise NotImplementedError
+
     def fit(self, **fit_options):
         raise NotImplementedError
 
-    def predict(self, df):
+    def predict(self, df: DataFrame = None, col: str = None):
         raise NotImplementedError
 
-    def set_prior(self, priors):
+    def set_prior(self, priors, masks=None):
         raise NotImplementedError
 
     def get_posterior(self):

@@ -3,6 +3,7 @@ Base Model
 """
 from typing import Dict, List
 import numpy as np
+from numpy import ndarray
 from pandas import DataFrame
 from regmod.data import Data
 from regmod.variable import Variable
@@ -60,19 +61,24 @@ class BaseModel(NodeModel):
     def fit(self, **fit_options):
         self.model.fit(**fit_options)
 
-    def predict(self, df: DataFrame = None):
+    def predict(self, df: DataFrame = None, col: str = None):
         if df is None:
             df = self.df.copy()
+        if col is None:
+            col = f"{self.name}_pred"
         pred_data = self.model.data.copy()
         pred_data.df = df
-
-        pred = self.model.params[0].get_param(self.model.opt_coefs, pred_data)
-        df[f"{self.name}_pred"] = pred
+        df[col] = self.model.params[0].get_param(self.model.opt_coefs,
+                                                 pred_data)
         return df
 
-    def set_prior(self, priors: Dict[str, List]):
+    def set_prior(self,
+                  priors: Dict[str, List],
+                  masks: Dict[str, ndarray] = None):
         for name, prior in priors.items():
             index = self.variable_names.index(name)
+            if masks is not None and name in masks:
+                prior.sd *= masks[name]
             self.variables[index].add_priors(prior)
         self.model = self.model_constructor()
 
