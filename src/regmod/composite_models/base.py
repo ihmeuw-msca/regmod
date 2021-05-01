@@ -45,9 +45,6 @@ class BaseModel(NodeModel):
         return PoissonModel(self.data,
                             param_specs={"lam": {"variables": self.variables}})
 
-    def get_data(self) -> DataFrame:
-        return self.df
-
     def set_data(self, df: DataFrame) -> DataFrame:
         self.df = df
         self.model.data.df = df

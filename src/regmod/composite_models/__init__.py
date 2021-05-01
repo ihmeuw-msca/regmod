@@ -1,1 +1,1 @@
-from .main import NodeModel, LinkModel
+from .main import NodeModel, Link

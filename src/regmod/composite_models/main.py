@@ -21,7 +21,7 @@ class NodeModel:
         raise NotImplementedError
 
     def get_data(self):
-        raise NotImplementedError
+        return self.df
 
     def fit(self, **fit_options):
         raise NotImplementedError
@@ -37,13 +37,27 @@ class NodeModel:
 
 
 @dataclass
-class LinkModel:
-    node_model: NodeModel
-    upper_links: List["LinkModel"] = field(default_factory=list)
-    lower_links: List["LinkModel"] = field(default_factory=list)
+class Link:
+    name: str
+    upper_links: List["Link"] = field(default_factory=list)
+    lower_links: List["Link"] = field(default_factory=list)
 
-    def fit(self, *args, **kwargs):
-        raise NotImplementedError
+    @property
+    def is_root(self) -> bool:
+        return len(self.upper_links) == 0
 
-    def predict(self, *args, **kwargs):
-        raise NotImplementedError
+    @property
+    def is_leaf(self) -> bool:
+        return len(self.lower_links) == 0
+
+    @property
+    def upper_rank(self) -> int:
+        if self.is_root:
+            return 0
+        return max([link.upper_rank for link in self.upper_links]) + 1
+
+    @property
+    def lower_rank(self) -> int:
+        if self.is_leaf:
+            return 0
+        return max([link.lower_rank for link in self.lower_links]) + 1
