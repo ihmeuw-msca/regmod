@@ -42,7 +42,7 @@ class NodeModel:
                   df: DataFrame,
                   col_label: str = None,
                   copy: bool = False) -> DataFrame:
-        if col_label is not None:
+        if col_label is not None and col_label in df.columns:
             df = df[df[col_label] == self.name]
         if copy:
             df = df.copy()

@@ -43,19 +43,18 @@ class ChainModel(CompositeModel):
     def fit(self, **fit_options):
         col_value = self.get_col_value()
         self.models[0].fit(**fit_options)
-        for i, model in enumerate(self.models):
-            df = self.predict_model(i, col_value=col_value)
-            model.set_data(df, col_value=col_value)
-            model.fit(**fit_options)
+        for model_id in range(1, self.num_models):
+            df = self.predict_model(model_id, col_value=col_value)
+            self.models[model_id].set_data(df, col_value=col_value)
+            self.models[model_id].fit(**fit_options)
 
     def predict_model(self,
                       model_id: int,
                       col_value: str = None) -> DataFrame:
         col_value = self.get_col_value(col_value)
         df = self.models[model_id].get_data()
-        if model_id > 0:
-            for i in range(model_id - 1):
-                df = self.models[i].predict(df, col_value=col_value)
+        for i in range(model_id):
+            df = self.models[i].predict(df, col_value=col_value)
         return df
 
     def predict(self,

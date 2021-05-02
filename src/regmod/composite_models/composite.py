@@ -82,5 +82,5 @@ class CompositeModel(NodeModel):
         df = self.subset_df(df, col_label)
         return pd.concat([model.predict(df,
                                         col_value=col_value,
-                                        col_label=col_label)
+                                        col_label=self.name)
                           for model in self.models])
