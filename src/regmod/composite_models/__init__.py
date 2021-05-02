@@ -1,4 +1,5 @@
-from .main import NodeModel, Link
+from .node import NodeModel
+from .link import Link
 from .base import BaseModel
 from .composite import CompositeModel
 from .chain import ChainModel
