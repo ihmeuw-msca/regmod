@@ -5,7 +5,8 @@ from typing import Dict, List
 
 import pandas as pd
 from pandas import DataFrame
-from regmod.composite_models import Link, NodeModel
+from regmod.composite_models.link import Link
+from regmod.composite_models.node import NodeModel
 
 
 class CompositeModel(NodeModel):

@@ -7,7 +7,7 @@ from typing import Callable, Dict, List
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
-from regmod.composite_models import NodeModel
+from regmod.composite_models.node import NodeModel
 from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import GaussianModel, PoissonModel

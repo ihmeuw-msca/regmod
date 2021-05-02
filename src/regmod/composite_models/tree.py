@@ -4,7 +4,9 @@ Tree Model
 from typing import Dict, List
 
 import numpy as np
-from regmod.composite_models import CompositeModel, Link, NodeModel
+from regmod.composite_models.composite import CompositeModel
+from regmod.composite_models.link import Link
+from regmod.composite_models.node import NodeModel
 
 
 class TreeModel(CompositeModel):

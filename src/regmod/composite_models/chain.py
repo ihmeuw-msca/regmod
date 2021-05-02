@@ -4,7 +4,9 @@ Chain Model
 from typing import List
 
 from pandas import DataFrame
-from regmod.composite_models import CompositeModel, Link, NodeModel
+from regmod.composite_models.composite import CompositeModel
+from regmod.composite_models.link import Link
+from regmod.composite_models.node import NodeModel
 
 
 class ChainModel(CompositeModel):
