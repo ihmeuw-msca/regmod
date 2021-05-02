@@ -2,6 +2,8 @@
 Composite Model
 """
 from typing import Dict, List
+import pandas as pd
+from pandas import DataFrame
 from regmod.composite_models import NodeModel, Link
 
 
@@ -14,6 +16,8 @@ class CompositeModel(NodeModel):
                  name: str,
                  models: List[NodeModel],
                  links: List[Link] = None):
+        super().__init__(name)
+
         if not all(isinstance(model, NodeModel) for model in models):
             raise TypeError("Models must be instances of NodeModel.")
 
@@ -21,18 +25,14 @@ class CompositeModel(NodeModel):
         self.model_dict = {model.name: model for model in self.models}
         model_names = [model.name for model in self.models]
 
-        df = {model.name: model.get_data()
-              for model in self.models}
-        super().__init__(name, df)
-
         if links is None:
             links = [Link(model_name) for model_name in model_names]
         if not all(isinstance(link, Link) for link in links):
             raise TypeError("Links must be instances of Link.")
-
         link_names = [link.name for link in links]
         if set(model_names) != set(link_names):
             raise ValueError("Models and links not match.")
+
         self.links = links
         self.link_dict = {link.name: link for link in self.links}
 
@@ -40,15 +40,27 @@ class CompositeModel(NodeModel):
     def num_models(self) -> int:
         return len(self.models)
 
-    def set_data(self, df: Dict):
-        for name in df.keys():
-            self.model_dict[name].set_data(df[name])
+    def get_data(self, col_label: str = None) -> DataFrame:
+        df = pd.concat([model.get_data(col_label=self.name)
+                        for model in self.models])
+        if col_label is not None:
+            df[col_label] = self.name
+        return df
 
-    def set_offset(self, df: Dict, col: str):
-        return {
-            name: self.model_dict[name].set_offset(df[name], col)
-            for name in df.keys()
-        }
+    def set_data(self, df: DataFrame, col_label: str = None):
+        if col_label is not None:
+            df = df[df[col_label] == self.name]
+        for model in self.models:
+            model.set_data(df, col_label=self.name)
+
+    def add_offset(self,
+                   df: DataFrame,
+                   col_value: str,
+                   col_label: str = None) -> DataFrame:
+        if col_label is not None:
+            df = df[df[col_label] == self.name]
+        return pd.concat([model.add_offset(df, col_value, col_label=self.name)
+                          for model in self.models])
 
     def get_posterior(self) -> Dict:
         return {
@@ -65,10 +77,15 @@ class CompositeModel(NodeModel):
         for model in self.models:
             model.fit(**fit_options)
 
-    def predict(self, df: Dict = None, col: str = None):
+    def predict(self,
+                df: DataFrame = None,
+                col_value: str = None,
+                col_label: str = None) -> DataFrame:
         if df is None:
-            df = {model.name: None for model in self.models}
-        return {
-            name: model.predict(df=df[name], col=col)
-            for name, model in self.model_dict.items()
-        }
+            df = self.get_data()
+        col_value = f"{self.name}_pred" if col_value is None else col_value
+        df = self.subset_df(df, col_label)
+        return pd.concat([model.predict(df,
+                                        col_value=col_value,
+                                        col_label=col_label)
+                          for model in self.models])

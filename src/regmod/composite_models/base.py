@@ -2,6 +2,7 @@
 Base Model
 """
 from typing import Dict, List
+from copy import deepcopy
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
@@ -24,7 +25,7 @@ class BaseModel(NodeModel):
                  variables: List[Variable],
                  mtype: str = "gaussian"):
 
-        super().__init__(name, data.df)
+        super().__init__(name)
 
         self.mtype = mtype
         model_constructor_name = f"get_{self.mtype}_model"
@@ -32,8 +33,8 @@ class BaseModel(NodeModel):
             raise ValueError(f"Not support {self.mtype} model.")
         self.model_constructor = getattr(self, model_constructor_name)
 
-        self.data = data
-        self.variables = variables
+        self.data = deepcopy(data)
+        self.variables = deepcopy(variables)
         self.variable_names = [v.name for v in variables]
 
         self.model = self.model_constructor()
@@ -48,28 +49,45 @@ class BaseModel(NodeModel):
                             param_specs={"lam": {"variables": self.variables,
                                                  "use_offset": True}})
 
-    def set_data(self, df: DataFrame) -> DataFrame:
-        self.df = df
+    def get_data(self, col_label: str = None) -> DataFrame:
+        df = self.model.data.df.copy()
+        if col_label is not None:
+            df[col_label] = self.name
+        return df
+
+    def set_data(self, df: DataFrame, col_label: str = None):
+        df = self.subset_df(df, col_label, copy=True)
+        if df.shape[0] == 0:
+            raise ValueError("Attempt to use empty dataframe.")
         self.model.data.df = df
 
-    def set_offset(self, df: DataFrame, col: str):
+    def add_offset(self,
+                   df: DataFrame,
+                   col_value: str,
+                   col_label: str = None) -> DataFrame:
+        df = self.subset_df(df, col_label, copy=True)
         df[self.model.data.col_offset] = self.model.params[0].inv_link.inv_fun(
-            df[col].values
+            df[col_value].values
         )
         return df
 
     def fit(self, **fit_options):
         self.model.fit(**fit_options)
 
-    def predict(self, df: DataFrame = None, col: str = None):
+    def predict(self,
+                df: DataFrame = None,
+                col_value: str = None,
+                col_label: str = None):
         if df is None:
-            df = self.df.copy()
-        if col is None:
-            col = f"{self.name}_pred"
+            df = self.get_data()
+        df = self.subset_df(df, col_label, copy=True)
+        col_value = f"{self.name}_pred" if col_value is None else col_value
         pred_data = self.model.data.copy()
         pred_data.df = df
-        df[col] = self.model.params[0].get_param(self.model.opt_coefs,
-                                                 pred_data)
+        df[col_value] = self.model.params[0].get_param(
+            self.model.opt_coefs,
+            pred_data
+        )
         return df
 
     def set_prior(self,
@@ -83,6 +101,8 @@ class BaseModel(NodeModel):
         self.model = self.model_constructor()
 
     def get_posterior(self) -> Dict:
+        if self.model.opt_coefs is None:
+            raise AttributeError("Please fit the model first.")
         mean = self.model.opt_coefs
         sd = np.sqrt(np.diag(self.model.opt_vcov))
         slices = sizes_to_sclices([v.size for v in self.variables])
@@ -90,3 +110,6 @@ class BaseModel(NodeModel):
             v.name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])
             for i, v in enumerate(self.variables)
         }
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(name={self.name}, mtype={self.mtype})"
