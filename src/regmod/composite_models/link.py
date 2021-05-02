@@ -1,8 +1,8 @@
 """
 Link for relation map between nodes
 """
-from typing import List, Union
 from dataclasses import dataclass, field
+from typing import List, Union
 
 
 @dataclass

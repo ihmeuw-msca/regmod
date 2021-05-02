@@ -1,18 +1,19 @@
 """
 Base Model
 """
-from typing import Callable, Dict, List
 from copy import deepcopy
+from typing import Callable, Dict, List
+
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
+from regmod.composite_models import NodeModel
 from regmod.data import Data
-from regmod.variable import Variable
+from regmod.function import fun_dict
 from regmod.models import GaussianModel, PoissonModel
 from regmod.prior import GaussianPrior
 from regmod.utils import sizes_to_sclices
-from regmod.function import fun_dict
-from regmod.composite_models import NodeModel
+from regmod.variable import Variable
 
 
 class BaseModel(NodeModel):

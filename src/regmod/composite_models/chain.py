@@ -2,8 +2,9 @@
 Chain Model
 """
 from typing import List
+
 from pandas import DataFrame
-from regmod.composite_models import NodeModel, Link, CompositeModel
+from regmod.composite_models import CompositeModel, Link, NodeModel
 
 
 class ChainModel(CompositeModel):

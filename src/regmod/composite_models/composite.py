@@ -2,9 +2,10 @@
 Composite Model
 """
 from typing import Dict, List
+
 import pandas as pd
 from pandas import DataFrame
-from regmod.composite_models import NodeModel, Link
+from regmod.composite_models import Link, NodeModel
 
 
 class CompositeModel(NodeModel):

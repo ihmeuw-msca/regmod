@@ -2,8 +2,9 @@
 Tree Model
 """
 from typing import Dict, List
+
 import numpy as np
-from regmod.composite_models import NodeModel, Link, CompositeModel
+from regmod.composite_models import CompositeModel, Link, NodeModel
 
 
 class TreeModel(CompositeModel):

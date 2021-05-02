@@ -2,6 +2,7 @@
 Node Model
 """
 from typing import Dict
+
 from pandas import DataFrame
 
 
