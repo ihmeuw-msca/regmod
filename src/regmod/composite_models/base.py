@@ -71,18 +71,24 @@ class BaseModel(NodeModel):
             df[col_label] = self.name
         return df
 
-    def set_data(self, df: DataFrame, col_label: str = None):
+    def set_data(self,
+                 df: DataFrame,
+                 col_value: str = None,
+                 col_label: str = None):
         df = self.subset_df(df, col_label, copy=True)
+        df = self.add_offset(df, col_value, copy=False)
         if df.shape[0] == 0:
             raise ValueError("Attempt to use empty dataframe.")
         self.data.attach_df(df)
 
     def add_offset(self,
                    df: DataFrame,
-                   col_value: str,
-                   col_label: str = None) -> DataFrame:
-        df = self.subset_df(df, col_label, copy=True)
-        df[self.data.col_offset] = self.link_fun(df[col_value].values)
+                   col_value: str = None,
+                   copy: bool = False) -> DataFrame:
+        if col_value is not None and col_value in df.columns:
+            df[self.data.col_offset] = self.link_fun(df[col_value].values)
+        if copy:
+            df = df.copy()
         return df
 
     def fit(self, **fit_options):
@@ -96,13 +102,16 @@ class BaseModel(NodeModel):
                 col_label: str = None):
         if df is None:
             df = self.get_data()
+        col_value = self.get_col_value(col_value)
+
         df = self.subset_df(df, col_label, copy=True)
-        col_value = f"{self.name}_pred" if col_value is None else col_value
+        df = self.add_offset(df, col_value, copy=False)
+
         pred_data = self.model.data.copy()
-        pred_data.df = df
+        pred_data.attach_df(df)
+
         df[col_value] = self.model.params[0].get_param(
-            self.model.opt_coefs,
-            pred_data
+            self.model.opt_coefs, pred_data
         )
         return df
 

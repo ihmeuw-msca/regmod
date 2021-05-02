@@ -47,20 +47,13 @@ class CompositeModel(NodeModel):
             df[col_label] = self.name
         return df
 
-    def set_data(self, df: DataFrame, col_label: str = None):
-        if col_label is not None:
-            df = df[df[col_label] == self.name]
+    def set_data(self,
+                 df: DataFrame,
+                 col_value: str = None,
+                 col_label: str = None):
+        df = self.subset_df(df, col_label, copy=False)
         for model in self.models:
-            model.set_data(df, col_label=self.name)
-
-    def add_offset(self,
-                   df: DataFrame,
-                   col_value: str,
-                   col_label: str = None) -> DataFrame:
-        if col_label is not None:
-            df = df[df[col_label] == self.name]
-        return pd.concat([model.add_offset(df, col_value, col_label=self.name)
-                          for model in self.models])
+            model.set_data(df, col_value=col_value, col_label=self.name)
 
     def get_posterior(self) -> Dict:
         return {
@@ -83,7 +76,7 @@ class CompositeModel(NodeModel):
                 col_label: str = None) -> DataFrame:
         if df is None:
             df = self.get_data()
-        col_value = f"{self.name}_pred" if col_value is None else col_value
+        col_value = self.get_col_value(col_value)
         df = self.subset_df(df, col_label)
         return pd.concat([model.predict(df,
                                         col_value=col_value,
