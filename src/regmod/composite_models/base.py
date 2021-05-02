@@ -1,7 +1,7 @@
 """
 Base Model
 """
-from typing import Dict, List
+from typing import Callable, Dict, List
 from copy import deepcopy
 import numpy as np
 from numpy import ndarray
@@ -11,6 +11,7 @@ from regmod.variable import Variable
 from regmod.models import GaussianModel, PoissonModel
 from regmod.prior import GaussianPrior
 from regmod.utils import sizes_to_sclices
+from regmod.function import fun_dict
 from regmod.composite_models import NodeModel
 
 
@@ -29,20 +30,35 @@ class BaseModel(NodeModel):
 
         self.mtype = mtype
         model_constructor_name = f"get_{self.mtype}_model"
-        if model_constructor_name not in dir(self):
+        link_fun_constructor_name = f"get_{self.mtype}_link_fun"
+        if not (model_constructor_name in dir(self) and
+                link_fun_constructor_name in dir(self)):
             raise ValueError(f"Not support {self.mtype} model.")
-        self.model_constructor = getattr(self, model_constructor_name)
+        self.get_model = getattr(self, model_constructor_name)
+        self.link_fun = getattr(self, link_fun_constructor_name)()
 
         self.data = deepcopy(data)
         self.variables = deepcopy(variables)
         self.variable_names = [v.name for v in variables]
 
-        self.model = self.model_constructor()
+        self.model = None
 
     def get_gaussian_model(self) -> GaussianModel:
         return GaussianModel(self.data,
                              param_specs={"mu": {"variables": self.variables,
                                                  "use_offset": True}})
+
+    @staticmethod
+    def get_gaussian_link_fun() -> Callable:
+        return fun_dict[
+            GaussianModel.default_param_specs["mu"]["inv_link"]
+        ].inv_fun
+
+    @staticmethod
+    def get_poisson_link_fun() -> Callable:
+        return fun_dict[
+            PoissonModel.default_param_specs["lam"]["inv_link"]
+        ].inv_fun
 
     def get_poisson_model(self) -> PoissonModel:
         return PoissonModel(self.data,
@@ -50,7 +66,7 @@ class BaseModel(NodeModel):
                                                  "use_offset": True}})
 
     def get_data(self, col_label: str = None) -> DataFrame:
-        df = self.model.data.df.copy()
+        df = self.data.df.copy()
         if col_label is not None:
             df[col_label] = self.name
         return df
@@ -59,19 +75,19 @@ class BaseModel(NodeModel):
         df = self.subset_df(df, col_label, copy=True)
         if df.shape[0] == 0:
             raise ValueError("Attempt to use empty dataframe.")
-        self.model.data.df = df
+        self.data.df = df
 
     def add_offset(self,
                    df: DataFrame,
                    col_value: str,
                    col_label: str = None) -> DataFrame:
         df = self.subset_df(df, col_label, copy=True)
-        df[self.model.data.col_offset] = self.model.params[0].inv_link.inv_fun(
-            df[col_value].values
-        )
+        df[self.data.col_offset] = self.link_fun(df[col_value].values)
         return df
 
     def fit(self, **fit_options):
+        if self.model is None:
+            self.model = self.get_model()
         self.model.fit(**fit_options)
 
     def predict(self,
@@ -98,7 +114,7 @@ class BaseModel(NodeModel):
             if masks is not None and name in masks:
                 prior.sd *= masks[name]
             self.variables[index].add_priors(prior)
-        self.model = self.model_constructor()
+        self.model = self.get_model()
 
     def get_posterior(self) -> Dict:
         if self.model.opt_coefs is None:
