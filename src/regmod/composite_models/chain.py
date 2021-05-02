@@ -37,16 +37,6 @@ class ChainModel(CompositeModel):
         super().__init__(name, models, ordered_links)
         self.models = [self.model_dict[link.name] for link in self.links]
 
-    def get_data(self, col_label: str = None) -> DataFrame:
-        df = self.models[-1].get_data()
-        if col_label is not None:
-            df[col_label] = self.name
-        return df
-
-    def set_data(self, df: DataFrame, col_label: str = None):
-        df = self.subset_df(df, col_label=col_label)
-        return self.models[0].set_data(df)
-
     def fit(self, **fit_options):
         for i, model in enumerate(self.models):
             model.fit(**fit_options)
@@ -62,13 +52,13 @@ class ChainModel(CompositeModel):
                 col_value: str = None,
                 col_label: str = None):
         if df is None:
-            df = self.get_data()
+            df = self.models[-1].get_data()
         df = self.subset_df(df, col_label)
         col_value = f"{self.name}_pred" if col_value is None else col_value
         for i, model in enumerate(self.models):
             df = model.predict(df, col_value=col_value)
             if i < self.num_models - 1:
                 df = self.models[i + 1].add_offset(
-                    df, col_value=f"{self.name}_pred"
+                    df, col_value=col_value
                 )
         return df
