@@ -75,7 +75,7 @@ class BaseModel(NodeModel):
         df = self.subset_df(df, col_label, copy=True)
         if df.shape[0] == 0:
             raise ValueError("Attempt to use empty dataframe.")
-        self.data.df = df
+        self.data.attach_df(df)
 
     def add_offset(self,
                    df: DataFrame,
@@ -120,7 +120,8 @@ class BaseModel(NodeModel):
         if self.model.opt_coefs is None:
             raise AttributeError("Please fit the model first.")
         mean = self.model.opt_coefs
-        sd = np.sqrt(np.diag(self.model.opt_vcov))
+        # use minimum standard deviation of the posterior distribution
+        sd = np.maximum(0.1, np.sqrt(np.diag(self.model.opt_vcov)))
         slices = sizes_to_sclices([v.size for v in self.variables])
         return {
             v.name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])

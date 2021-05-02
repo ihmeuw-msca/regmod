@@ -63,6 +63,14 @@ class Link:
     upper_links: List["Link"] = field(default_factory=list)
     lower_links: List["Link"] = field(default_factory=list)
 
+    def __post_init__(self):
+        for link in self.upper_links:
+            if self not in link.lower_links:
+                link.lower_links.append(self)
+        for link in self.lower_links:
+            if self not in link.upper_links:
+                link.upper_links.append(self)
+
     @staticmethod
     def check_links(links: Union["Link", List["Link"]]) -> List["Link"]:
         if isinstance(links, Link):
@@ -106,6 +114,13 @@ class Link:
         if self.is_leaf:
             return 0
         return max([link.lower_rank for link in self.lower_links]) + 1
+
+    def to_list(self) -> List["Link"]:
+        current_list = [self]
+        if not self.is_leaf:
+            for link in self.lower_links:
+                current_list.extend(link.to_list())
+        return current_list
 
     def __repr__(self) -> str:
         return (f"{type(self).__name__}(name={self.name},"

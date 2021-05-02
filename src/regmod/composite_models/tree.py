@@ -21,7 +21,7 @@ class TreeModel(CompositeModel):
         if len(root_links) != 1:
             raise ValueError("Links must have one and only one root.")
         upper_ranks = np.array([link.upper_rank for link in links])
-        ordered_links = links[np.argsort(upper_ranks)]
+        ordered_links = [links[i] for i in np.argsort(upper_ranks)]
 
         super().__init__(name, models, ordered_links)
         self.models = [self.model_dict[link.name] for link in self.links]
