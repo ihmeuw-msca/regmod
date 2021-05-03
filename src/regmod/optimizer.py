@@ -6,10 +6,8 @@ import numpy as np
 from numpy import ndarray
 from scipy.optimize import LinearConstraint, minimize
 
-from regmod.models import Model
 
-
-def scipy_optimize(model: Model,
+def scipy_optimize(model: "Model",
                    x0: ndarray = None,
                    options: Dict = None) -> Dict[str, ndarray]:
 
@@ -34,14 +32,14 @@ def scipy_optimize(model: Model,
     return result.x
 
 
-def set_trim_weights(model: Model, index: ndarray, mask: float):
+def set_trim_weights(model: "Model", index: ndarray, mask: float):
     weights = np.ones(model.data.num_obs)
     weights[index] = mask
     model.data.trim_weights = weights
 
 
 def trimming(optimize: Callable) -> Callable:
-    def optimize_with_trimming(model: Model,
+    def optimize_with_trimming(model: "Model",
                                x0: ndarray = None,
                                options: Dict = None,
                                trim_steps: int = 3,
