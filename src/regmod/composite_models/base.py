@@ -7,7 +7,7 @@ from typing import Callable, Dict, List
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
-from regmod.composite_models.node import NodeModel
+from regmod.composite_models.interface import ModelInterface
 from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import GaussianModel, PoissonModel
@@ -16,7 +16,7 @@ from regmod.utils import sizes_to_sclices
 from regmod.variable import Variable
 
 
-class BaseModel(NodeModel):
+class BaseModel(ModelInterface):
     """
     Base Model, a simple wrapper around the stats model.
     """

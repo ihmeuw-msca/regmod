@@ -5,23 +5,23 @@ from typing import Dict, List
 
 import pandas as pd
 from pandas import DataFrame
-from regmod.composite_models.node import NodeModel
+from regmod.composite_models.interface import ModelInterface
 from regmod.composite_models.treenode import TreeNode
 
 
-class CompositeModel(NodeModel):
+class CompositeModel(ModelInterface):
     """
     Composite Model, abstract behavior of group model.
     """
 
     def __init__(self,
                  name: str,
-                 models: List[NodeModel],
+                 models: List[ModelInterface],
                  nodes: List[TreeNode] = None):
         super().__init__(name)
 
-        if not all(isinstance(model, NodeModel) for model in models):
-            raise TypeError("Models must be instances of NodeModel.")
+        if not all(isinstance(model, ModelInterface) for model in models):
+            raise TypeError("Models must be instances of ModelInterface.")
 
         self.models = models
         self.model_dict = {model.name: model for model in self.models}

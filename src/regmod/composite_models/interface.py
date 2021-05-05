@@ -6,9 +6,9 @@ from typing import Dict
 from pandas import DataFrame
 
 
-class NodeModel:
+class ModelInterface:
     """
-    Abstract class that encode the behavior of the node
+    Abstract class that encode the behavior of the model interface
     """
 
     def __init__(self, name: str):

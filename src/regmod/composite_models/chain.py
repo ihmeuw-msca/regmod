@@ -5,7 +5,7 @@ from typing import List
 
 from pandas import DataFrame
 from regmod.composite_models.composite import CompositeModel
-from regmod.composite_models.node import NodeModel
+from regmod.composite_models.interface import ModelInterface
 from regmod.composite_models.treenode import TreeNode
 
 
@@ -16,7 +16,7 @@ class ChainModel(CompositeModel):
 
     def __init__(self,
                  name: str,
-                 models: List[NodeModel],
+                 models: List[ModelInterface],
                  root_node: TreeNode = None):
 
         if root_node is None:
