@@ -53,12 +53,15 @@ class TreeNode:
     def all_nodes(self) -> List["TreeNode"]:
         return self.root.all_sub_nodes
 
+    def get_sub_node_names(self) -> List[str]:
+        return [node.name for node in self.sub_nodes]
+
     def append(self, node: Union[str, "TreeNode"]):
         node = self.as_treenode(node)
         if not node.is_root:
             raise ValueError(f"Cannot append {node}, "
                              f"already have parent {node.sup_node}.")
-        sub_node_names = [sub_node.name for sub_node in self.sub_nodes]
+        sub_node_names = self.get_sub_node_names()
         if node.name in sub_node_names:
             index = sub_node_names.index(node.name)
             while len(node.sub_nodes) > 0:
@@ -93,10 +96,16 @@ class TreeNode:
                     sub_node.remove(node)
 
     @property
-    def rank(self) -> int:
+    def urank(self) -> int:
         if self.is_root:
             return 0
-        return self.sup_node.rank + 1
+        return self.sup_node.urank + 1
+
+    @property
+    def lrank(self) -> int:
+        if self.is_leaf:
+            return 0
+        return max(node.lrank for node in self.sub_nodes) + 1
 
     @classmethod
     def as_treenode(cls, obj: Any) -> "TreeNode":
@@ -128,4 +137,48 @@ class TreeNode:
             return True
         return any(node in sub_node for sub_node in self.sub_nodes)
 
-    # TODO: add eq function
+    def __eq__(self, node: "TreeNode") -> bool:
+        if not isinstance(node, TreeNode):
+            raise TypeError("Can only compare to TreeNode.")
+        # special cases
+        if node is self:
+            return True
+        if node.name != self.name:
+            return False
+
+        # compaire sub nodes
+        if len(node.sub_nodes) != len(self.sub_nodes):
+            return False
+        self_sub_node_names = set(self.get_sub_node_names())
+        node_sub_node_names = set(node.get_sub_node_names())
+        if node_sub_node_names != self_sub_node_names:
+            return False
+        return all(node[name] == self[name]
+                   for name in self_sub_node_names)
+
+    def __getitem__(self, name: str) -> "TreeNode":
+        sub_node_names = self.get_sub_node_names()
+        if name not in sub_node_names:
+            raise ValueError(f"Cannot find {name} in sub nodes.")
+        return self.sub_nodes[sub_node_names.index(name)]
+
+    def __lt__(self, node: "TreeNode") -> bool:
+        if not isinstance(node, TreeNode):
+            raise TypeError("Can only compare to TreeNode.")
+        # special cases
+        if self.is_leaf:
+            return False
+        sub_node_names = self.get_sub_node_names()
+        if node.name not in sub_node_names:
+            return False
+        return all(sub_node < self[node.name]
+                   for sub_node in node.sub_nodes)
+
+    def __gt__(self, node: "TreeNode") -> bool:
+        return node < self
+
+    def __le__(self, node: "TreeNode") -> bool:
+        return node == self or node < self
+
+    def __ge__(self, node: "TreeNode") -> bool:
+        return node == self or node > self
