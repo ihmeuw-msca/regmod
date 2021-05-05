@@ -49,6 +49,10 @@ class TreeNode:
             [node.all_sub_nodes for node in self.sub_nodes]
         ))
 
+    @property
+    def all_nodes(self) -> List["TreeNode"]:
+        return self.root.all_sub_nodes
+
     def append(self, node: Union[str, "TreeNode"]):
         node = self.as_treenode(node)
         if not node.is_root:
@@ -78,6 +82,16 @@ class TreeNode:
         node.sup_node = None
         return node
 
+    def remove(self, node: "TreeNode"):
+        if not isinstance(node, TreeNode):
+            raise TypeError("Can only remove TreeNode.")
+        if not node.is_root:
+            if node.sup_node is self:
+                self.pop(self.sub_nodes.index(node))
+            elif not self.is_leaf:
+                for sub_node in self.sub_nodes:
+                    sub_node.remove(node)
+
     @property
     def rank(self) -> int:
         if self.is_root:
@@ -91,23 +105,27 @@ class TreeNode:
         return TreeNode(str(obj))
 
     def __len__(self) -> int:
-        return len(self.sub_nodes)
+        if self.is_leaf:
+            return 1
+        return 1 + sum(len(node) for node in self.sub_nodes)
 
-    def __add__(self, obj: Union[str, "TreeNode"]) -> "TreeNode":
-        self.merge(obj)
+    def __add__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
+        self.merge(node)
         return self
 
-    def __truediv__(self, obj: Union[str, "TreeNode"]) -> "TreeNode":
-        self.append(obj)
+    def __sub__(self, node: "TreeNode") -> "TreeNode":
+        self.remove(node)
+        return self
+
+    def __truediv__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
+        self.append(node)
         return self.sub_nodes[-1]
 
-    # TODO: add case when obj is str
-    def __contains__(self, obj: "TreeNode") -> bool:
-        if not isinstance(obj, TreeNode):
-            raise ValueError("Can only contain TreeNode.")
-        if obj == self:
+    def __contains__(self, node: "TreeNode") -> bool:
+        if not isinstance(node, TreeNode):
+            raise TypeError("Can only contain TreeNode.")
+        if node == self:
             return True
-        return any(obj in node for node in self.sub_nodes)
+        return any(node in sub_node for sub_node in self.sub_nodes)
 
-    # TODO: add remove function
     # TODO: add eq function
