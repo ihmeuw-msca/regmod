@@ -1,17 +1,15 @@
 """
 Tree Node
 """
-from dataclasses import dataclass, field
 from itertools import chain
 from typing import Any, Iterable, List, Union
 
 
-@dataclass
 class TreeNode:
-    name: str
-    sup_node: "TreeNode" = field(default=None, init=False, repr=False)
-    sub_nodes: List["TreeNode"] = field(default_factory=list,
-                                        init=False, repr=False)
+    def __init__(self, name: str):
+        self.name = name
+        self.sup_node = None
+        self.sub_nodes = []
 
     @property
     def is_root(self) -> bool:
@@ -162,6 +160,9 @@ class TreeNode:
 
     def __ge__(self, node: "TreeNode") -> bool:
         return node == self or self > node
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(name={self.name})"
 
     @classmethod
     def as_treenode(cls, obj: Any) -> "TreeNode":
