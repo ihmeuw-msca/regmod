@@ -62,6 +62,12 @@ class TreeModel(CompositeModel):
                          lvl_masks: List[float] = None,
                          **param_specs) -> "TreeModel":
 
+        # check data before create model
+        data.attach_df(df)
+        for var in variables:
+            var.check_data(data)
+        data.detach_df()
+
         def get_model(node: TreeNode,
                       df_group: DataFrame,
                       data: Data = data,
