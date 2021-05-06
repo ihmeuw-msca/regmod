@@ -4,6 +4,8 @@ Tree Node
 from itertools import chain
 from typing import Any, Iterable, List, Union
 
+from pandas import DataFrame
+
 
 class TreeNode:
     def __init__(self, name: str):
@@ -108,6 +110,9 @@ class TreeNode:
                 for sub_node in self.sub_nodes:
                     sub_node.remove(node)
 
+    def copy(self) -> "TreeNode":
+        return self.__copy__()
+
     def __getitem__(self, name: str) -> "TreeNode":
         sub_node_names = list(map(self.get_name, self.sub_nodes))
         if name not in sub_node_names:
@@ -164,11 +169,48 @@ class TreeNode:
     def __repr__(self) -> str:
         return f"{type(self).__name__}(name={self.name})"
 
+    def __copy__(self) -> "TreeNode":
+        root_node = type(self)(self.name)
+        for node in self.sub_nodes:
+            root_node.append(node.__copy__())
+        return root_node
+
     @classmethod
     def as_treenode(cls, obj: Any) -> "TreeNode":
         if isinstance(obj, cls):
             return obj
         return TreeNode(str(obj))
+
+    @classmethod
+    def from_names(cls, names: Iterable[str]) -> "TreeNode":
+        if len(names) == 0:
+            raise ValueError("Names must not be empty.")
+        nodes = [cls(names[0])]
+        for name in names[1:]:
+            nodes.append(nodes[-1] / name)
+        return nodes[0]
+
+    @classmethod
+    def from_full_name(cls, full_name: str) -> "TreeNode":
+        names = full_name.split("/")
+        return cls.from_names(names)
+
+    @classmethod
+    def from_dataframe(cls,
+                       df: DataFrame,
+                       cols: List[str],
+                       root_name: str = "Global") -> "TreeNode":
+        if not all(col in df.columns for col in cols):
+            raise ValueError("Columns must be in the dataframe.")
+        root_node = cls(root_name)
+        if len(cols) == 0:
+            return root_node
+        df_group = df.groupby(cols[0])
+        for name in df_group.groups.keys():
+            root_node.append(
+                cls.from_dataframe(df_group.get_group(name), cols[1:], name)
+            )
+        return root_node
 
     @staticmethod
     def get_name(node: "TreeNode") -> str:

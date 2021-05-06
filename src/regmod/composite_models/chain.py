@@ -20,10 +20,7 @@ class ChainModel(CompositeModel):
                  root_node: TreeNode = None):
 
         if root_node is None:
-            nodes = [TreeNode(models[0].name)]
-            for model in models[1:]:
-                nodes.append(nodes[-1] / model.name)
-            root_node = nodes[0]
+            root_node = TreeNode.from_names([model.name for model in models])
 
         if len(root_node.leafs) > 1:
             raise ValueError("Tree nodes must form a chain.")
