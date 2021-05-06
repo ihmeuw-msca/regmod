@@ -2,7 +2,7 @@
 Tree Node
 """
 from itertools import chain
-from typing import Any, Iterable, List, Union
+from typing import Any, Callable, Iterable, List, Union
 
 from pandas import DataFrame
 
@@ -12,6 +12,7 @@ class TreeNode:
         self.name = name
         self.sup_node = None
         self.sub_nodes = []
+        self.container = None
 
     @property
     def is_root(self) -> bool:
@@ -198,18 +199,24 @@ class TreeNode:
     @classmethod
     def from_dataframe(cls,
                        df: DataFrame,
-                       cols: List[str],
-                       root_name: str = "Global") -> "TreeNode":
-        if not all(col in df.columns for col in cols):
+                       id_cols: List[str],
+                       root_name: str = "Global",
+                       container_fun: Callable = None) -> "TreeNode":
+        if not all(col in df.columns for col in id_cols):
             raise ValueError("Columns must be in the dataframe.")
         root_node = cls(root_name)
-        if len(cols) == 0:
+        if container_fun is not None:
+            root_node.container = container_fun(root_node, df)
+        if len(id_cols) == 0:
             return root_node
-        df_group = df.groupby(cols[0])
+        df_group = df.groupby(id_cols[0])
         for name in df_group.groups.keys():
-            root_node.append(
-                cls.from_dataframe(df_group.get_group(name), cols[1:], name)
-            )
+            root_node.append(cls.from_dataframe(
+                df_group.get_group(name),
+                id_cols[1:],
+                root_name=name,
+                container_fun=container_fun
+            ))
         return root_node
 
     @staticmethod
