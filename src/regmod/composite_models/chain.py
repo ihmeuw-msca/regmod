@@ -5,8 +5,8 @@ from typing import List
 
 from pandas import DataFrame
 from regmod.composite_models.composite import CompositeModel
-from regmod.composite_models.link import Link
-from regmod.composite_models.node import NodeModel
+from regmod.composite_models.interface import ModelInterface
+from regmod.composite_models.treenode import TreeNode
 
 
 class ChainModel(CompositeModel):
@@ -16,29 +16,17 @@ class ChainModel(CompositeModel):
 
     def __init__(self,
                  name: str,
-                 models: List[NodeModel],
-                 links: List[Link] = None):
+                 models: List[ModelInterface],
+                 root_node: TreeNode = None):
 
-        if links is None:
-            model_names = [model.name for model in models]
-            links = [Link(model_name) for model_name in model_names]
-            for i in range(len(links) - 1):
-                links[i].add_lower_links(links[i + 1])
+        if root_node is None:
+            root_node = TreeNode.from_names([model.name for model in models])
 
-        ordered_links = [link for link in links if link.is_root]
-        if len(ordered_links) != 1:
-            raise ValueError("Links must have one and only one root.")
-        while not ordered_links[-1].is_leaf:
-            lower_links = ordered_links[-1].lower_links
-            if len(lower_links) != 1:
-                raise ValueError("Given links cannot form a chain.")
-            next_link = lower_links[0]
-            if next_link in ordered_links:
-                raise ValueError("There is a loop in the given links.")
-            ordered_links.append(next_link)
+        if len(root_node.leafs) > 1:
+            raise ValueError("Tree nodes must form a chain.")
 
-        super().__init__(name, models, ordered_links)
-        self.models = [self.model_dict[link.name] for link in self.links]
+        super().__init__(name, models, root_node.lower_nodes)
+        self.models = [self.model_dict[node.name] for node in self.nodes]
 
     def fit(self, **fit_options):
         col_value = self.get_col_value()
