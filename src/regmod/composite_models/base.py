@@ -25,7 +25,8 @@ class BaseModel(ModelInterface):
                  name: str,
                  data: Data,
                  variables: List[Variable],
-                 mtype: str = "gaussian"):
+                 mtype: str = "gaussian",
+                 **param_specs):
 
         super().__init__(name)
 
@@ -42,12 +43,16 @@ class BaseModel(ModelInterface):
         self.variables = deepcopy(variables)
         self.variable_names = [v.name for v in variables]
 
+        self.param_specs = {"variables": self.variables,
+                            "use_offset": True,
+                            **param_specs}
         self.model = None
 
     def get_gaussian_model(self) -> GaussianModel:
-        return GaussianModel(self.data,
-                             param_specs={"mu": {"variables": self.variables,
-                                                 "use_offset": True}})
+        return GaussianModel(self.data, param_specs={"mu": self.param_specs})
+
+    def get_poisson_model(self) -> PoissonModel:
+        return PoissonModel(self.data, param_specs={"lam": self.param_specs})
 
     @staticmethod
     def get_gaussian_link_fun() -> Callable:
@@ -60,11 +65,6 @@ class BaseModel(ModelInterface):
         return fun_dict[
             PoissonModel.default_param_specs["lam"]["inv_link"]
         ].inv_fun
-
-    def get_poisson_model(self) -> PoissonModel:
-        return PoissonModel(self.data,
-                            param_specs={"lam": {"variables": self.variables,
-                                                 "use_offset": True}})
 
     def get_data(self, col_label: str = None) -> DataFrame:
         df = self.data.df.copy()

@@ -59,7 +59,8 @@ class TreeModel(CompositeModel):
                          root_name: str = "Global",
                          mtype: str = "gaussian",
                          var_masks: Dict[str, float] = None,
-                         lvl_masks: List[float] = None) -> "TreeModel":
+                         lvl_masks: List[float] = None,
+                         **param_specs) -> "TreeModel":
 
         def get_model(node: TreeNode,
                       df_group: DataFrame,
@@ -67,7 +68,8 @@ class TreeModel(CompositeModel):
                       variables: List[Variable] = variables,
                       mtype: str = mtype):
             data.attach_df(df_group)
-            model = BaseModel(node.name, data, variables, mtype=mtype)
+            model = BaseModel(node.name, data, variables,
+                              mtype=mtype, **param_specs)
             data.detach_df()
             return model
 
