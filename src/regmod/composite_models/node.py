@@ -10,7 +10,7 @@ from typing import Any, Callable, Iterable, List, Union
 from pandas import DataFrame
 
 
-class TreeNode:
+class Node:
     def __init__(self, name: str):
         name = str(name)
         if "/" in name:
@@ -33,23 +33,23 @@ class TreeNode:
         return self.get_name(0)
 
     @property
-    def root(self) -> "TreeNode":
+    def root(self) -> "Node":
         if self.is_root:
             return self
         return self.parent.root
 
     @property
-    def leafs(self) -> List["TreeNode"]:
+    def leafs(self) -> List["Node"]:
         if self.is_leaf:
             return [self]
         return list(chain.from_iterable([n.leafs for n in self.children]))
 
     @property
-    def children(self) -> List["TreeNode"]:
+    def children(self) -> List["Node"]:
         return list(self.children_dict.values())
 
     @property
-    def branch(self) -> List["TreeNode"]:
+    def branch(self) -> List["Node"]:
         if self.is_leaf:
             return [self]
         return [self] + list(chain.from_iterable(
@@ -57,7 +57,7 @@ class TreeNode:
         ))
 
     @property
-    def tree(self) -> List["TreeNode"]:
+    def tree(self) -> List["Node"]:
         return self.root.branch
 
     @property
@@ -66,8 +66,8 @@ class TreeNode:
             return 0
         return self.parent.level + 1
 
-    def append(self, node: Union[str, "TreeNode"]):
-        node = self.as_treenode(node)
+    def append(self, node: Union[str, "Node"]):
+        node = self.as_node(node)
         if not node.is_root:
             raise ValueError(f"Cannot append {node}, "
                              f"already have parent {node.parent}.")
@@ -78,17 +78,17 @@ class TreeNode:
             node.parent = self
             self.children_dict[node.name] = node
 
-    def extend(self, nodes: Iterable[Union[str, "TreeNode"]]):
+    def extend(self, nodes: Iterable[Union[str, "Node"]]):
         for node in nodes:
             self.append(node)
 
-    def merge(self, node: Union[str, "TreeNode"]):
+    def merge(self, node: Union[str, "Node"]):
         if node.name != self.name:
             self.name = f"{self.name}|{node.name}"
         while len(node.children) > 0:
             self.append(node.pop())
 
-    def pop(self, key: Union[int, str] = -1) -> "TreeNode":
+    def pop(self, key: Union[int, str] = -1) -> "Node":
         if isinstance(key, int):
             key = list(self.children_dict.keys())[key]
         node = self.children_dict.pop(key)
@@ -105,10 +105,10 @@ class TreeNode:
             return self.name
         return f"{self.parent.get_name(level)}/{self.name}"
 
-    def copy(self) -> "TreeNode":
+    def copy(self) -> "Node":
         return self.__copy__()
 
-    def __getitem__(self, name: str) -> "TreeNode":
+    def __getitem__(self, name: str) -> "Node":
         names = name.split("/", 1)
         node = self.children_dict[names[0]]
         if len(names) == 1:
@@ -120,66 +120,66 @@ class TreeNode:
             return 1
         return 1 + sum(len(node) for node in self.children)
 
-    def __or__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
+    def __or__(self, node: Union[str, "Node"]) -> "Node":
         self.merge(node)
         return self
 
-    def __truediv__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
+    def __truediv__(self, node: Union[str, "Node"]) -> "Node":
         self.append(node)
         return self.children[-1]
 
-    def __contains__(self, node: "TreeNode") -> bool:
-        if not isinstance(node, TreeNode):
-            raise TypeError("Can only contain TreeNode.")
+    def __contains__(self, node: "Node") -> bool:
+        if not isinstance(node, Node):
+            raise TypeError("Can only contain Node.")
         if node == self:
             return True
         return any(node in _node for _node in self.children)
 
-    def __eq__(self, node: "TreeNode") -> bool:
-        if not isinstance(node, TreeNode):
-            raise TypeError("Can only compare to TreeNode.")
+    def __eq__(self, node: "Node") -> bool:
+        if not isinstance(node, Node):
+            raise TypeError("Can only compare to Node.")
         self_names = set(_node.get_name(self.level) for _node in self.branch)
         node_names = set(_node.get_name(node.level) for _node in node.branch)
         return self_names == node_names
 
-    def __lt__(self, node: "TreeNode") -> bool:
-        if not isinstance(node, TreeNode):
-            raise TypeError("Can only compare to TreeNode.")
+    def __lt__(self, node: "Node") -> bool:
+        if not isinstance(node, Node):
+            raise TypeError("Can only compare to Node.")
         self_names = (_node.get_name(self.level) for _node in self.branch)
         node_names = (_node.get_name(node.level) for _node in node.branch)
         return all(any(self_name in node_name for node_name in node_names)
                    for self_name in self_names)
 
-    def __gt__(self, node: "TreeNode") -> bool:
+    def __gt__(self, node: "Node") -> bool:
         return node < self
 
-    def __le__(self, node: "TreeNode") -> bool:
+    def __le__(self, node: "Node") -> bool:
         return node == self or self < node
 
-    def __ge__(self, node: "TreeNode") -> bool:
+    def __ge__(self, node: "Node") -> bool:
         return node == self or self > node
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(name={self.name})"
 
-    def __copy__(self) -> "TreeNode":
+    def __copy__(self) -> "Node":
         root_node = type(self)(self.name)
         for node in self.children:
             root_node.append(node.__copy__())
         return root_node
 
     @classmethod
-    def as_treenode(cls, obj: Any) -> "TreeNode":
+    def as_node(cls, obj: Any) -> "Node":
         if isinstance(obj, cls):
             return obj
-        return TreeNode(str(obj))
+        return Node(str(obj))
 
     @classmethod
-    def from_names(cls, names: Iterable[str]) -> "TreeNode":
-        return reduce(truediv, map(cls.as_treenode, names)).root
+    def from_names(cls, names: Iterable[str]) -> "Node":
+        return reduce(truediv, map(cls.as_node, names)).root
 
     @classmethod
-    def from_full_name(cls, full_name: str) -> "TreeNode":
+    def from_full_name(cls, full_name: str) -> "Node":
         names = full_name.split("/")
         return cls.from_names(names)
 
@@ -188,7 +188,7 @@ class TreeNode:
                        df: DataFrame,
                        id_cols: List[str],
                        root_name: str = "Global",
-                       container_fun: Callable = None) -> "TreeNode":
+                       container_fun: Callable = None) -> "Node":
         if not all(col in df.columns for col in id_cols):
             raise ValueError("Columns must be in the dataframe.")
         root_node = cls(root_name)

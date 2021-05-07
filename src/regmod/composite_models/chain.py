@@ -6,7 +6,7 @@ from typing import List
 from pandas import DataFrame
 from regmod.composite_models.composite import CompositeModel
 from regmod.composite_models.interface import ModelInterface
-from regmod.composite_models.treenode import TreeNode
+from regmod.composite_models.node import Node
 
 
 class ChainModel(CompositeModel):
@@ -17,10 +17,10 @@ class ChainModel(CompositeModel):
     def __init__(self,
                  name: str,
                  models: List[ModelInterface],
-                 root_node: TreeNode = None):
+                 root_node: Node = None):
 
         if root_node is None:
-            root_node = TreeNode.from_names([model.name for model in models])
+            root_node = Node.from_names([model.name for model in models])
 
         if len(root_node.leafs) > 1:
             raise ValueError("Tree nodes must form a chain.")

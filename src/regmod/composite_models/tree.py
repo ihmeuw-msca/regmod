@@ -11,7 +11,7 @@ from regmod.variable import Variable
 from regmod.composite_models.base import BaseModel
 from regmod.composite_models.composite import CompositeModel
 from regmod.composite_models.interface import ModelInterface
-from regmod.composite_models.treenode import TreeNode
+from regmod.composite_models.node import Node
 
 
 class TreeModel(CompositeModel):
@@ -22,7 +22,7 @@ class TreeModel(CompositeModel):
     def __init__(self,
                  name: str,
                  models: List[ModelInterface],
-                 root_node: TreeNode,
+                 root_node: Node,
                  masks: Dict):
 
         super().__init__(name, models, root_node.branch)
@@ -67,7 +67,7 @@ class TreeModel(CompositeModel):
             var.check_data(data)
         data.detach_df()
 
-        def get_model(node: TreeNode,
+        def get_model(node: Node,
                       df_group: DataFrame,
                       data: Data = data,
                       variables: List[Variable] = variables,
@@ -78,10 +78,10 @@ class TreeModel(CompositeModel):
             data.detach_df()
             return model
 
-        root_node = TreeNode.from_dataframe(df,
-                                            id_cols,
-                                            root_name=root_name,
-                                            container_fun=get_model)
+        root_node = Node.from_dataframe(df,
+                                        id_cols,
+                                        root_name=root_name,
+                                        container_fun=get_model)
 
         models = []
         for node in root_node.tree:

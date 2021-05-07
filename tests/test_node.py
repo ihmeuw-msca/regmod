@@ -4,7 +4,7 @@ Test Tree Node
 import pytest
 from pandas import DataFrame
 
-from regmod.composite_models import TreeNode
+from regmod.composite_models import Node
 
 
 # pylint: disable=redefined-outer-name
@@ -12,7 +12,7 @@ from regmod.composite_models import TreeNode
 
 @pytest.fixture
 def simple_node():
-    node = TreeNode("0")
+    node = Node("0")
     node.extend(["1", "2"])
     node["1"].extend(["3", "4"])
 
@@ -21,7 +21,7 @@ def simple_node():
 
 @pytest.mark.parametrize("name", ["dummy"])
 def test_init_attr(name):
-    node = TreeNode(name)
+    node = Node(name)
     assert node.name == name
     assert node.parent is None
     assert len(node.children) == 0
@@ -29,8 +29,8 @@ def test_init_attr(name):
 
 
 def test_attr():
-    node = TreeNode("0")
-    sub_node = TreeNode("1")
+    node = Node("0")
+    sub_node = Node("1")
     node.append(sub_node)
 
     assert node.children[0] is sub_node
@@ -38,8 +38,8 @@ def test_attr():
 
 
 def test_is_root():
-    node = TreeNode("0")
-    sub_node = TreeNode("1")
+    node = Node("0")
+    sub_node = Node("1")
     node.append(sub_node)
 
     assert node.is_root
@@ -47,8 +47,8 @@ def test_is_root():
 
 
 def test_is_leaf():
-    node = TreeNode("0")
-    sub_node = TreeNode("1")
+    node = Node("0")
+    sub_node = Node("1")
     node.append(sub_node)
 
     assert not node.is_leaf
@@ -56,8 +56,8 @@ def test_is_leaf():
 
 
 def test_full_name():
-    node = TreeNode("0")
-    sub_node = TreeNode("1")
+    node = Node("0")
+    sub_node = Node("1")
     node.append(sub_node)
 
     assert node.full_name == "0"
@@ -65,15 +65,15 @@ def test_full_name():
 
 
 def test_root():
-    node = TreeNode("0")
-    sub_node = TreeNode("1")
+    node = Node("0")
+    sub_node = Node("1")
     node.append(sub_node)
 
     assert sub_node.root is node
 
 
 def test_leafs():
-    node = TreeNode("0")
+    node = Node("0")
     node.extend(["1", "2"])
 
     assert len(node.leafs) == 2
@@ -100,7 +100,7 @@ def test_level(simple_node):
 
 
 def test_append(simple_node):
-    node = TreeNode("1")
+    node = Node("1")
     node.append("a")
     assert node.children[0].name == "a"
 
@@ -114,7 +114,7 @@ def test_extend(simple_node):
 
 
 def test_merge(simple_node):
-    node = TreeNode("random")
+    node = Node("random")
     node.append("a")
 
     simple_node.merge(node)
@@ -151,7 +151,7 @@ def test_len(simple_node):
 
 
 def test_or(simple_node):
-    node = TreeNode("0")
+    node = Node("0")
     node.append("a")
 
     result_node = simple_node | node
@@ -167,19 +167,19 @@ def test_truediv(simple_node):
 
 
 def test_contains(simple_node):
-    node = TreeNode("1")
+    node = Node("1")
     node.extend(["3", "4"])
     assert node in simple_node
 
 
 def test_eq(simple_node):
-    node = TreeNode("1")
+    node = Node("1")
     node.extend(["3", "4"])
     assert node == simple_node["1"]
 
 
 def test_lt(simple_node):
-    node = TreeNode("1")
+    node = Node("1")
     node.extend(["3", "4"])
     assert node < simple_node
 
@@ -190,21 +190,21 @@ def test_copy(simple_node):
     assert node == simple_node
 
 
-@pytest.mark.parametrize("obj", [0, "0", TreeNode("0")])
-def test_as_treenode(obj):
-    node = TreeNode.as_treenode(obj)
-    assert isinstance(node, TreeNode)
+@pytest.mark.parametrize("obj", [0, "0", Node("0")])
+def test_as_node(obj):
+    node = Node.as_node(obj)
+    assert isinstance(node, Node)
     assert node.name == "0"
 
 
 def test_from_names():
-    node = TreeNode.from_names(["0", "1", "3"])
+    node = Node.from_names(["0", "1", "3"])
     leaf = node.leafs[0]
     assert leaf.full_name == "0/1/3"
 
 
 def test_from_full_names():
-    node = TreeNode.from_full_name("0/1/3")
+    node = Node.from_full_name("0/1/3")
     leaf = node.leafs[0]
     assert leaf.full_name == "0/1/3"
 
@@ -216,9 +216,9 @@ def test_from_dataframe():
         "level3": [1, 2, 3, 4]
     })
 
-    node = TreeNode.from_dataframe(df,
-                                   id_cols=["level1", "level2", "level3"],
-                                   root_name="overall")
+    node = Node.from_dataframe(df,
+                               id_cols=["level1", "level2", "level3"],
+                               root_name="overall")
 
     assert max(n.level for n in node.leafs) == 3
     assert len(node) == 11

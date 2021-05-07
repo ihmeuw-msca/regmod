@@ -6,7 +6,7 @@ from typing import Dict, List
 import pandas as pd
 from pandas import DataFrame
 from regmod.composite_models.interface import ModelInterface
-from regmod.composite_models.treenode import TreeNode
+from regmod.composite_models.node import Node
 
 
 class CompositeModel(ModelInterface):
@@ -17,7 +17,7 @@ class CompositeModel(ModelInterface):
     def __init__(self,
                  name: str,
                  models: List[ModelInterface],
-                 nodes: List[TreeNode] = None):
+                 nodes: List[Node] = None):
         super().__init__(name)
 
         if not all(isinstance(model, ModelInterface) for model in models):
@@ -28,9 +28,9 @@ class CompositeModel(ModelInterface):
         model_names = [model.name for model in self.models]
 
         if nodes is None:
-            nodes = list(map(TreeNode, model_names))
-        if not all(isinstance(node, TreeNode) for node in nodes):
-            raise TypeError("nodes must be instances of TreeNode.")
+            nodes = list(map(Node, model_names))
+        if not all(isinstance(node, Node) for node in nodes):
+            raise TypeError("nodes must be instances of Node.")
         node_names = [node.name for node in nodes]
         if set(model_names) != set(node_names):
             raise ValueError("Models and nodes not match.")
