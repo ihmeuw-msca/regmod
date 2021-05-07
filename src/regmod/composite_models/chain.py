@@ -25,7 +25,7 @@ class ChainModel(CompositeModel):
         if len(root_node.leafs) > 1:
             raise ValueError("Tree nodes must form a chain.")
 
-        super().__init__(name, models, root_node.lower_nodes)
+        super().__init__(name, models, root_node.branch)
         self.models = [self.model_dict[node.name] for node in self.nodes]
 
     def fit(self, **fit_options):

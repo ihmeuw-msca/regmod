@@ -25,7 +25,7 @@ class TreeModel(CompositeModel):
                  root_node: TreeNode,
                  masks: Dict):
 
-        super().__init__(name, models, root_node.lower_nodes)
+        super().__init__(name, models, root_node.branch)
         self.models = [self.model_dict[node.name] for node in self.nodes]
 
         if not all(mask_name in self.model_dict for mask_name in masks):
@@ -90,7 +90,7 @@ class TreeModel(CompositeModel):
 
         masks = {}
         final_var_masks = {var.name: np.ones(var.size) for var in variables}
-        final_lvl_masks = [1.0]*root_node.lower_rank
+        final_lvl_masks = [1.0]*max(node.level for node in root_node.leafs)
         if var_masks is not None:
             final_var_masks.update(var_masks)
         if lvl_masks is not None:
