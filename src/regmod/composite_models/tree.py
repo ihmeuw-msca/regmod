@@ -41,10 +41,9 @@ class TreeModel(CompositeModel):
 
         if not node.is_leaf:
             prior = model.get_posterior()
-            for sub_node in node.sub_nodes:
-                sub_model_name = sub_node.name
-                self.model_dict[sub_model_name].set_prior(prior, mask)
-                self._fit(sub_model_name, **fit_options)
+            for sub_node in node.children:
+                self.model_dict[sub_node.name].set_prior(prior, mask)
+                self._fit(sub_node.name, **fit_options)
 
     def fit(self, **fit_options):
         self._fit(self.nodes[0].name, **fit_options)
@@ -85,7 +84,7 @@ class TreeModel(CompositeModel):
                                             container_fun=get_model)
 
         models = []
-        for node in root_node.all_nodes:
+        for node in root_node.tree:
             models.append(node.container)
             node.container = None
 
@@ -97,11 +96,11 @@ class TreeModel(CompositeModel):
         if lvl_masks is not None:
             final_lvl_masks = lvl_masks + final_lvl_masks[len(lvl_masks):]
 
-        for node in root_node.all_nodes:
+        for node in root_node.tree:
             if node.is_leaf:
                 continue
             masks[node.name] = {
-                var_name: var_prior*final_lvl_masks[node.upper_rank]
+                var_name: var_prior*final_lvl_masks[node.level]
                 for var_name, var_prior in final_var_masks.items()
             }
 

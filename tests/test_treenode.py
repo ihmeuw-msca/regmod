@@ -23,8 +23,8 @@ def simple_node():
 def test_init_attr(name):
     node = TreeNode(name)
     assert node.name == name
-    assert node.sup_node is None
-    assert len(node.sub_nodes) == 0
+    assert node.parent is None
+    assert len(node.children) == 0
     assert node.container is None
 
 
@@ -33,8 +33,8 @@ def test_attr():
     sub_node = TreeNode("1")
     node.append(sub_node)
 
-    assert node.sub_nodes[0] is sub_node
-    assert sub_node.sup_node is node
+    assert node.children[0] is sub_node
+    assert sub_node.parent is node
 
 
 def test_is_root():
@@ -79,21 +79,15 @@ def test_leafs():
     assert len(node.leafs) == 2
 
 
-def test_lower_nodes(simple_node):
-    lower_nodes = simple_node.lower_nodes
-    lower_node_names = set(n.name for n in lower_nodes)
+def test_branch(simple_node):
+    branch = simple_node.branch
+    lower_node_names = set(n.name for n in branch)
     assert lower_node_names == set(["0", "1", "2", "3", "4"])
 
 
-def test_upper_nodes(simple_node):
-    upper_nodes = simple_node["1"]["3"].upper_nodes
-    upper_node_names = set(n.name for n in upper_nodes)
-    assert upper_node_names == set(["0", "1", "3"])
-
-
-def test_all_nodes(simple_node):
-    all_nodes = simple_node["1"]["3"].all_nodes
-    all_node_names = set(n.name for n in all_nodes)
+def test_tree(simple_node):
+    tree = simple_node["1"]["3"].tree
+    all_node_names = set(n.name for n in tree)
     assert all_node_names == set(["0", "1", "2", "3", "4"])
 
 
@@ -108,15 +102,15 @@ def test_level(simple_node):
 def test_append(simple_node):
     node = TreeNode("1")
     node.append("a")
-    assert node.sub_nodes[0].name == "a"
+    assert node.children[0].name == "a"
 
     simple_node.append(node)
-    assert simple_node["1"].sub_nodes[-1].name == "a"
+    assert simple_node["1"].children[-1].name == "a"
 
 
 def test_extend(simple_node):
     simple_node["2"].extend(["5", "6"])
-    assert set(n.name for n in simple_node["2"].sub_nodes) == set(["5", "6"])
+    assert set(n.name for n in simple_node["2"].children) == set(["5", "6"])
 
 
 def test_merge(simple_node):
@@ -124,20 +118,20 @@ def test_merge(simple_node):
     node.append("a")
 
     simple_node.merge(node)
-    assert simple_node.sub_nodes[-1].name == "a"
+    assert simple_node.children[-1].name == "a"
 
 
 def test_pop(simple_node):
     node = simple_node.pop()
     assert node.is_root
-    assert len(simple_node.sub_nodes) == 1
+    assert len(simple_node.children) == 1
 
 
 def test_detach(simple_node):
-    node = simple_node.sub_nodes[0]
+    node = simple_node.children[0]
     node.detach()
     assert node.is_root
-    assert len(simple_node.sub_nodes) == 1
+    assert len(simple_node.children) == 1
 
 
 def test_get_name(simple_node):
@@ -161,14 +155,14 @@ def test_add(simple_node):
 
     result_node = simple_node + node
     assert result_node is simple_node
-    assert result_node.sub_nodes[-1].name == "a"
+    assert result_node.children[-1].name == "a"
 
 
 def test_truediv(simple_node):
     node = simple_node / "a"
 
     assert node.root is simple_node
-    assert simple_node.sub_nodes[-1].name == "a"
+    assert simple_node.children[-1].name == "a"
 
 
 def test_contains(simple_node):
