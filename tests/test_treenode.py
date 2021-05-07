@@ -97,20 +97,12 @@ def test_all_nodes(simple_node):
     assert all_node_names == set(["0", "1", "2", "3", "4"])
 
 
-def test_upper_rank(simple_node):
+def test_level(simple_node):
     root_node = simple_node
     leaf_node = simple_node.leafs[0]
 
-    assert root_node.upper_rank == 0
-    assert leaf_node.upper_rank == 2
-
-
-def test_lower_rank(simple_node):
-    root_node = simple_node
-    leaf_node = simple_node.leafs[0]
-
-    assert root_node.lower_rank == 2
-    assert leaf_node.lower_rank == 0
+    assert root_node.level == 0
+    assert leaf_node.level == 2
 
 
 def test_append(simple_node):
@@ -141,9 +133,9 @@ def test_pop(simple_node):
     assert len(simple_node.sub_nodes) == 1
 
 
-def test_remove(simple_node):
+def test_detach(simple_node):
     node = simple_node.sub_nodes[0]
-    simple_node.remove(node)
+    node.detach()
     assert node.is_root
     assert len(simple_node.sub_nodes) == 1
 
@@ -170,15 +162,6 @@ def test_add(simple_node):
     result_node = simple_node + node
     assert result_node is simple_node
     assert result_node.sub_nodes[-1].name == "a"
-
-
-def test_sub(simple_node):
-    node = simple_node["1"]
-
-    result_node = simple_node - node
-    assert result_node is simple_node
-    assert node.is_root
-    assert len(result_node.sub_nodes) == 1
 
 
 def test_truediv(simple_node):
@@ -242,5 +225,5 @@ def test_from_dataframe():
                                    id_cols=["level1", "level2", "level3"],
                                    root_name="overall")
 
-    assert node.lower_rank == 3
+    assert max(n.level for n in node.leafs) == 3
     assert len(node) == 11

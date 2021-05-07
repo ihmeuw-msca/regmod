@@ -1,6 +1,7 @@
 """
 Tree Node
 """
+from collections import OrderedDict
 from itertools import chain
 from functools import reduce
 from operator import truediv
@@ -11,9 +12,12 @@ from pandas import DataFrame
 
 class TreeNode:
     def __init__(self, name: str):
+        name = str(name)
+        if "/" in name:
+            raise ValueError(f"name={name} cannot contain character '/'")
         self.name = name
         self.sup_node = None
-        self.sub_nodes = []
+        self.sub_nodes_dict = OrderedDict()
         self.container = None
 
     @property
@@ -41,6 +45,10 @@ class TreeNode:
         return list(chain.from_iterable([n.leafs for n in self.sub_nodes]))
 
     @property
+    def sub_nodes(self) -> List["TreeNode"]:
+        return list(self.sub_nodes_dict.values())
+
+    @property
     def lower_nodes(self) -> List["TreeNode"]:
         if self.is_leaf:
             return [self]
@@ -59,30 +67,22 @@ class TreeNode:
         return self.root.lower_nodes
 
     @property
-    def upper_rank(self) -> int:
+    def level(self) -> int:
         if self.is_root:
             return 0
-        return self.sup_node.upper_rank + 1
-
-    @property
-    def lower_rank(self) -> int:
-        if self.is_leaf:
-            return 0
-        return max(n.lower_rank for n in self.sub_nodes) + 1
+        return self.sup_node.level + 1
 
     def append(self, node: Union[str, "TreeNode"]):
         node = self.as_treenode(node)
         if not node.is_root:
             raise ValueError(f"Cannot append {node}, "
                              f"already have parent {node.sup_node}.")
-        sub_node_names = [n.name for n in self.sub_nodes]
-        if node.name in sub_node_names:
-            index = sub_node_names.index(node.name)
+        if node.name in self.sub_nodes_dict:
             while len(node.sub_nodes) > 0:
-                self.sub_nodes[index].append(node.pop())
+                self[node.name].append(node.pop())
         else:
             node.sup_node = self
-            self.sub_nodes.append(node)
+            self.sub_nodes_dict[node.name] = node
 
     def extend(self, nodes: Iterable[Union[str, "TreeNode"]]):
         for n in nodes:
@@ -94,37 +94,32 @@ class TreeNode:
         while len(node.sub_nodes) > 0:
             self.append(node.pop())
 
-    def pop(self, *args) -> "TreeNode":
-        node = self.sub_nodes.pop(*args)
+    def pop(self, key: Union[int, str] = -1) -> "TreeNode":
+        if isinstance(key, int):
+            key = list(self.sub_nodes_dict.keys())[key]
+        node = self.sub_nodes_dict.pop(key)
         node.sup_node = None
         return node
 
-    def remove(self, node: "TreeNode"):
-        if not isinstance(node, TreeNode):
-            raise TypeError("Can only remove TreeNode.")
-        if not node.is_root:
-            if node.sup_node is self:
-                self.pop(self.sub_nodes.index(node))
-            elif not self.is_leaf:
-                for n in self.sub_nodes:
-                    n.remove(node)
+    def detach(self):
+        if not self.is_root:
+            del self.sup_node.sub_nodes_dict[self.name]
+            self.sup_node = None
 
-    def get_name(self, upper_rank: int) -> str:
-        upper_rank = int(upper_rank)
-        if upper_rank < 0:
-            raise ValueError(f"upper_rank={upper_rank} cannot be negative.")
-        if upper_rank >= self.upper_rank:
+    def get_name(self, level: int) -> str:
+        if self.level <= level or self.is_root:
             return self.name
-        return f"{self.sup_node.get_name(upper_rank)}/{self.name}"
+        return f"{self.sup_node.get_name(level)}/{self.name}"
 
     def copy(self) -> "TreeNode":
         return self.__copy__()
 
     def __getitem__(self, name: str) -> "TreeNode":
-        sub_node_names = [n.name for n in self.sub_nodes]
-        if name not in sub_node_names:
-            raise KeyError(f"Cannot find {name} in sub nodes.")
-        return self.sub_nodes[sub_node_names.index(name)]
+        names = name.split("/", 1)
+        node = self.sub_nodes_dict[names[0]]
+        if len(names) == 1:
+            return node
+        return node[names[1]]
 
     def __len__(self) -> int:
         if self.is_leaf:
@@ -133,10 +128,6 @@ class TreeNode:
 
     def __add__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
         self.merge(node)
-        return self
-
-    def __sub__(self, node: "TreeNode") -> "TreeNode":
-        self.remove(node)
         return self
 
     def __truediv__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
@@ -154,15 +145,15 @@ class TreeNode:
         if not isinstance(node, TreeNode):
             raise TypeError("Can only compare to TreeNode.")
 
-        self_names = set(n.get_name(self.upper_rank) for n in self.lower_nodes)
-        node_names = set(n.get_name(node.upper_rank) for n in node.lower_nodes)
+        self_names = set(n.get_name(self.level) for n in self.lower_nodes)
+        node_names = set(n.get_name(node.level) for n in node.lower_nodes)
         return self_names == node_names
 
     def __lt__(self, node: "TreeNode") -> bool:
         if not isinstance(node, TreeNode):
             raise TypeError("Can only compare to TreeNode.")
-        self_names = (n.get_name(self.upper_rank) for n in self.lower_nodes)
-        node_names = (n.get_name(node.upper_rank) for n in node.lower_nodes)
+        self_names = (n.get_name(self.level) for n in self.lower_nodes)
+        node_names = (n.get_name(node.level) for n in node.lower_nodes)
         return all(any(self_name in node_name for node_name in node_names)
                    for self_name in self_names)
 
