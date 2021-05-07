@@ -79,8 +79,8 @@ class TreeNode:
             self.children_dict[node.name] = node
 
     def extend(self, nodes: Iterable[Union[str, "TreeNode"]]):
-        for n in nodes:
-            self.append(n)
+        for node in nodes:
+            self.append(node)
 
     def merge(self, node: Union[str, "TreeNode"]):
         if node.name != self.name:
@@ -118,7 +118,7 @@ class TreeNode:
     def __len__(self) -> int:
         if self.is_leaf:
             return 1
-        return 1 + sum(len(n) for n in self.children)
+        return 1 + sum(len(node) for node in self.children)
 
     def __or__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
         self.merge(node)
@@ -133,21 +133,20 @@ class TreeNode:
             raise TypeError("Can only contain TreeNode.")
         if node == self:
             return True
-        return any(node in n for n in self.children)
+        return any(node in _node for _node in self.children)
 
     def __eq__(self, node: "TreeNode") -> bool:
         if not isinstance(node, TreeNode):
             raise TypeError("Can only compare to TreeNode.")
-
-        self_names = set(n.get_name(self.level) for n in self.branch)
-        node_names = set(n.get_name(node.level) for n in node.branch)
+        self_names = set(_node.get_name(self.level) for _node in self.branch)
+        node_names = set(_node.get_name(node.level) for _node in node.branch)
         return self_names == node_names
 
     def __lt__(self, node: "TreeNode") -> bool:
         if not isinstance(node, TreeNode):
             raise TypeError("Can only compare to TreeNode.")
-        self_names = (n.get_name(self.level) for n in self.branch)
-        node_names = (n.get_name(node.level) for n in node.branch)
+        self_names = (_node.get_name(self.level) for _node in self.branch)
+        node_names = (_node.get_name(node.level) for _node in node.branch)
         return all(any(self_name in node_name for node_name in node_names)
                    for self_name in self_names)
 
