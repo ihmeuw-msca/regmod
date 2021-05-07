@@ -114,10 +114,11 @@ def test_extend(simple_node):
 
 
 def test_merge(simple_node):
-    node = TreeNode("0")
+    node = TreeNode("random")
     node.append("a")
 
     simple_node.merge(node)
+    assert simple_node.name == "0|random"
     assert simple_node.children[-1].name == "a"
 
 
@@ -149,11 +150,11 @@ def test_len(simple_node):
     assert len(simple_node) == 5
 
 
-def test_add(simple_node):
+def test_or(simple_node):
     node = TreeNode("0")
     node.append("a")
 
-    result_node = simple_node + node
+    result_node = simple_node | node
     assert result_node is simple_node
     assert result_node.children[-1].name == "a"
 

@@ -84,7 +84,7 @@ class TreeNode:
 
     def merge(self, node: Union[str, "TreeNode"]):
         if node.name != self.name:
-            raise ValueError("Cannot merge nodes with different names.")
+            self.name = f"{self.name}|{node.name}"
         while len(node.children) > 0:
             self.append(node.pop())
 
@@ -120,7 +120,7 @@ class TreeNode:
             return 1
         return 1 + sum(len(n) for n in self.children)
 
-    def __add__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
+    def __or__(self, node: Union[str, "TreeNode"]) -> "TreeNode":
         self.merge(node)
         return self
 
