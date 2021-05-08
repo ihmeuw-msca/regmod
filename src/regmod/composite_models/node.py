@@ -1,24 +1,31 @@
 """
 Tree Node
 """
-from collections import OrderedDict
 from itertools import chain
 from functools import reduce
-from operator import truediv
+from operator import truediv, attrgetter
 from typing import Any, Callable, Iterable, List, Union
 
 from pandas import DataFrame
 
+from regmod.composite_models.collections import NamedList
+
 
 class Node:
     def __init__(self, name: str):
+        self.name = name
+        self.parent = None
+        self.children = NamedList()
+        self.container = None
+
+    name = property(attrgetter("_name"))
+
+    @name.setter
+    def name(self, name: str):
         name = str(name)
         if "/" in name:
             raise ValueError(f"name={name} cannot contain character '/'")
-        self.name = name
-        self.parent = None
-        self.children_dict = OrderedDict()
-        self.container = None
+        self._name = name
 
     @property
     def is_root(self) -> bool:
@@ -45,10 +52,6 @@ class Node:
         return list(chain.from_iterable([n.leafs for n in self.children]))
 
     @property
-    def children(self) -> List["Node"]:
-        return list(self.children_dict.values())
-
-    @property
     def branch(self) -> List["Node"]:
         if self.is_leaf:
             return [self]
@@ -71,12 +74,12 @@ class Node:
         if not node.is_root:
             raise ValueError(f"Cannot append {node}, "
                              f"already have parent {node.parent}.")
-        if node.name in self.children_dict:
+        if node.name in self.children:
             while len(node.children) > 0:
                 self[node.name].append(node.pop())
         else:
             node.parent = self
-            self.children_dict[node.name] = node
+            self.children[node.name] = node
 
     def extend(self, nodes: Iterable[Union[str, "Node"]]):
         for node in nodes:
@@ -89,16 +92,13 @@ class Node:
             self.append(node.pop())
 
     def pop(self, key: Union[int, str] = -1) -> "Node":
-        if isinstance(key, int):
-            key = list(self.children_dict.keys())[key]
-        node = self.children_dict.pop(key)
+        node = self.children.pop(key)
         node.parent = None
         return node
 
     def detach(self):
         if not self.is_root:
-            del self.parent.children_dict[self.name]
-            self.parent = None
+            self.parent.pop(self.name)
 
     def get_name(self, level: int) -> str:
         if self.level <= level or self.is_root:
@@ -110,7 +110,7 @@ class Node:
 
     def __getitem__(self, name: str) -> "Node":
         names = name.split("/", 1)
-        node = self.children_dict[names[0]]
+        node = self.children[names[0]]
         if len(names) == 1:
             return node
         return node[names[1]]

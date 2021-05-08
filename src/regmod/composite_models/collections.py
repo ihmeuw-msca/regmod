@@ -10,7 +10,7 @@ class NamedList:
     List with names, a wrapper around OrderedDict
     """
 
-    def __init__(self, keys: Iterable[str], values: Iterable[Any]):
+    def __init__(self, keys: Iterable[str] = (), values: Iterable[Any] = ()):
         self.ordered_dict = OrderedDict(zip(map(str, keys), values))
 
     @property

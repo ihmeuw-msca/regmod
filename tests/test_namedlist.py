@@ -14,6 +14,11 @@ def nlist():
     return NamedList(["a", "b", "c"], [1, 2, 3])
 
 
+def test_default_init():
+    nlist = NamedList()
+    assert len(nlist) == 0
+
+
 def test_keys(nlist):
     assert nlist.keys == ["a", "b", "c"]
 
