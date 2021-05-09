@@ -32,7 +32,7 @@ def test_attr():
     sub_node = Node("1")
     node.append(sub_node)
 
-    assert list(node.children.values())[0] is sub_node
+    assert node.children[0] is sub_node
     assert sub_node.parent is node
 
 
@@ -101,10 +101,10 @@ def test_level(simple_node):
 def test_append(simple_node):
     node = Node("1")
     node.append("a")
-    assert list(node.children.values())[0].name == "a"
+    assert node.children[0].name == "a"
 
     simple_node.append(node)
-    assert list(simple_node["1"].children.maps[0].values())[-1].name == "a"
+    assert simple_node["1"].children.named_lists[0][-1].name == "a"
 
 
 def test_extend(simple_node):
@@ -117,7 +117,7 @@ def test_merge(simple_node):
     node.append("a")
 
     simple_node.merge(node)
-    assert list(simple_node.children.maps[0].values())[-1].name == "a"
+    assert simple_node.children.named_lists[0][-1].name == "a"
 
 
 def test_pop(simple_node):
@@ -127,7 +127,7 @@ def test_pop(simple_node):
 
 
 def test_detach(simple_node):
-    node = list(simple_node.children.maps[0].values())[0]
+    node = simple_node.children[0]
     node.detach()
     assert node.isroot
     assert len(simple_node.children) == 1

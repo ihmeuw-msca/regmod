@@ -1,7 +1,6 @@
 """
 Tree Node
 """
-from collections import ChainMap, OrderedDict
 from itertools import chain
 from functools import reduce
 from operator import truediv, attrgetter
@@ -9,12 +8,14 @@ from typing import Any, Iterable, List, Union
 
 from pandas import DataFrame
 
+from regmod.composite_models.collections import ChainNamedList
+
 
 class Node:
     def __init__(self, name: str):
         self.name = name
         self.parent = None
-        self.children = ChainMap(OrderedDict(), OrderedDict())
+        self.children = ChainNamedList({}, {})
 
     name = property(attrgetter("_name"))
 
@@ -48,7 +49,7 @@ class Node:
         if self.isleaf:
             return [self]
         return list(chain.from_iterable(
-            node.leafs for node in self.children.values()
+            node.leafs for node in self.children
         ))
 
     @property
@@ -56,7 +57,7 @@ class Node:
         if self.isleaf:
             return [self]
         return [self] + list(chain.from_iterable(
-            node.branch for node in self.children.values()
+            node.branch for node in self.children
         ))
 
     @property
@@ -78,7 +79,7 @@ class Node:
             self.children[node.name].merge(node)
         else:
             node.parent = self
-            self.children.maps[rank][node.name] = node
+            self.children.named_lists[rank][node.name] = node
 
     def extend(self, nodes: Iterable[Union[str, "Node"]], rank: int = 0):
         for node in nodes:
@@ -87,20 +88,15 @@ class Node:
     def merge(self, node: Union[str, "Node"]):
         if node.name != self.name:
             raise ValueError("Cannot merge with node with different name.")
-        for rank, children in enumerate(node.children.maps):
+        for rank, children in enumerate(node.children.named_lists):
             while len(children) > 0:
                 self.append(node.pop(rank=rank), rank=rank)
 
-    def pop(self, name: str = None, rank: int = None) -> "Node":
-        children = self.children.maps[0]
+    def pop(self, name: Union[int, str] = -1, rank: int = None) -> "Node":
+        children = self.children
         if rank is not None:
-            children = self.children.maps[rank]
-        else:
-            for children in self.children.maps:
-                if (name in children) or (name is None and len(children) > 0):
-                    break
-
-        node = children.popitem()[1] if name is None else children.pop(name)
+            children = self.children.named_lists[rank]
+        node = children.pop(name)
         node.parent = None
         return node
 
@@ -126,7 +122,7 @@ class Node:
     def __len__(self) -> int:
         if self.isleaf:
             return 1
-        return 1 + sum(len(node) for node in self.children.values())
+        return 1 + sum(len(node) for node in self.children)
 
     def __or__(self, node: Union[str, "Node"]) -> "Node":
         self.merge(node)
@@ -135,19 +131,19 @@ class Node:
     def __truediv__(self, node: Union[str, "Node"]) -> "Node":
         rank = 0
         self.append(node, rank=rank)
-        return list(self.children.maps[rank].values())[-1]
+        return self.children.named_lists[rank][-1]
 
     def __floordiv__(self, node: Union[str, "Node"]) -> "Node":
         rank = 1
         self.append(node, rank=rank)
-        return list(self.children.maps[rank].values())[-1]
+        return self.children.named_lists[rank][-1]
 
     def __contains__(self, node: "Node") -> bool:
         if not isinstance(node, Node):
             raise TypeError("Can only contain Node.")
         if node == self:
             return True
-        return any(node in _node for _node in self.children.values())
+        return any(node in _node for _node in self.children)
 
     def __eq__(self, node: "Node") -> bool:
         if not isinstance(node, Node):
@@ -178,7 +174,7 @@ class Node:
 
     def __copy__(self) -> "Node":
         self_node = type(self)(self.name)
-        for node in self.children.values():
+        for node in self.children:
             self_node.append(node.__copy__())
         return self_node
 
