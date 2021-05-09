@@ -1,22 +1,20 @@
 """
 Tree Node
 """
+from collections import ChainMap, OrderedDict
 from itertools import chain
 from functools import reduce
 from operator import truediv, attrgetter
-from typing import Any, Callable, Iterable, List, Union
+from typing import Any, Iterable, List, Union
 
 from pandas import DataFrame
-
-from regmod.composite_models.collections import NamedList
 
 
 class Node:
     def __init__(self, name: str):
         self.name = name
         self.parent = None
-        self.children = NamedList()
-        self.container = None
+        self.children = ChainMap(OrderedDict(), OrderedDict())
 
     name = property(attrgetter("_name"))
 
@@ -28,11 +26,11 @@ class Node:
         self._name = name
 
     @property
-    def is_root(self) -> bool:
+    def isroot(self) -> bool:
         return self.parent is None
 
     @property
-    def is_leaf(self) -> bool:
+    def isleaf(self) -> bool:
         return len(self.children) == 0
 
     @property
@@ -41,22 +39,24 @@ class Node:
 
     @property
     def root(self) -> "Node":
-        if self.is_root:
+        if self.isroot:
             return self
         return self.parent.root
 
     @property
     def leafs(self) -> List["Node"]:
-        if self.is_leaf:
+        if self.isleaf:
             return [self]
-        return list(chain.from_iterable([n.leafs for n in self.children]))
+        return list(chain.from_iterable(
+            node.leafs for node in self.children.values()
+        ))
 
     @property
     def branch(self) -> List["Node"]:
-        if self.is_leaf:
+        if self.isleaf:
             return [self]
         return [self] + list(chain.from_iterable(
-            [n.branch for n in self.children]
+            node.branch for node in self.children.values()
         ))
 
     @property
@@ -65,45 +65,53 @@ class Node:
 
     @property
     def level(self) -> int:
-        if self.is_root:
+        if self.isroot:
             return 0
         return self.parent.level + 1
 
-    def append(self, node: Union[str, "Node"]):
+    def append(self, node: Union[str, "Node"], rank: int = 0):
         node = self.as_node(node)
-        if not node.is_root:
+        if not node.isroot:
             raise ValueError(f"Cannot append {node}, "
                              f"already have parent {node.parent}.")
         if node.name in self.children:
-            while len(node.children) > 0:
-                self[node.name].append(node.pop())
+            self.children[node.name].merge(node)
         else:
             node.parent = self
-            self.children[node.name] = node
+            self.children.maps[rank][node.name] = node
 
-    def extend(self, nodes: Iterable[Union[str, "Node"]]):
+    def extend(self, nodes: Iterable[Union[str, "Node"]], rank: int = 0):
         for node in nodes:
-            self.append(node)
+            self.append(node, rank=rank)
 
     def merge(self, node: Union[str, "Node"]):
         if node.name != self.name:
-            self.name = f"{self.name}|{node.name}"
-        while len(node.children) > 0:
-            self.append(node.pop())
+            raise ValueError("Cannot merge with node with different name.")
+        for rank, children in enumerate(node.children.maps):
+            while len(children) > 0:
+                self.append(node.pop(rank=rank), rank=rank)
 
-    def pop(self, key: Union[int, str] = -1) -> "Node":
-        node = self.children.pop(key)
+    def pop(self, name: str = None, rank: int = None) -> "Node":
+        children = self.children.maps[0]
+        if rank is not None:
+            children = self.children.maps[rank]
+        else:
+            for children in self.children.maps:
+                if (name in children) or (name is None and len(children) > 0):
+                    break
+
+        node = children.popitem()[1] if name is None else children.pop(name)
         node.parent = None
         return node
 
     def detach(self):
-        if not self.is_root:
+        if not self.isroot:
             self.parent.pop(self.name)
 
     def get_name(self, level: int) -> str:
-        if self.level <= level or self.is_root:
+        if self.level <= level or self.isroot:
             return self.name
-        return f"{self.parent.get_name(level)}/{self.name}"
+        return "/".join([self.parent.get_name(level), self.name])
 
     def copy(self) -> "Node":
         return self.__copy__()
@@ -116,24 +124,30 @@ class Node:
         return node[names[1]]
 
     def __len__(self) -> int:
-        if self.is_leaf:
+        if self.isleaf:
             return 1
-        return 1 + sum(len(node) for node in self.children)
+        return 1 + sum(len(node) for node in self.children.values())
 
     def __or__(self, node: Union[str, "Node"]) -> "Node":
         self.merge(node)
         return self
 
     def __truediv__(self, node: Union[str, "Node"]) -> "Node":
-        self.append(node)
-        return self.children[-1]
+        rank = 0
+        self.append(node, rank=rank)
+        return list(self.children.maps[rank].values())[-1]
+
+    def __floordiv__(self, node: Union[str, "Node"]) -> "Node":
+        rank = 1
+        self.append(node, rank=rank)
+        return list(self.children.maps[rank].values())[-1]
 
     def __contains__(self, node: "Node") -> bool:
         if not isinstance(node, Node):
             raise TypeError("Can only contain Node.")
         if node == self:
             return True
-        return any(node in _node for _node in self.children)
+        return any(node in _node for _node in self.children.values())
 
     def __eq__(self, node: "Node") -> bool:
         if not isinstance(node, Node):
@@ -163,10 +177,10 @@ class Node:
         return f"{type(self).__name__}(name={self.name})"
 
     def __copy__(self) -> "Node":
-        root_node = type(self)(self.name)
-        for node in self.children:
-            root_node.append(node.__copy__())
-        return root_node
+        self_node = type(self)(self.name)
+        for node in self.children.values():
+            self_node.append(node.__copy__())
+        return self_node
 
     @classmethod
     def as_node(cls, obj: Any) -> "Node":
@@ -187,13 +201,10 @@ class Node:
     def from_dataframe(cls,
                        df: DataFrame,
                        id_cols: List[str],
-                       root_name: str = "Global",
-                       container_fun: Callable = None) -> "Node":
+                       root_name: str = "Global") -> "Node":
         if not all(col in df.columns for col in id_cols):
             raise ValueError("Columns must be in the dataframe.")
         root_node = cls(root_name)
-        if container_fun is not None:
-            root_node.container = container_fun(root_node, df)
         if len(id_cols) == 0:
             return root_node
         df_group = df.groupby(id_cols[0])
@@ -202,6 +213,5 @@ class Node:
                 df_group.get_group(name),
                 id_cols[1:],
                 root_name=name,
-                container_fun=container_fun
             ))
         return root_node

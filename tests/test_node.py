@@ -25,7 +25,6 @@ def test_init_attr(name):
     assert node.name == name
     assert node.parent is None
     assert len(node.children) == 0
-    assert node.container is None
 
 
 def test_attr():
@@ -33,26 +32,26 @@ def test_attr():
     sub_node = Node("1")
     node.append(sub_node)
 
-    assert node.children[0] is sub_node
+    assert list(node.children.values())[0] is sub_node
     assert sub_node.parent is node
 
 
-def test_is_root():
+def test_isroot():
     node = Node("0")
     sub_node = Node("1")
     node.append(sub_node)
 
-    assert node.is_root
-    assert not sub_node.is_root
+    assert node.isroot
+    assert not sub_node.isroot
 
 
-def test_is_leaf():
+def test_isleaf():
     node = Node("0")
     sub_node = Node("1")
     node.append(sub_node)
 
-    assert not node.is_leaf
-    assert sub_node.is_leaf
+    assert not node.isleaf
+    assert sub_node.isleaf
 
 
 def test_full_name():
@@ -102,36 +101,35 @@ def test_level(simple_node):
 def test_append(simple_node):
     node = Node("1")
     node.append("a")
-    assert node.children[0].name == "a"
+    assert list(node.children.values())[0].name == "a"
 
     simple_node.append(node)
-    assert simple_node["1"].children[-1].name == "a"
+    assert list(simple_node["1"].children.maps[0].values())[-1].name == "a"
 
 
 def test_extend(simple_node):
     simple_node["2"].extend(["5", "6"])
-    assert set(n.name for n in simple_node["2"].children) == set(["5", "6"])
+    assert set(n.name for n in simple_node["2"].children.values()) == set(["5", "6"])
 
 
 def test_merge(simple_node):
-    node = Node("random")
+    node = Node("0")
     node.append("a")
 
     simple_node.merge(node)
-    assert simple_node.name == "0|random"
-    assert simple_node.children[-1].name == "a"
+    assert list(simple_node.children.maps[0].values())[-1].name == "a"
 
 
 def test_pop(simple_node):
     node = simple_node.pop()
-    assert node.is_root
+    assert node.isroot
     assert len(simple_node.children) == 1
 
 
 def test_detach(simple_node):
-    node = simple_node.children[0]
+    node = list(simple_node.children.maps[0].values())[0]
     node.detach()
-    assert node.is_root
+    assert node.isroot
     assert len(simple_node.children) == 1
 
 
@@ -156,14 +154,14 @@ def test_or(simple_node):
 
     result_node = simple_node | node
     assert result_node is simple_node
-    assert result_node.children[-1].name == "a"
+    assert result_node.children["a"].name == "a"
 
 
 def test_truediv(simple_node):
     node = simple_node / "a"
 
     assert node.root is simple_node
-    assert simple_node.children[-1].name == "a"
+    assert simple_node.children["a"].name == "a"
 
 
 def test_contains(simple_node):
