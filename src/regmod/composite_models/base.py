@@ -2,12 +2,12 @@
 Base Model
 """
 from copy import deepcopy
-from typing import Callable, Dict, List
+from typing import Dict, List, Union
 
 import numpy as np
 from numpy import ndarray
 from pandas import DataFrame
-from regmod.composite_models.interface import ModelInterface
+from regmod.composite_models.interface import NodeModel
 from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import GaussianModel, PoissonModel
@@ -15,8 +15,26 @@ from regmod.prior import GaussianPrior
 from regmod.utils import sizes_to_sclices
 from regmod.variable import Variable
 
+link_funs = {
+    "gaussian": fun_dict[
+        GaussianModel.default_param_specs["mu"]["inv_link"]
+    ].inv_fun,
+    "poisson": fun_dict[
+        PoissonModel.default_param_specs["lam"]["inv_link"]
+    ].inv_fun
+}
 
-class BaseModel(ModelInterface):
+model_constructors = {
+    "gaussian": lambda data, param_specs: GaussianModel(
+        data, param_specs={"mu": param_specs}
+    ),
+    "poisson": lambda data, param_specs: PoissonModel(
+        data, param_specs={"lam": param_specs}
+    )
+}
+
+
+class BaseModel(NodeModel):
     """
     Base Model, a simple wrapper around the stats model.
     """
@@ -29,89 +47,48 @@ class BaseModel(ModelInterface):
                  **param_specs):
 
         super().__init__(name)
+        if any(mtype not in model_config
+               for model_config in (fun_dict, model_constructors)):
+            raise ValueError(f"Not supported model type {mtype}")
+        data = deepcopy(data)
+        variables = list(deepcopy(variables))
 
         self.mtype = mtype
-        model_constructor_name = f"get_{self.mtype}_model"
-        link_fun_constructor_name = f"get_{self.mtype}_link_fun"
-        if not (model_constructor_name in dir(self) and
-                link_fun_constructor_name in dir(self)):
-            raise ValueError(f"Not support {self.mtype} model.")
-        self.get_model = getattr(self, model_constructor_name)
-        self.link_fun = getattr(self, link_fun_constructor_name)()
-
-        self.data = deepcopy(data)
-        self.variables = deepcopy(variables)
-        self.variable_names = [v.name for v in variables]
-
-        self.param_specs = {"variables": self.variables,
+        self.data = data
+        self.variables = {v.name: v for v in variables}
+        self.param_specs = {"variables": variables,
                             "use_offset": True,
                             **param_specs}
         self.model = None
 
-    def get_gaussian_model(self) -> GaussianModel:
-        return GaussianModel(self.data, param_specs={"mu": self.param_specs})
-
-    def get_poisson_model(self) -> PoissonModel:
-        return PoissonModel(self.data, param_specs={"lam": self.param_specs})
-
-    @staticmethod
-    def get_gaussian_link_fun() -> Callable:
-        return fun_dict[
-            GaussianModel.default_param_specs["mu"]["inv_link"]
-        ].inv_fun
-
-    @staticmethod
-    def get_poisson_link_fun() -> Callable:
-        return fun_dict[
-            PoissonModel.default_param_specs["lam"]["inv_link"]
-        ].inv_fun
-
-    def get_data(self, col_label: str = None) -> DataFrame:
-        df = self.data.df.copy()
-        if col_label is not None:
-            df[col_label] = self.name
+    def add_offset(self, df: DataFrame, copy: bool = False) -> DataFrame:
+        df = df.copy() if copy else df
+        if self.col_value in df:
+            df[self.data.col_offset] = link_funs[self.mtype](df[self.col_value])
         return df
 
-    def set_data(self,
-                 df: DataFrame,
-                 col_value: str = None,
-                 col_label: str = None):
-        df = self.subset_df(df, col_label, copy=True)
-        df = self.add_offset(df, col_value, copy=False)
+    def get_data(self) -> DataFrame:
+        return self.data.df.copy()
+
+    def set_data(self, df: DataFrame):
         if df.shape[0] == 0:
             raise ValueError("Attempt to use empty dataframe.")
-        self.data.attach_df(df)
-
-    def add_offset(self,
-                   df: DataFrame,
-                   col_value: str = None,
-                   copy: bool = False) -> DataFrame:
-        if col_value is not None and col_value in df.columns:
-            df[self.data.col_offset] = self.link_fun(df[col_value].values)
-        if copy:
-            df = df.copy()
-        return df
+        self.data.attach_df(self.add_offset(df, copy=True))
 
     def fit(self, **fit_options):
         if self.model is None:
-            self.model = self.get_model()
+            self.model = model_constructors[self.mtype](self.data,
+                                                        self.param_specs)
         self.model.fit(**fit_options)
 
-    def predict(self,
-                df: DataFrame = None,
-                col_value: str = None,
-                col_label: str = None):
-        if df is None:
-            df = self.get_data()
-        col_value = self.get_col_value(col_value)
-
-        df = self.subset_df(df, col_label, copy=True)
-        df = self.add_offset(df, col_value, copy=False)
+    def predict(self, df: DataFrame = None):
+        df = self.get_data() if df is None else df.copy()
+        df = self.add_offset(df)
 
         pred_data = self.model.data.copy()
         pred_data.attach_df(df)
 
-        df[col_value] = self.model.params[0].get_param(
+        df[self.col_value] = self.model.params[0].get_param(
             self.model.opt_coefs, pred_data
         )
         return df
@@ -120,11 +97,10 @@ class BaseModel(ModelInterface):
                   priors: Dict[str, List],
                   masks: Dict[str, ndarray] = None):
         for name, prior in priors.items():
-            index = self.variable_names.index(name)
             if masks is not None and name in masks:
                 prior.sd *= masks[name]
-            self.variables[index].add_priors(prior)
-        self.model = self.get_model()
+            self.variables[name].add_priors(prior)
+        self.model = model_constructors[self.mtype](self.data, self.param_specs)
 
     def get_posterior(self) -> Dict:
         if self.model.opt_coefs is None:
@@ -132,11 +108,19 @@ class BaseModel(ModelInterface):
         mean = self.model.opt_coefs
         # use minimum standard deviation of the posterior distribution
         sd = np.maximum(0.1, np.sqrt(np.diag(self.model.opt_vcov)))
-        slices = sizes_to_sclices([v.size for v in self.variables])
+        vnames = [v.name for v in self.param_specs["variables"]]
+        slices = sizes_to_sclices([self.variables[name].size
+                                   for name in vnames])
         return {
-            v.name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])
-            for i, v in enumerate(self.variables)
+            name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])
+            for i, name in enumerate(vnames)
         }
+
+    def append(self, node: Union[str, "Node"], rank: int = 0):
+        if rank >= 1:
+            raise ValueError(f"{type(self).__name__} can only have primary "
+                             "link.")
+        super().append(node, rank=rank)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(name={self.name}, mtype={self.mtype})"

@@ -1,57 +1,46 @@
 """
 Node Model
 """
+from abc import ABC, abstractmethod
 from typing import Dict
 
 from pandas import DataFrame
 
+from regmod.composite_models.node import Node
 
-class ModelInterface:
+
+class ModelInterface(ABC):
     """
     Abstract class that encode the behavior of the model interface
     """
 
-    def __init__(self, name: str):
-        self.name = name
+    col_label = "label"
+    col_value = "value"
 
-    def set_data(self,
-                 df: DataFrame,
-                 col_value: str = None,
-                 col_label: str = None):
-        raise NotImplementedError
+    @abstractmethod
+    def set_data(self, df: DataFrame):
+        pass
 
-    def get_data(self, col_label: str = None) -> DataFrame:
-        raise NotImplementedError
+    @abstractmethod
+    def get_data(self) -> DataFrame:
+        pass
 
+    @abstractmethod
     def fit(self, **fit_options):
-        raise NotImplementedError
+        pass
 
-    def predict(self,
-                df: DataFrame = None,
-                col_value: str = None,
-                col_label: str = None) -> DataFrame:
-        raise NotImplementedError
+    @abstractmethod
+    def predict(self, df: DataFrame = None) -> DataFrame:
+        pass
 
+    @abstractmethod
     def set_prior(self, priors: Dict, masks: Dict = None):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def get_posterior(self) -> Dict:
-        raise NotImplementedError
+        pass
 
-    def subset_df(self,
-                  df: DataFrame,
-                  col_label: str = None,
-                  copy: bool = False) -> DataFrame:
-        if col_label is not None and col_label in df.columns:
-            df = df[df[col_label] == self.name]
-        if copy:
-            df = df.copy()
-        return df
 
-    def get_col_value(self, col_value: str = None) -> str:
-        if col_value is not None:
-            return col_value
-        return f"{self.name}_pred"
-
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}(name={self.name})"
+class NodeModel(Node, ModelInterface):
+    pass
