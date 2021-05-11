@@ -220,3 +220,11 @@ def test_from_dataframe():
 
     assert max(n.level for n in node.leafs) == 3
     assert len(node) == 11
+
+
+def test_get_leafs(simple_node):
+    assert (set(node.name for node in simple_node.leafs) ==
+            set(node.name for node in simple_node.get_leafs()))
+
+    assert (set(node.name for node in simple_node.get_leafs(1)) ==
+            set(["0", "1", "2", "3", "4"]))

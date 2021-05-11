@@ -109,6 +109,16 @@ class Node:
             return self.name
         return "/".join([self.parent.get_name(level), self.name])
 
+    def get_leafs(self, *ranks) -> List["Node"]:
+        if len(ranks) == 0:
+            ranks = range(len(self.children.named_lists))
+        leafs = list(chain.from_iterable(
+            node.get_leafs(*ranks) for node in self.children
+        ))
+        if all(len(self.children.named_lists[rank]) == 0 for rank in ranks):
+            leafs.insert(0, self)
+        return leafs
+
     def copy(self) -> "Node":
         return self.__copy__()
 
