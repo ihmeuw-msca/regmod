@@ -119,6 +119,7 @@ class BaseModel(ModelInterface):
     def set_prior(self,
                   priors: Dict[str, List],
                   masks: Dict[str, ndarray] = None):
+        priors = deepcopy(priors)
         for name, prior in priors.items():
             index = self.variable_names.index(name)
             if masks is not None and name in masks:
