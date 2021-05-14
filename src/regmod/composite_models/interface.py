@@ -34,7 +34,11 @@ class ModelInterface(ABC):
         pass
 
     @abstractmethod
-    def set_prior(self, priors: Dict, masks: Dict = None):
+    def set_prior(self, priors: Dict):
+        pass
+
+    @abstractmethod
+    def set_prior_mask(self, masks: Dict):
         pass
 
     @abstractmethod
@@ -43,4 +47,8 @@ class ModelInterface(ABC):
 
 
 class NodeModel(Node, ModelInterface):
-    pass
+
+    def append(self, node: "NodeModel", rank: int = 0):
+        if not isinstance(node, NodeModel):
+            raise TypeError("Cannot only connect to instance of NodeModel.")
+        super().append(node, rank=rank)

@@ -207,21 +207,6 @@ def test_from_full_names():
     assert leaf.full_name == "0/1/3"
 
 
-def test_from_dataframe():
-    df = DataFrame({
-        "level1": [0, 0, 1, 1],
-        "level2": [0, 1, 0, 1],
-        "level3": [1, 2, 3, 4]
-    })
-
-    node = Node.from_dataframe(df,
-                               id_cols=["level1", "level2", "level3"],
-                               root_name="overall")
-
-    assert max(n.level for n in node.leafs) == 3
-    assert len(node) == 11
-
-
 def test_get_leafs(simple_node):
     assert (set(node.name for node in simple_node.leafs) ==
             set(node.name for node in simple_node.get_leafs()))

@@ -6,8 +6,6 @@ from functools import reduce
 from operator import truediv, attrgetter
 from typing import Any, Iterable, List, Union
 
-from pandas import DataFrame
-
 from regmod.composite_models.collections import ChainNamedList
 
 
@@ -190,9 +188,9 @@ class Node:
 
     @classmethod
     def as_node(cls, obj: Any) -> "Node":
-        if isinstance(obj, cls):
+        if isinstance(obj, Node):
             return obj
-        return Node(str(obj))
+        return cls(str(obj))
 
     @classmethod
     def from_names(cls, names: Iterable[str]) -> "Node":
@@ -202,22 +200,3 @@ class Node:
     def from_full_name(cls, full_name: str) -> "Node":
         names = full_name.split("/")
         return cls.from_names(names)
-
-    @classmethod
-    def from_dataframe(cls,
-                       df: DataFrame,
-                       id_cols: List[str],
-                       root_name: str = "Global") -> "Node":
-        if not all(col in df.columns for col in id_cols):
-            raise ValueError("Columns must be in the dataframe.")
-        root_node = cls(root_name)
-        if len(id_cols) == 0:
-            return root_node
-        df_group = df.groupby(id_cols[0])
-        for name in df_group.groups.keys():
-            root_node.append(cls.from_dataframe(
-                df_group.get_group(name),
-                id_cols[1:],
-                root_name=name,
-            ))
-        return root_node

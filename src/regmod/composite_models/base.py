@@ -2,10 +2,9 @@
 Base Model
 """
 from copy import deepcopy
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import numpy as np
-from numpy import ndarray
 from pandas import DataFrame
 from regmod.composite_models.interface import NodeModel
 from regmod.data import Data
@@ -44,11 +43,12 @@ class BaseModel(NodeModel):
                  data: Data,
                  variables: List[Variable],
                  mtype: str = "gaussian",
+                 prior_mask: Dict = None,
                  **param_specs):
 
         super().__init__(name)
         if any(mtype not in model_config
-               for model_config in (fun_dict, model_constructors)):
+               for model_config in (link_funs, model_constructors)):
             raise ValueError(f"Not supported model type {mtype}")
         data = deepcopy(data)
         variables = list(deepcopy(variables))
@@ -60,6 +60,7 @@ class BaseModel(NodeModel):
                             "use_offset": True,
                             **param_specs}
         self.model = None
+        self.prior_mask = {} if prior_mask is None else prior_mask
 
     def add_offset(self, df: DataFrame, copy: bool = False) -> DataFrame:
         df = df.copy() if copy else df
@@ -77,8 +78,8 @@ class BaseModel(NodeModel):
 
     def fit(self, **fit_options):
         if self.model is None:
-            self.model = model_constructors[self.mtype](self.data,
-                                                        self.param_specs)
+            model_constructor = model_constructors[self.mtype]
+            self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
 
     def predict(self, df: DataFrame = None):
@@ -93,14 +94,20 @@ class BaseModel(NodeModel):
         )
         return df
 
-    def set_prior(self,
-                  priors: Dict[str, List],
-                  masks: Dict[str, ndarray] = None):
+    def set_prior(self, priors: Dict[str, List]):
+        priors = deepcopy(priors)
         for name, prior in priors.items():
-            if masks is not None and name in masks:
-                prior.sd *= masks[name]
+            if name in self.prior_mask:
+                prior.sd *= self.prior_mask[name]
             self.variables[name].add_priors(prior)
         self.model = model_constructors[self.mtype](self.data, self.param_specs)
+
+    def set_prior_mask(self, masks: Dict):
+        for name, mask in masks.items():
+            if name in self.variables:
+                if mask.size != self.variables[name]:
+                    raise ValueError("Prior mask size not compatible.")
+                self.prior_mask[name] = mask
 
     def get_posterior(self) -> Dict:
         if self.model.opt_coefs is None:
@@ -116,7 +123,7 @@ class BaseModel(NodeModel):
             for i, name in enumerate(vnames)
         }
 
-    def append(self, node: Union[str, "Node"], rank: int = 0):
+    def append(self, node: NodeModel, rank: int = 0):
         if rank >= 1:
             raise ValueError(f"{type(self).__name__} can only have primary "
                              "link.")
