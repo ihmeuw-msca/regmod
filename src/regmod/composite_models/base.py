@@ -116,6 +116,34 @@ class BaseModel(ModelInterface):
         )
         return df
 
+    def get_draws(self,
+                  df: DataFrame = None,
+                  col_value: str = None,
+                  col_label: str = None,
+                  sample_size: int = 1000):
+        if df is None:
+            df = self.get_data()
+        col_value = self.get_col_value(col_value)
+
+        df = self.subset_df(df, col_label, copy=True)
+        df = self.add_offset(df, col_value, copy=False)
+
+        pred_data = self.model.data.copy()
+        pred_data.attach_df(df)
+
+        coefs_samples = np.random.multivariate_normal(
+            mean=self.model.opt_coefs,
+            cov=self.model.opt_vcov,
+            size=sample_size
+        )
+
+        for i, coefs in enumerate(coefs_samples):
+            df[f"{col_value}_{i}"] = self.model.params[0].get_param(
+                coefs, pred_data
+            )
+
+        return df
+
     def set_prior(self,
                   priors: Dict[str, List],
                   masks: Dict[str, ndarray] = None):
