@@ -3,4 +3,4 @@ from .chain import ChainModel
 from .composite import CompositeModel
 from .interface import ModelInterface
 from .tree import TreeModel
-from .treenode import TreeNode
+from .node import Node

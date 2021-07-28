@@ -31,14 +31,14 @@ class Variable:
             if isinstance(prior, LinearPrior):
                 continue
             if isinstance(prior, GaussianPrior):
-                if self.gprior is not None and self.gprior != prior:
-                    raise ValueError("Can only provide one Gaussian prior.")
+                if self.gprior is not None:
+                    self.priors.remove(self.gprior)
                 self.gprior = prior
                 assert self.gprior.size == self.size, \
                     "Gaussian prior size not match."
             elif isinstance(prior, UniformPrior):
-                if self.uprior is not None and self.uprior != prior:
-                    raise ValueError("Can only provide one Uniform prior.")
+                if self.uprior is not None:
+                    self.priors.remove(self.uprior)
                 self.uprior = prior
                 assert self.uprior.size == self.size, \
                     "Uniform prior size not match."
