@@ -50,7 +50,7 @@ def test_spline_specs(knots, degree, l_linear, r_linear, knots_type):
 
 @pytest.mark.parametrize("sizes", [[1, 2, 3]])
 def test_sizes_to_slices(sizes):
-    slices = utils.sizes_to_sclices(sizes)
+    slices = utils.sizes_to_slices(sizes)
     assert slices[0] == slice(0, 1)
     assert slices[1] == slice(1, 3)
     assert slices[2] == slice(3, 6)

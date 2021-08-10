@@ -153,7 +153,7 @@ class SplineSpecs:
                        include_first_basis=self.include_first_basis)
 
 
-def sizes_to_sclices(sizes: List[int]) -> List[slice]:
+def sizes_to_slices(sizes: List[int]) -> List[slice]:
     """Convert a list of sizes to a list of slices.
 
     Parameters
