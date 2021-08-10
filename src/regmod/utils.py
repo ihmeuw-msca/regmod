@@ -17,16 +17,16 @@ def default_vec_factory(vec: Any,
     Parameters
     ----------
     vec : Any
-        Vector to be validated. When it is ``None``, it will use the
-        ``default_value`` and ``size`` to create the vector. When it is a
-        scalar, it will use ``size`` to create the vector. When it is a vector,
+        Vector to be validated. When it is `None`, it will use the
+        `default_value` and `size` to create the vector. When it is a
+        scalar, it will use `size` to create the vector. When it is a vector,
         it will be checked if have correct size.
     size : int
         Size of the vector.
     default_value : float
         Default value of the vector.
     vec_name : str, optional
-        Name of the vector, used for print error purpose. Default to ``'vec'``.
+        Name of the vector, used for print error purpose. Default to `'vec'`.
 
     Returns
     -------
@@ -55,7 +55,7 @@ def check_size(vec: np.ndarray, size: int, vec_name: str = 'vec') -> None:
     size : int
         The assumption size of the vector.
     vec_name : str, optional
-        Name of the vector, used for print error purpose. Default to ``'vec'``.
+        Name of the vector, used for print error purpose. Default to `'vec'`.
 
     Raises
     ------
@@ -72,24 +72,24 @@ class SplineSpecs:
     Attributes
     ----------
     knots : np.ndarray
-        Knots placement of the spline. Depends on ``knots_type`` this will be
+        Knots placement of the spline. Depends on `knots_type` this will be
         used differently.
     degree : int, optional
         Degree of the spline. Default to be 3.
     l_linear : bool, optional
-        If ``True``, spline will use left linear tail. Default to be ``False``.
+        If `True`, spline will use left linear tail. Default to be `False`.
     r_linear : bool, optional
-        If ``True``, spline will use right linear tail. Default to be `False``.
+        If `True`, spline will use right linear tail. Default to be `False`.
     include_first_basis : bool, optional
-        If ``True``, spline will include the first basis of the spline. Default
-        to be ``True``.
+        If `True`, spline will include the first basis of the spline. Default
+        to be `True`.
     knots_type : str, optional
         Type of the spline knots. Can only be choosen from three options,
-        ``'abs'``, ``'rel_domian'`` and ``'rel_freq'``. When it is ``'abs'``
+        `'abs'`, `'rel_domian'` and `'rel_freq'`. When it is `'abs'`
         which standards for absolute, the knots will be used as it is. When it
-        is ``rel_domain`` which standards for relative domain, the knots
+        is `rel_domain` which standards for relative domain, the knots
         requires to be between 0 and 1, and will be interpreted as the
-        proportion of the domain. And when it is ``rel_freq`` which standards
+        proportion of the domain. And when it is `rel_freq` which standards
         for relative frequency, it will be interpreted as the frequency of the
         data and required to be between 0 and 1.
     num_spline_bases : int
@@ -126,13 +126,13 @@ class SplineSpecs:
         Parameters
         ----------
         vec : Optional[np.ndarray]
-            Given vector as the data. Default to ``None``. When it is ``None``
-            it requires ``knots_type`` to be ``abs``.
+            Given vector as the data. Default to `None`. When it is `None`
+            it requires `knots_type` to be `abs`.
 
         Raises
         ------
         AssertionError
-            Raised when ``vec`` is ``None`` and ``knots_type`` is not ``abs``.
+            Raised when `vec` is `None` and `knots_type` is not `abs`.
 
         Returns
         -------
@@ -168,7 +168,7 @@ def sizes_to_sclices(sizes: List[int]) -> List[slice]:
     Raises
     ------
     ValueError
-        Raised when ``sizes`` contains non-positive numbers.
+        Raised when `sizes` contains non-positive numbers.
 
     Returns
     -------
