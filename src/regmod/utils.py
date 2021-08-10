@@ -170,6 +170,18 @@ def sizes_to_slices(sizes: List[int]) -> List[slice]:
     -------
     List[slice]
         A list of slices converted from sizes.
+
+    Examples
+    --------
+    >>> sizes = [1, 2, 3]
+    >>> slices = sizes_to_slices(sizes)
+    >>> slices
+    [slice(0, 1, None), slice(1, 3, None), slice(3, 6, None)]
+    >>> x = list(range(sum(sizes)))
+    >>> x
+    [0, 1, 2, 3, 4, 5]
+    >>> [x[s] for s in slices]
+    [[0], [1, 2], [3, 4, 5]]
     """
     sizes = np.asarray(sizes).astype(int)
     if any(sizes <= 0):
