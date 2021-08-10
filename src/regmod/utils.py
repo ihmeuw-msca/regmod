@@ -25,7 +25,7 @@ def default_vec_factory(vec: Any,
         Size of the vector.
     default_value : float
         Default value of the vector.
-    vec_name : str, optional
+    vec_name : str, default='vec'
         Name of the vector, used for print error purpose. Default to `'vec'`.
 
     Returns
@@ -51,7 +51,7 @@ def check_size(vec: np.ndarray, size: int, vec_name: str = 'vec') -> None:
         Vector to be validated.
     size : int
         The assumption size of the vector.
-    vec_name : str, optional
+    vec_name : str, default='vec'
         Name of the vector, used for print error purpose. Default to `'vec'`.
 
     Raises
@@ -71,16 +71,16 @@ class SplineSpecs:
     knots : np.ndarray
         Knots placement of the spline. Depends on `knots_type` this will be
         used differently.
-    degree : int, optional
+    degree : int, default=3
         Degree of the spline. Default to be 3.
-    l_linear : bool, optional
+    l_linear : bool, default=False
         If `True`, spline will use left linear tail. Default to be `False`.
-    r_linear : bool, optional
+    r_linear : bool, default=False
         If `True`, spline will use right linear tail. Default to be `False`.
-    include_first_basis : bool, optional
+    include_first_basis : bool, default=True
         If `True`, spline will include the first basis of the spline. Default
         to be `True`.
-    knots_type : str, optional
+    knots_type : {'abs', 'rel_domain', 'rel_freq'}, default='abs'
         Type of the spline knots. Can only be choosen from three options,
         `'abs'`, `'rel_domian'` and `'rel_freq'`. When it is `'abs'`
         which standards for absolute, the knots will be used as it is. When it
