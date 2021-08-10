@@ -5,12 +5,12 @@ __all__ = [
 
 __title__ = "regmod"
 __summary__ = "regmod: General regression models."
-__uri__ = "https://github.com/zhengp0/regmod"
+__uri__ = "https://github.com/ihmeuw-msca/regmod"
 
 __version__ = "0.0.6"
 
-__author__ = "Peng Zheng"
-__email__ = "zhengp@uw.edu"
+__author__ = "IHME Math Sciences"
+__email__ = "ihme.math.sciences@gmail.com"
 
 __license__ = "BSD 2-Clause License"
 __copyright__ = f"Copyright 2021 {__author__}"

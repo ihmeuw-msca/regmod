@@ -1,5 +1,5 @@
-.. image:: https://github.com/zhengp0/regmod/workflows/python-build/badge.svg
-    :target: https://github.com/zhengp0/regmod/actions
+.. image:: https://github.com/ihmeuw-msca/regmod/workflows/python-build/badge.svg
+    :target: https://github.com/ihmeuw-msca/regmod/actions
 
 .. image:: https://badge.fury.io/py/regmod.svg
     :target: https://badge.fury.io/py/regmod
