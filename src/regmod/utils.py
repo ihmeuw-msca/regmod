@@ -34,13 +34,10 @@ def default_vec_factory(vec: Any,
         Created or validated vector.
     """
 
-    if vec is None:
-        vec = np.repeat(default_value, size)
-    elif np.isscalar(vec):
-        vec = np.repeat(vec, size)
-    else:
-        vec = np.asarray(vec)
-        check_size(vec, size, vec_name=vec_name)
+    if vec is None or np.isscalar(vec):
+        return np.repeat(default_value if vec is None else vec, size)
+    vec = np.asarray(vec)
+    check_size(vec, size, vec_name=vec_name)
 
     return vec
 
