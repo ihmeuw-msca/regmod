@@ -111,8 +111,7 @@ class SplineSpecs:
 
     @property
     def num_spline_bases(self) -> int:
-        """Number of the spline bases.
-        """
+        """Number of the spline bases."""
         inner_knots = self.knots[int(self.l_linear):
                                  len(self.knots) - int(self.r_linear)]
         return len(inner_knots) - 2 + self.degree + int(self.include_first_basis)
