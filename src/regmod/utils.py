@@ -2,7 +2,7 @@
 Utility classes and functions
 """
 from dataclasses import dataclass
-from typing import Any, List
+from typing import Any, List, Optional
 
 import numpy as np
 from xspline import XSpline
@@ -116,12 +116,12 @@ class SplineSpecs:
                                  len(self.knots) - int(self.r_linear)]
         return len(inner_knots) - 2 + self.degree + int(self.include_first_basis)
 
-    def create_spline(self, vec: np.ndarray = None) -> XSpline:
+    def create_spline(self, vec: Optional[np.ndarray] = None) -> XSpline:
         """Create spline from the given vector.
 
         Parameters
         ----------
-        vec : Optional[np.ndarray]
+        vec : Optional[np.ndarray], optional
             Given vector as the data. Default to `None`. When it is `None`
             it requires `knots_type` to be `abs`.
 
