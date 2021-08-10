@@ -9,7 +9,7 @@ from scipy.linalg import block_diag
 
 from regmod.data import Data
 from regmod.parameter import Parameter
-from regmod.utils import sizes_to_sclices
+from regmod.utils import sizes_to_slices
 from regmod.optimizer import scipy_optimize
 
 
@@ -44,7 +44,7 @@ class Model:
             param.check_data(self.data)
 
         self.sizes = [param.size for param in self.params]
-        self.indices = sizes_to_sclices(self.sizes)
+        self.indices = sizes_to_slices(self.sizes)
         self.size = sum(self.sizes)
         self.num_params = len(self.params)
 

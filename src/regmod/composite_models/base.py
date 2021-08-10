@@ -11,7 +11,7 @@ from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import GaussianModel, PoissonModel
 from regmod.prior import GaussianPrior
-from regmod.utils import sizes_to_sclices
+from regmod.utils import sizes_to_slices
 from regmod.variable import Variable
 
 link_funs = {
@@ -116,8 +116,8 @@ class BaseModel(NodeModel):
         # use minimum standard deviation of the posterior distribution
         sd = np.maximum(0.1, np.sqrt(np.diag(self.model.opt_vcov)))
         vnames = [v.name for v in self.param_specs["variables"]]
-        slices = sizes_to_sclices([self.variables[name].size
-                                   for name in vnames])
+        slices = sizes_to_slices([self.variables[name].size
+                                  for name in vnames])
         return {
             name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])
             for i, name in enumerate(vnames)
