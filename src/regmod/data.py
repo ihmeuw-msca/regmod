@@ -226,7 +226,7 @@ class Data:
 
     @property
     def obs(self) -> ndarray:
-        """Obervation column(s)."""
+        """Observation column(s)."""
         if self.col_obs is None:
             raise ValueError("This data object does not contain observations.")
         return self.get_cols(self.col_obs)
