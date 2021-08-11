@@ -32,6 +32,10 @@ def default_vec_factory(vec: Any,
     -------
     np.ndarray
         Created or validated vector.
+
+    Notes
+    -----
+    This function should be replaced in the next version.
     """
 
     if vec is None or np.isscalar(vec):
@@ -58,6 +62,10 @@ def check_size(vec: np.ndarray, size: int, vec_name: str = 'vec') -> None:
     ------
     AssertionError
         Raised when the size of the vector not match with the given size.
+
+    Notes
+    -----
+    This function should be replaced in the next version.
     """
     assert len(vec) == size, f"{vec_name} must length {size}."
 
