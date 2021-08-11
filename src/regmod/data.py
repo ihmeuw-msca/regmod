@@ -2,7 +2,7 @@
 Data Module
 """
 from dataclasses import dataclass, field
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 
 import numpy as np
 from numpy import ndarray
@@ -11,7 +11,85 @@ from pandas import DataFrame
 
 @dataclass
 class Data:
-    col_obs: Union[str, List[str]] = None
+    """Data class used for validate and accessing data in `pd.DataFrame`.
+
+    Parameters
+    ----------
+    col_obs : Optional[Union[str, List[str]]], optional
+        Column name(s) for observation. Default to be `None`.
+    col_covs : List[str], optional
+        Column names for covariates. Default to be an empty list.
+    col_weights : str, default="weights"
+        Column name for weights. Default to be `'weights'`. If `col_weights` is
+        not in the data frame, a column with name `col_weights` will be added to
+        the data frame filled with 1.
+    col_offset : str, default="offset"
+        Column name for weights. Default to be `'offset'`. If `col_offset`
+        is not in the data frame, a column with name `col_offset` will be added
+        to the data frame filled with 0.
+    df : pd.DataFrame, optional
+        Data frame for the object. Default is an empty data frame.
+
+    Attributes
+    ----------
+    obs
+    covs
+    weights
+    offset
+    trim_weights
+    num_obs
+    col_obs : Optional[Union[str, List[str]]]
+        Column name for observation, can be a single string, a list of string or
+        `None`. When it is `None` you cannot access property `obs`.
+    col_covs : List[str]
+        A list of column names for covariates.
+    col_weights : str
+        Column name for weights. `weights` can be used in the likelihood
+        computation. Values of `weights` are required be between 0 and 1.
+        `col_weights` defaultly is set to be `'weights'`. If `col_weights` is
+        not in the data frame, a column with name `col_weights` will be added to
+        the data frame filled with 1.
+    col_offset : str
+        Column name for offset. Same as `weights`, `offset` can be used in
+        computing likelihood. `offset` need to be pre-transformed according to
+        link function of the parameters. `col_offset` defaultly is set to be
+        `'offset'`. If `col_offset` is not in the data frame, a column with name
+        `col_offset` will be added to the data frame filled with 0.
+    df : pd.DataFrame
+        Data frame for the object. Default is an empty data frame.
+    cols : List[str]
+        All the relevant columns, including, `col_obs` (if not `None`),
+        `col_covs`, `col_weights`, `col_offset` and `'trim_weights'`.
+
+    Methods
+    -------
+    is_empty()
+        Return `True` when `self.df` is empty.
+    check_cols()
+        Validate if all `self.cols` are in `self.df`.
+    parse_df(df=None)
+        Subset `df` with `self.cols`.
+    fill_df()
+        Automatically add columns `'intercept'`, `col_weights`, `col_offset` and
+        `'trim_weights'`, if they are not present in the `self.df`.
+    detach_df()
+        Set `self.df` to a empty data frame.
+    attach_df(df)
+        Validate `df` and set `self.df=df`.
+    copy(with_df=False)
+        Copy `self` to a new instance of the class.
+    get_cols(cols)
+        Accessing columns in `self.df`.
+    get_covs(col_covs)
+        Accessing covariates in `self.df`.
+
+    Notes
+    -----
+    * This class should be replaced by a subclass of a more general dataclass
+    * `get_covs` seems very redundant should only keep `get_cols`.
+    """
+
+    col_obs: Optional[Union[str, List[str]]] = None
     col_covs: List[str] = field(default_factory=list)
     col_weights: str = "weights"
     col_offset: str = "offset"
