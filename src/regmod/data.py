@@ -64,7 +64,7 @@ class Data:
     Methods
     -------
     is_empty()
-        Return `True` when `self.df` is empty.
+        Indicator of empty data frame.
     check_cols()
         Validate if all `self.cols` are in `self.df`.
     parse_df(df=None)
@@ -112,18 +112,48 @@ class Data:
             self.check_cols()
 
     def is_empty(self) -> bool:
+        """Indicator of empty data frame.
+
+        Returns
+        -------
+        bool
+            Return `True` when `self.df` is empty.
+        """
         return self.num_obs == 0
 
-    def check_cols(self):
+    def check_cols(self) -> None:
+        """Validate if all `self.cols` are in `self.df`.
+
+        Raises
+        ------
+        ValueError
+            Raised if any col in `self.cols` is not in `self.df`.
+        """
         for col in self.cols:
             if col not in self.df.columns:
                 raise ValueError(f"Missing columnn {col}.")
 
-    def parse_df(self, df: DataFrame = None):
+    def parse_df(self, df: Optional[DataFrame] = None) -> DataFrame:
+        """Subset `df` with `self.cols`.
+
+        Parameters
+        ----------
+        df : Optional[DataFrame], optional
+            Data Frame need to be subset. When it is `None`, it will use
+            `self.df`.
+
+        Returns
+        -------
+        DataFrame
+            Copy of origin input data frame with subset columns.
+        """
         df = self.df if df is None else df
         self.df = df.loc[:, df.columns.isin(self.cols)].copy()
 
-    def fill_df(self):
+    def fill_df(self) -> None:
+        """Automatically add columns `'intercept'`, `col_weights`, `col_offset`
+        and `'trim_weights'`, if they are not present in the `self.df`.
+        """
         if "intercept" not in self.df.columns:
             self.df["intercept"] = 1.0
         if self.col_weights not in self.df.columns:
@@ -138,14 +168,35 @@ class Data:
         self.df["trim_weights"] = 1.0
 
     def detach_df(self):
+        """Set `self.df` to a empty data frame."""
         self.df = DataFrame(columns=self.cols)
 
     def attach_df(self, df: DataFrame):
+        """Validate `df` and set `self.df=df`.
+
+        Parameters
+        ----------
+        df : DataFrame
+            Data frame need to be attached.
+        """
         self.parse_df(df)
         self.fill_df()
         self.check_cols()
 
     def copy(self, with_df=False) -> "Data":
+        """Copy `self` to a new instance of the class.
+
+        Parameters
+        ----------
+        with_df : bool, default=False
+            If `True`, copy with attached data frame, else only copy the
+            structure with empty data frame. Default to be `False`.
+
+        Returns
+        -------
+        Data
+            Copied instance of `Data` class.
+        """
         df = self.df.copy() if with_df else DataFrame(columns=self.cols)
         return Data(self.col_obs,
                     self.col_covs,
@@ -154,32 +205,52 @@ class Data:
                     df)
 
     def get_cols(self, cols: Union[List[str], str]) -> ndarray:
+        """Accessing columns in `self.df`.
+
+        Parameters
+        ----------
+        cols : Union[List[str], str]
+            Column name(s) need to accessed.
+
+        Returns
+        -------
+        ndarray
+            Numpy array corresponding to the column(s).
+        """
         return self.df[cols].to_numpy()
 
     @property
     def num_obs(self) -> int:
+        """Number of the observations/rows of data frame."""
         return self.df.shape[0]
 
     @property
     def obs(self) -> ndarray:
+        """Obervation column(s)."""
         if self.col_obs is None:
             raise ValueError("This data object does not contain observations.")
         return self.get_cols(self.col_obs)
 
     @property
     def covs(self) -> Dict[str, ndarray]:
+        """Covariates dictionary with column names as keys and corresponding
+        numpy array as the column.
+        """
         return self.df[self.col_covs].to_dict(orient="list")
 
     @property
     def weights(self) -> ndarray:
+        """Weights column."""
         return self.get_cols(self.col_weights)
 
     @property
     def offset(self) -> ndarray:
+        """Offset column."""
         return self.get_cols(self.col_offset)
 
     @property
     def trim_weights(self) -> ndarray:
+        """Trimming weights column."""
         return self.get_cols("trim_weights")
 
     @trim_weights.setter
@@ -189,6 +260,19 @@ class Data:
         self.df["trim_weights"] = weights
 
     def get_covs(self, col_covs: Union[List[str], str]) -> ndarray:
+        """Accessing covariates in `self.df`.
+
+        Parameters
+        ----------
+        col_covs : Union[List[str], str]
+            Column name(s) of the covariates.
+
+        Returns
+        -------
+        ndarray
+            Return the corresponding column(s) in the data frame. Always return
+            matrix even if `col_covs` is a single string.
+        """
         if not isinstance(col_covs, list):
             col_covs = [col_covs]
         return self.get_cols(col_covs)
