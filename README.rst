@@ -1,4 +1,4 @@
-.. image:: https://github.com/ihmeuw-msca/regmod/workflows/python-build/badge.svg
+.. image:: https://github.com/ihmeuw-msca/regmod/workflows/build/badge.svg
     :target: https://github.com/ihmeuw-msca/regmod/actions
 
 .. image:: https://badge.fury.io/py/regmod.svg
