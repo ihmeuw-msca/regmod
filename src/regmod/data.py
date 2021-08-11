@@ -11,20 +11,20 @@ from pandas import DataFrame
 
 @dataclass
 class Data:
-    """Data class used for validate and accessing data in `pd.DataFrame`.
+    """Data class used to validate and access data in `pd.DataFrame`.
 
     Parameters
     ----------
     col_obs : Optional[Union[str, List[str]]], optional
-        Column name(s) for observation. Default to be `None`.
+        Column name(s) for observation. Default is `None`.
     col_covs : List[str], optional
-        Column names for covariates. Default to be an empty list.
+        Column names for covariates. Default is an empty list.
     col_weights : str, default="weights"
-        Column name for weights. Default to be `'weights'`. If `col_weights` is
+        Column name for weights. Default is `'weights'`. If `col_weights` is
         not in the data frame, a column with name `col_weights` will be added to
         the data frame filled with 1.
     col_offset : str, default="offset"
-        Column name for weights. Default to be `'offset'`. If `col_offset`
+        Column name for weights. Default is `'offset'`. If `col_offset`
         is not in the data frame, a column with name `col_offset` will be added
         to the data frame filled with 0.
     df : pd.DataFrame, optional
@@ -45,15 +45,15 @@ class Data:
         A list of column names for covariates.
     col_weights : str
         Column name for weights. `weights` can be used in the likelihood
-        computation. Values of `weights` are required be between 0 and 1.
+        computation. Values of `weights` are required to be between 0 and 1.
         `col_weights` defaultly is set to be `'weights'`. If `col_weights` is
         not in the data frame, a column with name `col_weights` will be added to
         the data frame filled with 1.
     col_offset : str
         Column name for offset. Same as `weights`, `offset` can be used in
         computing likelihood. `offset` need to be pre-transformed according to
-        link function of the parameters. `col_offset` defaultly is set to be
-        `'offset'`. If `col_offset` is not in the data frame, a column with name
+        link function of the parameters. Default for `col_offset` is `'offset'`.
+        If `col_offset` is not in the data frame, a column with name
         `col_offset` will be added to the data frame filled with 0.
     df : pd.DataFrame
         Data frame for the object. Default is an empty data frame.
@@ -73,15 +73,15 @@ class Data:
         Automatically add columns `'intercept'`, `col_weights`, `col_offset` and
         `'trim_weights'`, if they are not present in the `self.df`.
     detach_df()
-        Set `self.df` to a empty data frame.
+        Set `self.df` to an empty data frame.
     attach_df(df)
         Validate `df` and set `self.df=df`.
     copy(with_df=False)
         Copy `self` to a new instance of the class.
     get_cols(cols)
-        Accessing columns in `self.df`.
+        Access columns in `self.df`.
     get_covs(col_covs)
-        Accessing covariates in `self.df`.
+        Access covariates in `self.df`.
 
     Notes
     -----
@@ -139,13 +139,13 @@ class Data:
         Parameters
         ----------
         df : Optional[DataFrame], optional
-            Data Frame need to be subset. When it is `None`, it will use
+            Data Frame used to create subset. When it is `None`, it will use
             `self.df`.
 
         Returns
         -------
         DataFrame
-            Copy of origin input data frame with subset columns.
+            Copy of input data frame with given subset columns.
         """
         df = self.df if df is None else df
         self.df = df.loc[:, df.columns.isin(self.cols)].copy()
@@ -168,7 +168,7 @@ class Data:
         self.df["trim_weights"] = 1.0
 
     def detach_df(self):
-        """Set `self.df` to a empty data frame."""
+        """Set `self.df` to an empty data frame."""
         self.df = DataFrame(columns=self.cols)
 
     def attach_df(self, df: DataFrame):
@@ -177,7 +177,7 @@ class Data:
         Parameters
         ----------
         df : DataFrame
-            Data frame need to be attached.
+            Data frame to be attached.
         """
         self.parse_df(df)
         self.fill_df()
@@ -190,7 +190,7 @@ class Data:
         ----------
         with_df : bool, default=False
             If `True`, copy with attached data frame, else only copy the
-            structure with empty data frame. Default to be `False`.
+            structure with empty data frame. Default is `False`.
 
         Returns
         -------
@@ -205,7 +205,7 @@ class Data:
                     df)
 
     def get_cols(self, cols: Union[List[str], str]) -> ndarray:
-        """Accessing columns in `self.df`.
+        """Access columns in `self.df`.
 
         Parameters
         ----------
@@ -260,7 +260,7 @@ class Data:
         self.df["trim_weights"] = weights
 
     def get_covs(self, col_covs: Union[List[str], str]) -> ndarray:
-        """Accessing covariates in `self.df`.
+        """Access covariates in `self.df`.
 
         Parameters
         ----------
