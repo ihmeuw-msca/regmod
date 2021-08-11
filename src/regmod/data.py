@@ -46,12 +46,12 @@ class Data:
     col_weights : str
         Column name for weights. `weights` can be used in the likelihood
         computation. Values of `weights` are required to be between 0 and 1.
-        `col_weights` defaultly is set to be `'weights'`. If `col_weights` is
-        not in the data frame, a column with name `col_weights` will be added to
-        the data frame filled with 1.
+        Default for `col_weights` is `'weights'`. If `col_weights` is not in the
+        data frame, a column with name `col_weights` will be added to the data
+        frame filled with 1.
     col_offset : str
         Column name for offset. Same as `weights`, `offset` can be used in
-        computing likelihood. `offset` need to be pre-transformed according to
+        computing likelihood. `offset` needs to be pre-transformed according to
         link function of the parameters. Default for `col_offset` is `'offset'`.
         If `col_offset` is not in the data frame, a column with name
         `col_offset` will be added to the data frame filled with 0.
