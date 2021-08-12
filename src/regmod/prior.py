@@ -169,6 +169,29 @@ class UniformPrior(Prior):
 
 @dataclass
 class LinearPrior:
+    """Linear prior information.
+
+    Parameters
+    ----------
+    mat : np.ndarray, optional
+        Linear mapping for the prior. Default is an empty matrix.
+    size : Optional[int], optional
+        Size of the prior. Default is `None`. If it is `None`, the size will
+        be inferred as the number of rows of `mat`.
+
+    Attributes
+    ----------
+    mat : np.ndarray
+        Linear mapping for the prior.
+    size : int
+        Size of the prior.
+
+    Methods
+    -------
+    is_empty()
+        Indicate if the prior is empty.
+    """
+
     mat: np.ndarray = field(default_factory=lambda: np.empty(shape=(0, 1)),
                             repr=False)
     size: int = None
@@ -180,11 +203,59 @@ class LinearPrior:
             assert self.size == self.mat.shape[0], "`mat` and `size` not match."
 
     def is_empty(self) -> bool:
+        """Indicate if the prior is empty.
+
+        Returns
+        -------
+        bool
+            Return `True` if `self.mat` is empty.
+        """
         return self.mat.size == 0.0
 
 
 @dataclass
 class SplinePrior(LinearPrior):
+    """Spline prior information.
+
+    Parameters
+    ----------
+    size : int, default=100
+        Size of the spline prior. Default is 100. It determines the number
+        of sample points in the specified domain.
+    order : int, default=0
+        Order of the spline derivative. Default is 0.
+    domain_lb : float, default=0.0
+        Lower bounds of the domain. Default is 0.0.
+    domain_ub : float, default=1.0
+        Upper bounds of the domain. Default is 1.0.
+    domain_type : {'abs', 'rel'}, default='rel'
+        Type of the domain. Default is `'rel'`. It can only be `'abs'` or
+        `'rel'`. When it is `'abs'`, `domain_lb` and `domain_ub` are interpreted
+        as the absolute position of the domain. When it is `'rel'`, lower and
+        upper bounds are treated as the percentage of the domain.
+
+    Attributes
+    ----------
+    size : int
+        Size of the spline prior. It determines the number of sample points in
+        the specified domain.
+    order : int
+        Order of the spline derivative.
+    domain_lb : float
+        Lower bounds of the domain.
+    domain_ub : float
+        Upper bounds of the domain.
+    domain_type : {'abs', 'rel'}
+        Type of the domain. When it is `'abs'`, `domain_lb` and `domain_ub` are
+        interpreted as the absolute position of the domain. When it is `'rel'`,
+        lower and upper bounds are treated as the percentage of the domain.
+
+    Methods
+    -------
+    attach_spline(spline)
+        Attach the spline to process the domain.
+    """
+
     size: int = 100
     order: int = 0
     domain_lb: float = field(default=0.0, repr=False)
@@ -200,7 +271,14 @@ class SplinePrior(LinearPrior):
             assert self.domain_lb >= 0.0 and self.domain_ub <= 1.0, \
                 "Using relative domain, bounds must be numbers between 0 and 1."
 
-    def attach_spline(self, spline: XSpline) -> np.ndarray:
+    def attach_spline(self, spline: XSpline):
+        """Attach the spline to process the domain.
+
+        Parameters
+        ----------
+        spline : XSpline
+            Spline used to create the linear mapping for the prior.
+        """
         knots_lb = spline.knots[0]
         knots_ub = spline.knots[-1]
         if self.domain_type == "rel":
@@ -217,6 +295,8 @@ class SplinePrior(LinearPrior):
 
 @dataclass
 class LinearGaussianPrior(LinearPrior, GaussianPrior):
+    """Linear Gaussian prior."""
+
     def __post_init__(self):
         LinearPrior.__post_init__(self)
         GaussianPrior.__post_init__(self)
@@ -224,6 +304,8 @@ class LinearGaussianPrior(LinearPrior, GaussianPrior):
 
 @dataclass
 class LinearUniformPrior(LinearPrior, UniformPrior):
+    """Linear Uniform prior."""
+
     def __post_init__(self):
         LinearPrior.__post_init__(self)
         UniformPrior.__post_init__(self)
@@ -231,6 +313,8 @@ class LinearUniformPrior(LinearPrior, UniformPrior):
 
 @dataclass
 class SplineGaussianPrior(SplinePrior, GaussianPrior):
+    """Spline Gaussian prior."""
+
     def __post_init__(self):
         SplinePrior.__post_init__(self)
         GaussianPrior.__post_init__(self)
@@ -238,6 +322,8 @@ class SplineGaussianPrior(SplinePrior, GaussianPrior):
 
 @dataclass
 class SplineUniformPrior(SplinePrior, UniformPrior):
+    """Spline Uniform Prior."""
+
     def __post_init__(self):
         SplinePrior.__post_init__(self)
         UniformPrior.__post_init__(self)
