@@ -35,6 +35,8 @@ class Parameter:
             "linear_gpriors size not match."
         assert all([prior.mat.shape[1] == self.size for prior in self.linear_upriors]), \
             "linear_upriors size not match."
+        assert all([isinstance(var, Variable) for var in self.variables]), \
+            "variables has to be a list of Variable."
 
     @property
     def size(self) -> int:
