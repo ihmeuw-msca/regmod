@@ -3,7 +3,7 @@ Prior module
 """
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any, List, Optional
 
 import numpy as np
 from xspline import XSpline
@@ -13,9 +13,43 @@ from regmod.utils import default_vec_factory
 
 @dataclass
 class Prior:
-    size: int = None
+    """Prior information for the variables, it is used to construct the
+    liklihood and solve the optimization problem.
+
+    Parameters
+    ----------
+    size : Optional[int], optional
+        Size of variable. Default is `None`. When it is `None`, size is inferred
+        from the vector information of the prior.
+
+    Attributes
+    ----------
+    size : int
+        Size of variable
+
+    Methods
+    -------
+    process_size(vecs)
+        Infer and validate size from given vector information.
+    """
+
+    size: Optional[int] = None
 
     def process_size(self, vecs: List[Any]):
+        """Infer and validate size from given vector information.
+
+        Parameters
+        ----------
+        vecs : List[Any]
+            Vector infromation of the prior. For Gaussian prior it will be mean
+            and standard deviation. For Uniform prior it will be lower and upper
+            bounds.
+
+        Raises
+        ------
+        ValueError
+            Raised when size is not positive or integer.
+        """
         if self.size is None:
             sizes = [len(vec) for vec in vecs if isinstance(vec, Iterable)]
             sizes.append(1)
