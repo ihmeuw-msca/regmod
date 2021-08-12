@@ -3,7 +3,7 @@ Prior module
 """
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List
 
 import numpy as np
 from xspline import XSpline
@@ -33,7 +33,7 @@ class Prior:
         Infer and validate size from given vector information.
     """
 
-    size: Optional[int] = None
+    size: int = None
 
     def process_size(self, vecs: List[Any]):
         """Infer and validate size from given vector information.
@@ -61,26 +61,110 @@ class Prior:
 
 @dataclass
 class GaussianPrior(Prior):
-    mean: np.ndarray = field(default=None, repr=False)
-    sd: np.ndarray = field(default=None, repr=False)
+    """Gaussian prior information.
+
+    Parameters
+    ----------
+    size : Optional[int], optional
+        Size of variable. Default is `None`. When it is `None`, size is inferred
+        from the vector information of the prior.
+    mean : Union[float, np.ndarray], default=0
+        Mean of the Gaussian prior. Default is 0. If it is a scalar, it will be
+        extended to an array with `self.size`.
+    sd : Union[float, np.ndarray], default=np.inf
+        Standard deviation of the Gaussian prior. Default is `np.inf`. If it is
+        a scalar, it will be extended to an array with `self.size`.
+
+    Attributes
+    ----------
+    size : int
+        Size of the variable.
+    mean : ndarray
+        Mean of the Gaussian prior.
+    sd : ndarray
+        Standard deviation of the Gaussian prior.
+
+    Raises
+    ------
+    ValueError
+        Raised when size of mean vector doesn't match.
+    ValueError
+        Raised when size of the standard deviation vector doesn't match.
+    ValueError
+        Raised when any value in standard deviation vector is non-positive.
+    """
+
+    mean: np.ndarray = field(default=0.0, repr=False)
+    sd: np.ndarray = field(default=np.inf, repr=False)
 
     def __post_init__(self):
         self.process_size([self.mean, self.sd])
-        self.mean = default_vec_factory(self.mean, self.size, 0.0, vec_name='mean')
-        self.sd = default_vec_factory(self.sd, self.size, np.inf, vec_name='sd')
-        assert all(self.sd > 0.0), "Standard deviation must be all positive."
+        if np.isscalar(self.mean):
+            self.mean = np.repeat(self.mean, self.size)
+        if np.isscalar(self.sd):
+            self.sd = np.repeat(self.sd, self.size)
+        self.mean = np.asarray(self.mean)
+        self.sd = np.asarray(self.sd)
+        if self.mean.size != self.size:
+            raise ValueError("Mean vector size not matching.")
+        if self.sd.size != self.size:
+            raise ValueError("Standard deviation vector size not matching.")
+        if any(self.sd <= 0.0):
+            raise ValueError("Standard deviation must be all positive.")
 
 
 @dataclass
 class UniformPrior(Prior):
-    lb: np.ndarray = field(default=None, repr=False)
-    ub: np.ndarray = field(default=None, repr=False)
+    """Uniform prior information.
+
+    Parameters
+    ----------
+    size : Optional[int], optional
+        Size of variable. Default is `None`. When it is `None`, size is inferred
+        from the vector information of the prior.
+    lb : Union[float, np.ndarray], default=-np.inf
+        Lower bound of Uniform prior. Default is `-np.inf`. If it is a scalar,
+        it will be extended to an array with `self.size`.
+    ub : Union[float, np.ndarray], default=np.inf
+        Upper bound of the Uniform prior. Default is `np.inf`. If it is a
+        scalar,it will be extended to an array with `self.size`.
+
+    Attributes
+    ----------
+    size : int
+        Size of the variable.
+    lb : ndarray
+        Lower bound of Uniform prior.
+    ub : ndarray
+        Upper bound of Uniform prior.
+
+    Raises
+    ------
+    ValueError
+        Raised when size of the lower bound vector doesn't match.
+    ValueError
+        Raised when size of the upper bound vector doesn't match.
+    ValueError
+        Raised if lower bound is greater than upper bound.
+    """
+
+    lb: np.ndarray = field(default=-np.inf, repr=False)
+    ub: np.ndarray = field(default=np.inf, repr=False)
 
     def __post_init__(self):
         self.process_size([self.lb, self.ub])
-        self.lb = default_vec_factory(self.lb, self.size, -np.inf, vec_name='lb')
-        self.ub = default_vec_factory(self.ub, self.size, np.inf, vec_name='ub')
-        assert all(self.lb <= self.ub), "Lower bounds must be less or equal than upper bounds."
+        if np.isscalar(self.lb):
+            self.lb = np.repeat(self.lb, self.size)
+        if np.isscalar(self.ub):
+            self.ub = np.repeat(self.ub, self.size)
+        self.lb = np.asarray(self.lb)
+        self.ub = np.asarray(self.ub)
+        if self.lb.size != self.size:
+            raise ValueError("Lower bound vector size not matching.")
+        if self.ub.size != self.size:
+            raise ValueError("Upper bound vector size not matching.")
+        if any(self.lb > self.ub):
+            ValueError("Lower bounds must be less or equal than upper bounds.")
 
 
 @dataclass
