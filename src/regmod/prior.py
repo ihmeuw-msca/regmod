@@ -31,6 +31,11 @@ class Prior:
     -------
     process_size(vecs)
         Infer and validate size from given vector information.
+
+    Notes
+    -----
+    We should figure out a better structure for linear and spline prior, so that
+    the extensions will be easier.
     """
 
     size: int = None
