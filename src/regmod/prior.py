@@ -13,9 +13,48 @@ from regmod.utils import default_vec_factory
 
 @dataclass
 class Prior:
+    """Prior information for the variables, it is used to construct the
+    likelihood and solve the optimization problem.
+
+    Parameters
+    ----------
+    size : Optional[int], optional
+        Size of variable. Default is `None`. When it is `None`, size is inferred
+        from the vector information of the prior.
+
+    Attributes
+    ----------
+    size : int
+        Size of variable.
+
+    Methods
+    -------
+    process_size(vecs)
+        Infer and validate size from given vector information.
+
+    Notes
+    -----
+    We should figure out a better structure for linear and spline prior, so that
+    the extensions will be easier.
+    """
+
     size: int = None
 
     def process_size(self, vecs: List[Any]):
+        """Infer and validate size from given vector information.
+
+        Parameters
+        ----------
+        vecs : List[Any]
+            Vector information of the prior. For Gaussian prior it will be mean
+            and standard deviation. For Uniform prior it will be lower and upper
+            bounds.
+
+        Raises
+        ------
+        ValueError
+            Raised when size is not positive or integer.
+        """
         if self.size is None:
             sizes = [len(vec) for vec in vecs if isinstance(vec, Iterable)]
             sizes.append(1)
@@ -27,30 +66,139 @@ class Prior:
 
 @dataclass
 class GaussianPrior(Prior):
-    mean: np.ndarray = field(default=None, repr=False)
-    sd: np.ndarray = field(default=None, repr=False)
+    """Gaussian prior information.
+
+    Parameters
+    ----------
+    size : Optional[int], optional
+        Size of variable. Default is `None`. When it is `None`, size is inferred
+        from the vector information of the prior.
+    mean : Union[float, np.ndarray], default=0
+        Mean of the Gaussian prior. Default is 0. If it is a scalar, it will be
+        extended to an array with `self.size`.
+    sd : Union[float, np.ndarray], default=np.inf
+        Standard deviation of the Gaussian prior. Default is `np.inf`. If it is
+        a scalar, it will be extended to an array with `self.size`.
+
+    Attributes
+    ----------
+    size : int
+        Size of the variable.
+    mean : ndarray
+        Mean of the Gaussian prior.
+    sd : ndarray
+        Standard deviation of the Gaussian prior.
+
+    Raises
+    ------
+    ValueError
+        Raised when size of mean vector doesn't match.
+    ValueError
+        Raised when size of the standard deviation vector doesn't match.
+    ValueError
+        Raised when any value in standard deviation vector is non-positive.
+    """
+
+    mean: np.ndarray = field(default=0.0, repr=False)
+    sd: np.ndarray = field(default=np.inf, repr=False)
 
     def __post_init__(self):
         self.process_size([self.mean, self.sd])
-        self.mean = default_vec_factory(self.mean, self.size, 0.0, vec_name='mean')
-        self.sd = default_vec_factory(self.sd, self.size, np.inf, vec_name='sd')
-        assert all(self.sd > 0.0), "Standard deviation must be all positive."
+        if np.isscalar(self.mean):
+            self.mean = np.repeat(self.mean, self.size)
+        if np.isscalar(self.sd):
+            self.sd = np.repeat(self.sd, self.size)
+        self.mean = np.asarray(self.mean)
+        self.sd = np.asarray(self.sd)
+        if self.mean.size != self.size:
+            raise ValueError("Mean vector size does not match.")
+        if self.sd.size != self.size:
+            raise ValueError("Standard deviation vector size does not match.")
+        if any(self.sd <= 0.0):
+            raise ValueError("Standard deviation must be all positive.")
 
 
 @dataclass
 class UniformPrior(Prior):
-    lb: np.ndarray = field(default=None, repr=False)
-    ub: np.ndarray = field(default=None, repr=False)
+    """Uniform prior information.
+
+    Parameters
+    ----------
+    size : Optional[int], optional
+        Size of variable. Default is `None`. When it is `None`, size is inferred
+        from the vector information of the prior.
+    lb : Union[float, np.ndarray], default=-np.inf
+        Lower bound of Uniform prior. Default is `-np.inf`. If it is a scalar,
+        it will be extended to an array with `self.size`.
+    ub : Union[float, np.ndarray], default=np.inf
+        Upper bound of the Uniform prior. Default is `np.inf`. If it is a
+        scalar,it will be extended to an array with `self.size`.
+
+    Attributes
+    ----------
+    size : int
+        Size of the variable.
+    lb : ndarray
+        Lower bound of Uniform prior.
+    ub : ndarray
+        Upper bound of Uniform prior.
+
+    Raises
+    ------
+    ValueError
+        Raised when size of the lower bound vector doesn't match.
+    ValueError
+        Raised when size of the upper bound vector doesn't match.
+    ValueError
+        Raised if lower bound is greater than upper bound.
+    """
+
+    lb: np.ndarray = field(default=-np.inf, repr=False)
+    ub: np.ndarray = field(default=np.inf, repr=False)
 
     def __post_init__(self):
         self.process_size([self.lb, self.ub])
-        self.lb = default_vec_factory(self.lb, self.size, -np.inf, vec_name='lb')
-        self.ub = default_vec_factory(self.ub, self.size, np.inf, vec_name='ub')
-        assert all(self.lb <= self.ub), "Lower bounds must be less or equal than upper bounds."
+        if np.isscalar(self.lb):
+            self.lb = np.repeat(self.lb, self.size)
+        if np.isscalar(self.ub):
+            self.ub = np.repeat(self.ub, self.size)
+        self.lb = np.asarray(self.lb)
+        self.ub = np.asarray(self.ub)
+        if self.lb.size != self.size:
+            raise ValueError("Lower bound vector size does not match.")
+        if self.ub.size != self.size:
+            raise ValueError("Upper bound vector size does not match.")
+        if any(self.lb > self.ub):
+            ValueError(
+                "Lower bounds must be less than or equal to upper bounds."
+            )
 
 
 @dataclass
 class LinearPrior:
+    """Linear prior information.
+
+    Parameters
+    ----------
+    mat : np.ndarray, optional
+        Linear mapping for the prior. Default is an empty matrix.
+    size : Optional[int], optional
+        Size of the prior. Default is `None`. If it is `None`, the size will
+        be inferred as the number of rows of `mat`.
+
+    Attributes
+    ----------
+    mat : np.ndarray
+        Linear mapping for the prior.
+    size : int
+        Size of the prior.
+
+    Methods
+    -------
+    is_empty()
+        Indicate if the prior is empty.
+    """
+
     mat: np.ndarray = field(default_factory=lambda: np.empty(shape=(0, 1)),
                             repr=False)
     size: int = None
@@ -62,11 +210,59 @@ class LinearPrior:
             assert self.size == self.mat.shape[0], "`mat` and `size` not match."
 
     def is_empty(self) -> bool:
+        """Indicate if the prior is empty.
+
+        Returns
+        -------
+        bool
+            Return `True` if `self.mat` is empty.
+        """
         return self.mat.size == 0.0
 
 
 @dataclass
 class SplinePrior(LinearPrior):
+    """Spline prior information.
+
+    Parameters
+    ----------
+    size : int, default=100
+        Size of the spline prior. Default is 100. It determines the number
+        of sample points in the specified domain.
+    order : int, default=0
+        Order of the spline derivative. Default is 0.
+    domain_lb : float, default=0.0
+        Lower bounds of the domain. Default is 0.0.
+    domain_ub : float, default=1.0
+        Upper bounds of the domain. Default is 1.0.
+    domain_type : {'rel', 'abs'}, default='rel'
+        Type of the domain. Default is `'rel'`. It can only be `'abs'` or
+        `'rel'`. When it is `'abs'`, `domain_lb` and `domain_ub` are interpreted
+        as the absolute position of the domain. When it is `'rel'`, lower and
+        upper bounds are treated as the percentage of the domain.
+
+    Attributes
+    ----------
+    size : int
+        Size of the spline prior. It determines the number of sample points in
+        the specified domain.
+    order : int
+        Order of the spline derivative.
+    domain_lb : float
+        Lower bounds of the domain.
+    domain_ub : float
+        Upper bounds of the domain.
+    domain_type : {'abs', 'rel'}
+        Type of the domain. When it is `'abs'`, `domain_lb` and `domain_ub` are
+        interpreted as the absolute position of the domain. When it is `'rel'`,
+        lower and upper bounds are treated as the percentage of the domain.
+
+    Methods
+    -------
+    attach_spline(spline)
+        Attach the spline to process the domain.
+    """
+
     size: int = 100
     order: int = 0
     domain_lb: float = field(default=0.0, repr=False)
@@ -82,7 +278,14 @@ class SplinePrior(LinearPrior):
             assert self.domain_lb >= 0.0 and self.domain_ub <= 1.0, \
                 "Using relative domain, bounds must be numbers between 0 and 1."
 
-    def attach_spline(self, spline: XSpline) -> np.ndarray:
+    def attach_spline(self, spline: XSpline):
+        """Attach the spline to process the domain.
+
+        Parameters
+        ----------
+        spline : XSpline
+            Spline used to create the linear mapping for the prior.
+        """
         knots_lb = spline.knots[0]
         knots_ub = spline.knots[-1]
         if self.domain_type == "rel":
@@ -99,6 +302,8 @@ class SplinePrior(LinearPrior):
 
 @dataclass
 class LinearGaussianPrior(LinearPrior, GaussianPrior):
+    """Linear Gaussian prior."""
+
     def __post_init__(self):
         LinearPrior.__post_init__(self)
         GaussianPrior.__post_init__(self)
@@ -106,6 +311,8 @@ class LinearGaussianPrior(LinearPrior, GaussianPrior):
 
 @dataclass
 class LinearUniformPrior(LinearPrior, UniformPrior):
+    """Linear Uniform prior."""
+
     def __post_init__(self):
         LinearPrior.__post_init__(self)
         UniformPrior.__post_init__(self)
@@ -113,6 +320,8 @@ class LinearUniformPrior(LinearPrior, UniformPrior):
 
 @dataclass
 class SplineGaussianPrior(SplinePrior, GaussianPrior):
+    """Spline Gaussian prior."""
+
     def __post_init__(self):
         SplinePrior.__post_init__(self)
         GaussianPrior.__post_init__(self)
@@ -120,6 +329,8 @@ class SplineGaussianPrior(SplinePrior, GaussianPrior):
 
 @dataclass
 class SplineUniformPrior(SplinePrior, UniformPrior):
+    """Spline Uniform Prior."""
+
     def __post_init__(self):
         SplinePrior.__post_init__(self)
         UniformPrior.__post_init__(self)
