@@ -14,7 +14,7 @@ from regmod.utils import default_vec_factory
 @dataclass
 class Prior:
     """Prior information for the variables, it is used to construct the
-    liklihood and solve the optimization problem.
+    likelihood and solve the optimization problem.
 
     Parameters
     ----------
@@ -25,7 +25,7 @@ class Prior:
     Attributes
     ----------
     size : int
-        Size of variable
+        Size of variable.
 
     Methods
     -------
@@ -46,7 +46,7 @@ class Prior:
         Parameters
         ----------
         vecs : List[Any]
-            Vector infromation of the prior. For Gaussian prior it will be mean
+            Vector information of the prior. For Gaussian prior it will be mean
             and standard deviation. For Uniform prior it will be lower and upper
             bounds.
 
@@ -111,9 +111,9 @@ class GaussianPrior(Prior):
         self.mean = np.asarray(self.mean)
         self.sd = np.asarray(self.sd)
         if self.mean.size != self.size:
-            raise ValueError("Mean vector size not matching.")
+            raise ValueError("Mean vector size does not match.")
         if self.sd.size != self.size:
-            raise ValueError("Standard deviation vector size not matching.")
+            raise ValueError("Standard deviation vector size does not match.")
         if any(self.sd <= 0.0):
             raise ValueError("Standard deviation must be all positive.")
 
@@ -165,11 +165,13 @@ class UniformPrior(Prior):
         self.lb = np.asarray(self.lb)
         self.ub = np.asarray(self.ub)
         if self.lb.size != self.size:
-            raise ValueError("Lower bound vector size not matching.")
+            raise ValueError("Lower bound vector size does not match.")
         if self.ub.size != self.size:
-            raise ValueError("Upper bound vector size not matching.")
+            raise ValueError("Upper bound vector size does not match.")
         if any(self.lb > self.ub):
-            ValueError("Lower bounds must be less or equal than upper bounds.")
+            ValueError(
+                "Lower bounds must be less than or equal to upper bounds."
+            )
 
 
 @dataclass
@@ -233,7 +235,7 @@ class SplinePrior(LinearPrior):
         Lower bounds of the domain. Default is 0.0.
     domain_ub : float, default=1.0
         Upper bounds of the domain. Default is 1.0.
-    domain_type : {'abs', 'rel'}, default='rel'
+    domain_type : {'rel', 'abs'}, default='rel'
         Type of the domain. Default is `'rel'`. It can only be `'abs'` or
         `'rel'`. When it is `'abs'`, `domain_lb` and `domain_ub` are interpreted
         as the absolute position of the domain. When it is `'rel'`, lower and
