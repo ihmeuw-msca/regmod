@@ -61,6 +61,10 @@ class Variable:
         Get direct Uniform prior vector.
     copy()
         Copy current instance.
+
+    Notes
+    -----
+    In the future, this class will be combined with the SplineVariable.
     """
 
     name: str
