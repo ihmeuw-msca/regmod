@@ -51,6 +51,16 @@ class Variable:
         Reset direct priors.
     add_priors(priors)
         Add priors.
+    rm_priors(indices)
+        Remove priors.
+    get_mat(data)
+        Get design matrix.
+    get_gvec()
+        Get direct Gaussian prior vector.
+    get_uvec()
+        Get direct Uniform prior vector.
+    copy()
+        Copy current instance.
     """
 
     name: str
@@ -186,7 +196,7 @@ class Variable:
         return data.get_covs(self.name)
 
     def get_gvec(self) -> np.ndarray:
-        """Get the direct Gaussian prior vector.
+        """Get direct Gaussian prior vector.
 
         Returns
         -------
@@ -200,7 +210,7 @@ class Variable:
         return gvec
 
     def get_uvec(self) -> np.ndarray:
-        """Get the direct Uniform prior vector.
+        """Get direct Uniform prior vector.
 
         Returns
         -------
@@ -226,6 +236,56 @@ class Variable:
 
 @dataclass
 class SplineVariable(Variable):
+    """Spline variable that store information of variable with splines.
+
+    Parameters
+    ----------
+    spline : XSpline, optional
+        Spline object that in charge of creating design matrix. Default to be
+        `None`. `spline` and `spline_specs` cannot be `None` at the same time.
+    spline_specs : SplineSpecs, optional
+        Spline settings used to create spline object. Recommend to use only when
+        use `knots_type={'rel_domain', 'rel_freq'}. Default to be `None`.
+    linear_gpriors : List[LinearPrior], optional
+        A list of linear Gaussian priors usually for shape priors of the spline.
+        Default to be an empty list.
+    linear_upriors : List[LinearPrior], optional
+        A list of linear Uniform priors usually for shape priors of the spline.
+        spline. Default to be an empty list.
+
+    Attributes
+    ----------
+    spline : XSpline
+        Spline object that in charge of creating design matrix.
+    spline_specs : SplineSpecs
+        Spline settings used to create spline object.
+    linear_gpriors : List[LinearPrior]
+        A list of linear Gaussian priors usually for shape priors of the spline.
+    linear_upriors : List[LinearPrior]
+        A list of linear Uniform priors usually for shape priors of the spline.
+
+    Methods
+    -------
+    check_data(data)
+        Check if the data contains the column name `name`. And create the spline
+        object, if only `spline_specs` is provided.
+    process_priors()
+        Check the prior type and extract `gprior`, `uprior`, `linear_gpriors`
+        and `linear_upriors`.
+    reset_priors()
+        Reset direct and linear priors.
+    get_mat(data)
+        Get design matrix.
+    get_linear_gvec()
+        Get linear Gaussian prior vector.
+    get_linear_uvec()
+        Get linear Uniform prior vector.
+    get_linear_gmat(data)
+        Get linear Gaussian prior design matrix.
+    get_linear_umat(data)
+        Get linear Uniform prior design matrix.
+    """
+
     spline: XSpline = field(default=None, repr=False)
     spline_specs: SplineSpecs = field(default=None, repr=False)
     linear_gpriors: List[LinearPrior] = field(default_factory=list, repr=False)
@@ -237,6 +297,14 @@ class SplineVariable(Variable):
         self.process_priors()
 
     def check_data(self, data: Data):
+        """Check if the data contains the column name `name`. And create the
+        spline object, if only `spline_specs` is provided.
+
+        Parameters
+        ----------
+        data : Data
+            Data object to be checked.
+        """
         super().check_data(data)
         if self.spline is None:
             cov = data.get_cols(self.name)
@@ -246,20 +314,32 @@ class SplineVariable(Variable):
                     prior.attach_spline(self.spline)
 
     def process_priors(self):
+        """Check the prior type and extract `gprior`, `uprior`, `linear_gpriors`
+        and `linear_upriors`.
+
+        Raises
+        ------
+        AssertionError
+            Raised if direct Gaussian prior size not match.
+        AssertionError
+            Raised if direct Uniform prior size not match.
+        ValueError
+            Raised when any prior in the list is not an instance of Prior.
+        """
         for prior in self.priors:
             if isinstance(prior, (SplineGaussianPrior, LinearGaussianPrior)):
                 self.linear_gpriors.append(prior)
             elif isinstance(prior, (SplineUniformPrior, LinearUniformPrior)):
                 self.linear_upriors.append(prior)
             elif isinstance(prior, GaussianPrior):
-                if self.gprior is not None and self.gprior != prior:
-                    raise ValueError("Can only provide one Gaussian prior.")
+                if self.gprior is not None:
+                    self.priors.remove(self.gprior)
                 self.gprior = prior
                 assert self.gprior.size == self.size, \
                     "Gaussian prior size not match."
             elif isinstance(prior, UniformPrior):
-                if self.uprior is not None and self.uprior != prior:
-                    raise ValueError("Can only provide one Uniform prior.")
+                if self.uprior is not None:
+                    self.priors.remove(self.uprior)
                 self.uprior = prior
                 assert self.uprior.size == self.size, \
                     "Uniform prior size not match."
@@ -268,6 +348,7 @@ class SplineVariable(Variable):
 
     @property
     def size(self) -> int:
+        """Size of the variable."""
         if self.spline is not None:
             n = self.spline.num_spline_bases
         else:
@@ -275,17 +356,37 @@ class SplineVariable(Variable):
         return n
 
     def reset_priors(self):
+        """Reset direct and linear priors."""
         self.gprior = None
         self.uprior = None
         self.linear_gpriors = list()
         self.linear_upriors = list()
 
     def get_mat(self, data: Data) -> np.ndarray:
+        """Get design matrix.
+
+        Parameters
+        ----------
+        data : Data
+            Data object that provides the covariates.
+
+        Returns
+        -------
+        np.ndarray
+            Design matrix.
+        """
         self.check_data(data)
         cov = data.get_cols(self.name)
         return self.spline.design_mat(cov, l_extra=True, r_extra=True)
 
     def get_linear_uvec(self) -> np.ndarray:
+        """Get linear Uniform prior vector.
+
+        Returns
+        -------
+        np.ndarray
+            Linear uniform prior vector.
+        """
         if not self.linear_upriors:
             uvec = np.empty((2, 0))
         else:
@@ -296,6 +397,13 @@ class SplineVariable(Variable):
         return uvec
 
     def get_linear_gvec(self) -> np.ndarray:
+        """Get linear Gaussian prior vector.
+
+        Returns
+        -------
+        np.ndarray
+            Linear Gaussian prior vector.
+        """
         if not self.linear_gpriors:
             gvec = np.empty((2, 0))
         else:
@@ -306,6 +414,23 @@ class SplineVariable(Variable):
         return gvec
 
     def get_linear_umat(self, data: Data = None) -> np.ndarray:
+        """Get linear Uniform prior design matrix.
+
+        Parameters
+        ----------
+        data : Data, optional
+            Data object that provides the covariates. Default to be `None`.
+
+        Raises
+        ------
+        AssertionError
+            Raised when both `data` and `self.spline` are `None`.
+
+        Returns
+        -------
+        np.ndarray:
+            Linear Uniform prior design matrix.
+        """
         if not self.linear_upriors:
             umat = np.empty((0, self.size))
         else:
@@ -318,6 +443,23 @@ class SplineVariable(Variable):
         return umat
 
     def get_linear_gmat(self, data: Data = None) -> np.ndarray:
+        """Get linear Gaussian prior design matrix.
+
+        Parameters
+        ----------
+        data : Data
+            Data object that provides the covariates.
+
+        Raises
+        ------
+        AssertionError
+            Raised when both `data` and `self.spline` are `None`.
+
+        Returns
+        -------
+        np.ndarray:
+            Linear Gaussian prior design matrix.
+        """
         if not self.linear_gpriors:
             gmat = np.empty((0, self.size))
         else:
