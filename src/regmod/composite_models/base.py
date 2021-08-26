@@ -9,7 +9,7 @@ from pandas import DataFrame
 from regmod.composite_models.interface import NodeModel
 from regmod.data import Data
 from regmod.function import fun_dict
-from regmod.models import GaussianModel, PoissonModel
+from regmod.models import GaussianModel, PoissonModel, BinomialModel
 from regmod.prior import GaussianPrior
 from regmod.utils import sizes_to_slices
 from regmod.variable import Variable
@@ -20,7 +20,10 @@ link_funs = {
     ].inv_fun,
     "poisson": fun_dict[
         PoissonModel.default_param_specs["lam"]["inv_link"]
-    ].inv_fun
+    ].inv_fun,
+    "binomial": fun_dict[
+        BinomialModel.default_param_specs["p"]["inv_link"]
+    ].inv_fun,
 }
 
 model_constructors = {
@@ -29,7 +32,10 @@ model_constructors = {
     ),
     "poisson": lambda data, param_specs: PoissonModel(
         data, param_specs={"lam": param_specs}
-    )
+    ),
+    "binomial": lambda data, param_specs: BinomialModel(
+        data, param_specs={"p": param_specs}
+    ),
 }
 
 
