@@ -53,11 +53,15 @@ def get_simple_basetree(df: DataFrame,
         return model
 
     # process masks
-    if var_masks is None:
-        var_masks = {v.name: np.ones(v.size) for v in variables}
-    if lvl_masks is None:
-        lvl_masks = [1.0]*len(col_label)
-    mask = {name: prior*lvl_masks[0] for name, prior in var_masks.items()}
+    final_var_masks = {v.name: np.full(v.size, np.inf) for v in variables}
+    final_lvl_masks = [np.inf]*len(col_label)
+    if var_masks is not None:
+        final_var_masks.update(var_masks)
+    if lvl_masks is not None:
+        final_lvl_masks = list(lvl_masks) + final_lvl_masks[len(lvl_masks):]
+
+    mask = {name: prior*final_lvl_masks[0]
+            for name, prior in final_var_masks.items()}
     model_specs["prior_mask"] = mask
 
     # create children model
