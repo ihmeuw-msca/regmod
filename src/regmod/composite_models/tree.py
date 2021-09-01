@@ -72,6 +72,6 @@ def get_simple_basetree(df: DataFrame,
                                          col_label[1:],
                                          model_specs,
                                          var_masks=var_masks,
-                                         lvl_masks=lvl_masks[1:]))
+                                         lvl_masks=final_lvl_masks[1:]))
 
     return model
