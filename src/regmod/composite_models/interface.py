@@ -34,6 +34,10 @@ class ModelInterface(ABC):
         pass
 
     @abstractmethod
+    def get_draws(self, df: DataFrame = None, size: int = 1000) -> DataFrame:
+        pass
+
+    @abstractmethod
     def set_prior(self, priors: Dict):
         pass
 

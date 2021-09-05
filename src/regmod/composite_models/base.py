@@ -100,6 +100,22 @@ class BaseModel(NodeModel):
         )
         return df
 
+    def get_draws(self, df: DataFrame = None, size: int = 1000) -> DataFrame:
+        df = self.get_data() if df is None else df.copy()
+        df = self.add_offset(df)
+
+        pred_data = self.model.data.copy()
+        pred_data.attach_df(df)
+
+        coefs_draws = np.random.multivariate_normal(self.model.opt_coefs,
+                                                    self.model.opt_vcov,
+                                                    size=size)
+        for i, coefs_draw in enumerate(coefs_draws):
+            df[f"{self.col_value}_{i}"] = self.model.params[0].get_param(
+                coefs_draw, pred_data
+            )
+        return df
+
     def set_prior(self, priors: Dict[str, List]):
         priors = deepcopy(priors)
         for name, prior in priors.items():

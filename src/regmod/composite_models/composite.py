@@ -71,3 +71,12 @@ class CompositeModel(NodeModel):
             self[name].predict(df[df[self.col_label] == name])
             for name in df[self.col_label].unique()
         ], ignore_index=True)
+
+    def get_draws(self,
+                  df: DataFrame = None,
+                  size: int = 1000) -> DataFrame:
+        df = self.get_data() if df is None else df
+        return pd.concat([
+            self[name].get_draws(df[df[self.col_label] == name], size)
+            for name in df[self.col_label].unique()
+        ], ignore_index=True)
