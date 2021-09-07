@@ -9,8 +9,24 @@ from scipy.optimize import LinearConstraint, minimize
 
 def scipy_optimize(model: "Model",
                    x0: ndarray = None,
-                   options: Dict = None) -> Dict[str, ndarray]:
+                   options: Dict = None) -> ndarray:
+    """Scipy trust-region optimizer.
 
+    Parameters
+    ----------
+    model : Model
+        Instance of `regmod.models.Model` class.
+    x0 : ndarray, optional
+        Initial guess for the variable, by default None. If `None` use zero
+        vector as the initial guess.
+    options : Dict, optional
+        Scipy solver options, by default None.
+
+    Returns
+    -------
+    ndarray
+        Optimal solution.
+    """
     x0 = np.zeros(model.size) if x0 is None else x0
     bounds = model.uvec.T
     constraints = [LinearConstraint(
@@ -33,12 +49,35 @@ def scipy_optimize(model: "Model",
 
 
 def set_trim_weights(model: "Model", index: ndarray, mask: float):
+    """Set trimming weights to model object.
+
+    Parameters
+    ----------
+    model : Model
+        Instance of `regmod.models.Model` class.
+    index : ndarray
+        Index where the weights need to be set.
+    mask : float
+        Value of the weights to set.
+    """
     weights = np.ones(model.data.num_obs)
     weights[index] = mask
     model.data.trim_weights = weights
 
 
 def trimming(optimize: Callable) -> Callable:
+    """Constructor of trimming solver.
+
+    Parameters
+    ----------
+    optimize : Callable
+        Optimization solver.
+
+    Returns
+    -------
+    Callable
+        Trimming optimization solver.
+    """
     def optimize_with_trimming(model: "Model",
                                x0: ndarray = None,
                                options: Dict = None,
