@@ -9,6 +9,24 @@ import numpy as np
 
 @dataclass
 class SmoothFunction:
+    """Smooth function class bundle function and its derivative information
+    together.
+
+    Parameters
+    ----------
+    name : str
+        Name of the function.
+    fun : Callable
+        The fuction require to accept numpy array as the input and output should
+        have the same shape with the input.
+    inv_fun : Callable
+        Inverse of the function.
+    dfun : Callable
+        Derivative of the function.
+    d2fun : Callable
+        Second derivative of the function.
+    """
+
     name: str
     fun: Callable = field(repr=False)
     inv_fun: Callable = field(repr=False)
