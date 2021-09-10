@@ -2,7 +2,7 @@
 Base Model
 """
 from copy import deepcopy
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 from pandas import DataFrame
@@ -40,8 +40,60 @@ model_constructors = {
 
 
 class BaseModel(NodeModel):
-    """
-    Base Model, a simple wrapper around the stats model.
+    """Base Model, a simple wrapper around the stats model.
+
+    Parameters
+    ----------
+    name : str
+        Name of the model
+    data : Data
+        The data object for the model.
+    variables : List[Variable]
+        A list of variables used in the model.
+    mtype : str, optional
+        Type of the model, please see model constructors for options. Default
+        to be `"gaussian"`.
+    prior_mask : Optional[Dict], optional
+        Masks for the priors. Default to be None. When it is None prior won't be
+        modified.
+
+    Attributes
+    ----------
+    name : str
+        Name of the model
+    data : Data
+        The data object for the model.
+    variables : List[Variable]
+        A list of variables used in the model.
+    mtype : str
+        Type of the model.
+    param_specs : Dict
+        Specifications of the parameter.
+    model : Model
+        `regmod.models.Model` instance with the given specification.
+    prior_mask : Dict
+        Masks for the priors.
+
+    Methods
+    -------
+    add_offset(df, copy=False)
+        Add offset to the given data frame.
+    set_data(df)
+        Attach the data frame. Offset will automatically added.
+    get_data(df)
+        Get the data frame.
+    fit(**fit_options)
+        Fit the model. Model will be created if hasn't.
+    predict(df=None)
+        Predict model with given data frame.
+    get_draws(df=None, size=1000)
+        Get the draws of the prediction with given data frame.
+    set_prior(priors)
+        Attach priors.
+    set_prior_mask(masks)
+        Set the prior masks.
+    get_posterior()
+        Get the posterior of the fitted model.
     """
 
     def __init__(self,
@@ -49,7 +101,7 @@ class BaseModel(NodeModel):
                  data: Data,
                  variables: List[Variable],
                  mtype: str = "gaussian",
-                 prior_mask: Dict = None,
+                 prior_mask: Optional[Dict] = None,
                  **param_specs):
 
         super().__init__(name)
@@ -69,26 +121,44 @@ class BaseModel(NodeModel):
         self.prior_mask = {} if prior_mask is None else prior_mask
 
     def add_offset(self, df: DataFrame, copy: bool = False) -> DataFrame:
+        """Add offset to the given data frame.
+
+        Parameters
+        ----------
+        df : DataFrame
+            Given data frame.
+        copy : bool, optional
+            If True return a copy of the given data frame, by default False.
+
+        Returns
+        -------
+        DataFrame
+            Data frame with the offset.
+        """
         df = df.copy() if copy else df
         if self.col_value in df:
             df[self.data.col_offset] = link_funs[self.mtype](df[self.col_value])
         return df
 
     def get_data(self) -> DataFrame:
+        """Get the data frame."""
         return self.data.df.copy()
 
     def set_data(self, df: DataFrame):
+        """Attach the data frame. Offset will automatically added."""
         if df.shape[0] == 0:
             raise ValueError("Attempt to use empty dataframe.")
         self.data.attach_df(self.add_offset(df, copy=True))
 
     def fit(self, **fit_options):
+        """Fit the model. Model will be created if hasn't."""
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
 
     def predict(self, df: DataFrame = None):
+        """Predict the model with given data frame."""
         df = self.get_data() if df is None else df.copy()
         df = self.add_offset(df)
 
@@ -101,6 +171,7 @@ class BaseModel(NodeModel):
         return df
 
     def get_draws(self, df: DataFrame = None, size: int = 1000) -> DataFrame:
+        """Get the draws of the prediction with given data frame."""
         df = self.get_data() if df is None else df.copy()
         df = self.add_offset(df)
 
@@ -117,6 +188,7 @@ class BaseModel(NodeModel):
         return df
 
     def set_prior(self, priors: Dict[str, List]):
+        """Attach priors."""
         priors = deepcopy(priors)
         for name, prior in priors.items():
             if name in self.prior_mask:
@@ -125,6 +197,7 @@ class BaseModel(NodeModel):
         self.model = model_constructors[self.mtype](self.data, self.param_specs)
 
     def set_prior_mask(self, masks: Dict):
+        """Set the prior masks."""
         for name, mask in masks.items():
             if name in self.variables:
                 if mask.size != self.variables[name]:
@@ -132,6 +205,7 @@ class BaseModel(NodeModel):
                 self.prior_mask[name] = mask
 
     def get_posterior(self) -> Dict:
+        """Get the posterior of the fitted model."""
         if self.model.opt_coefs is None:
             raise AttributeError("Please fit the model first.")
         mean = self.model.opt_coefs
@@ -146,6 +220,21 @@ class BaseModel(NodeModel):
         }
 
     def append(self, node: NodeModel, rank: int = 0):
+        """Overwrite the append function in NodeModel.
+
+        Parameters
+        ----------
+        node : NodeModel
+            The node model to be appended node.
+        rank : int, optional
+            Indicate which compartment to append to, by default 0.
+
+        Raises
+        ------
+        ValueError
+            Raised if rank is greater than or equals to 1. BaseModel can only
+            primary children.
+        """
         if rank >= 1:
             raise ValueError(f"{type(self).__name__} can only have primary "
                              "link.")

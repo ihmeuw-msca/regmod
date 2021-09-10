@@ -66,8 +66,7 @@ class ModelInterface(ABC):
 
     @abstractmethod
     def fit(self, **fit_options):
-        """Fit the model.
-        """
+        """Fit the model."""
         pass
 
     @abstractmethod
