@@ -44,6 +44,11 @@ class TreeModel(CompositeModel):
     def get_simple_tree(cls, name: str, *args, **kwargs) -> "TreeModel":
         """Get the simple TreeModel from given specification.
 
+        Parameters
+        ----------
+        name : str
+            Name of the model.
+
         Returns
         -------
         TreeModel
@@ -57,14 +62,14 @@ def get_simple_basetree(df: DataFrame,
                         model_specs: Dict,
                         var_masks: Dict[str, float] = None,
                         lvl_masks: List[float] = None) -> BaseModel:
-    """Get a simple TreeModel from given specification.
+    """Get simple base model with tree structure from given specification.
 
     Parameters
     ----------
     df : DataFrame
-        Given data frame
+        Given data frame.
     col_label : List[str]
-        The name of the label column
+        The name of the label column.
     model_specs : Dict
         Model specification including data and variables.
     var_masks : Dict[str, float], optional
