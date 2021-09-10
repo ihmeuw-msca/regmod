@@ -7,7 +7,7 @@ __title__ = "regmod"
 __summary__ = "regmod: General regression models."
 __uri__ = "https://github.com/ihmeuw-msca/regmod"
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 __author__ = "IHME Math Sciences"
 __email__ = "ihme.math.sciences@gmail.com"
