@@ -32,7 +32,7 @@ def data():
 def wrong_data():
     num_obs = 5
     df = pd.DataFrame({
-        "obs": np.random.randn(num_obs),
+        "obs": -np.random.rand(num_obs),
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })

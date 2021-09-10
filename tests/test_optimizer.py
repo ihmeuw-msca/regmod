@@ -33,11 +33,11 @@ def test_scipy_optimizer(seed):
 
     model = GaussianModel(data, param_specs={"mu": {"variables": [var_cov0, var_cov1]}})
 
-    result = scipy_optimize(model)
+    coefs = scipy_optimize(model)
 
     tr_coef = np.linalg.solve(
         (model.mat[0].T*model.data.weights).dot(model.mat[0]),
         (model.mat[0].T*model.data.weights).dot(model.data.obs)
     )
 
-    assert np.allclose(result["coefs"], tr_coef)
+    assert np.allclose(coefs, tr_coef)

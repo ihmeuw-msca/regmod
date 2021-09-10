@@ -73,6 +73,12 @@ def model(data, var_cov0, var_cov1):
     return GaussianModel(data, param_specs={"mu": {"variables": [var_cov0, var_cov1]}})
 
 
+def test_model_result(model):
+    assert model.opt_result is None
+    assert model.opt_coefs is None
+    assert model.opt_vcov is None
+
+
 def test_model_size(model, var_cov0, var_cov1):
     assert model.size == var_cov0.size + var_cov1.size
 

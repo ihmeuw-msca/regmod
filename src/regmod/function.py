@@ -9,8 +9,27 @@ import numpy as np
 
 @dataclass
 class SmoothFunction:
+    """Smooth function class bundle function and its derivative information
+    together.
+
+    Parameters
+    ----------
+    name : str
+        Name of the function.
+    fun : Callable
+        The fuction require to accept numpy array as the input and output should
+        have the same shape with the input.
+    inv_fun : Callable
+        Inverse of the function.
+    dfun : Callable
+        Derivative of the function.
+    d2fun : Callable
+        Second derivative of the function.
+    """
+
     name: str
     fun: Callable = field(repr=False)
+    inv_fun: Callable = field(repr=False)
     dfun: Callable = field(repr=False)
     d2fun: Callable = field(default=None, repr=False)
 
@@ -25,18 +44,6 @@ def identity_dfun(x):
 
 def identity_d2fun(x):
     return 0.0 if np.isscalar(x) else np.zeros(len(x))
-
-
-def quad_fun(x):
-    return x**2
-
-
-def quad_dfun(x):
-    return 2.0*x
-
-
-def quad_d2fun(x):
-    return 2.0 if np.isscalar(x) else np.full(len(x), 2.0)
 
 
 def exp_fun(x):
@@ -106,12 +113,31 @@ def logit_d2fun(x):
 
 
 fun_list = [
-    SmoothFunction(name="identity", fun=identity_fun, dfun=identity_dfun, d2fun=identity_d2fun),
-    SmoothFunction(name="quad", fun=quad_fun, dfun=quad_dfun, d2fun=quad_d2fun),
-    SmoothFunction(name="exp", fun=exp_fun, dfun=exp_dfun, d2fun=exp_d2fun),
-    SmoothFunction(name="expit", fun=expit_fun, dfun=expit_dfun, d2fun=expit_d2fun),
-    SmoothFunction(name="log", fun=log_fun, dfun=log_dfun, d2fun=log_d2fun),
-    SmoothFunction(name="logit", fun=logit_fun, dfun=logit_dfun, d2fun=logit_d2fun),
+    SmoothFunction(name="identity",
+                   fun=identity_fun,
+                   inv_fun=identity_fun,
+                   dfun=identity_dfun,
+                   d2fun=identity_d2fun),
+    SmoothFunction(name="exp",
+                   fun=exp_fun,
+                   inv_fun=log_fun,
+                   dfun=exp_dfun,
+                   d2fun=exp_d2fun),
+    SmoothFunction(name="expit",
+                   fun=expit_fun,
+                   inv_fun=logit_fun,
+                   dfun=expit_dfun,
+                   d2fun=expit_d2fun),
+    SmoothFunction(name="log",
+                   fun=log_fun,
+                   inv_fun=exp_fun,
+                   dfun=log_dfun,
+                   d2fun=log_d2fun),
+    SmoothFunction(name="logit",
+                   fun=logit_fun,
+                   inv_fun=expit_fun,
+                   dfun=logit_dfun,
+                   d2fun=logit_d2fun),
 ]
 
 
