@@ -78,22 +78,8 @@ class BaseModel(NodeModel):
     -------
     add_offset(df, copy=False)
         Add offset to the given data frame.
-    set_data(df)
-        Attach the data frame. Offset will automatically added.
-    get_data(df)
-        Get the data frame.
-    fit(**fit_options)
-        Fit the model. Model will be created if hasn't.
-    predict(df=None)
-        Predict model with given data frame.
-    get_draws(df=None, size=1000)
-        Get the draws of the prediction with given data frame.
-    set_prior(priors)
-        Attach priors.
-    set_prior_mask(masks)
-        Set the prior masks.
-    get_posterior()
-        Get the posterior of the fitted model.
+    append(node, rank=0)
+        Overwrite the append function in NodeModel.
     """
 
     def __init__(self,
@@ -141,24 +127,20 @@ class BaseModel(NodeModel):
         return df
 
     def get_data(self) -> DataFrame:
-        """Get the data frame."""
         return self.data.df.copy()
 
     def set_data(self, df: DataFrame):
-        """Attach the data frame. Offset will automatically added."""
         if df.shape[0] == 0:
             raise ValueError("Attempt to use empty dataframe.")
         self.data.attach_df(self.add_offset(df, copy=True))
 
     def fit(self, **fit_options):
-        """Fit the model. Model will be created if hasn't."""
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
 
     def predict(self, df: DataFrame = None):
-        """Predict the model with given data frame."""
         df = self.get_data() if df is None else df.copy()
         df = self.add_offset(df)
 
@@ -171,7 +153,6 @@ class BaseModel(NodeModel):
         return df
 
     def get_draws(self, df: DataFrame = None, size: int = 1000) -> DataFrame:
-        """Get the draws of the prediction with given data frame."""
         df = self.get_data() if df is None else df.copy()
         df = self.add_offset(df)
 
@@ -188,7 +169,6 @@ class BaseModel(NodeModel):
         return df
 
     def set_prior(self, priors: Dict[str, List]):
-        """Attach priors."""
         priors = deepcopy(priors)
         for name, prior in priors.items():
             if name in self.prior_mask:
@@ -197,7 +177,6 @@ class BaseModel(NodeModel):
         self.model = model_constructors[self.mtype](self.data, self.param_specs)
 
     def set_prior_mask(self, masks: Dict):
-        """Set the prior masks."""
         for name, mask in masks.items():
             if name in self.variables:
                 if mask.size != self.variables[name]:
@@ -205,7 +184,6 @@ class BaseModel(NodeModel):
                 self.prior_mask[name] = mask
 
     def get_posterior(self) -> Dict:
-        """Get the posterior of the fitted model."""
         if self.model.opt_coefs is None:
             raise AttributeError("Please fit the model first.")
         mean = self.model.opt_coefs

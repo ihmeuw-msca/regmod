@@ -1,23 +1,39 @@
 """
 Composite Model
 """
-from typing import Dict, List
+from typing import Dict, Iterable, List, Optional
 from itertools import chain
 
 import pandas as pd
 from pandas import DataFrame
 from regmod.composite_models.interface import NodeModel
+from regmod.composite_models.node import Node
 
 
 class CompositeModel(NodeModel):
-    """
-    Composite Model, abstract behavior of group model.
+    """Composite Model, abstract behavior of group model.
+
+    Parameters
+    ----------
+    name : str
+        Name of the model.
+    models : List[NodeModel], optional
+        A list of sub models. Default to be None. When it is None, models will
+        be an empty list.
+    masks : Optional[Dict], optional
+        Prior masks, default to be None. When it is None, masks will be an empty
+        dictionary.
+
+    Methods
+    -------
+    get_computational_nodes()
+        Get the computational nodes.
     """
 
     def __init__(self,
                  name: str,
-                 models: List[NodeModel] = None,
-                 masks: Dict = None):
+                 models: Optional[List[NodeModel]] = None,
+                 masks: Optional[Dict] = None):
         super().__init__(name)
         models = [] if models is None else models
         if not all(isinstance(model, NodeModel) for model in models):
@@ -30,7 +46,14 @@ class CompositeModel(NodeModel):
             raise TypeError("Masks must be dictionary.")
         self.set_prior_mask(masks)
 
-    def get_computational_nodes(self):
+    def get_computational_nodes(self) -> Iterable[NodeModel]:
+        """Get the computational nodes.
+
+        Returns
+        -------
+        Iterable[NodeModel]
+            Computational nodes.
+        """
         return chain.from_iterable(
             model.get_leafs(1) for model in self.children.named_lists[1]
         )
