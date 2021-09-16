@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 import numpy as np
 from numpy import ndarray
-from scipy.stats import poisson
+from scipy.stats import weibull_min
 from regmod.data import Data
 
 from .model import Model
@@ -38,7 +38,9 @@ class WeibullModel(Model):
                 [ln_t*(t**params[1]), 1/params[1]**2 + params[0]*(ln_t**2)*(t**params[1])]]
 
     def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
-        return NotImplemented
+        scale = 1 / params[0]**(1 / params[1])
+        return [weibull_min.ppf(bounds[0], c=params[1], scale=scale),
+                weibull_min.ppf(bounds[1], c=params[1], scale=scale)]
 
     def __repr__(self) -> str:
         return f"WeibullModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"
