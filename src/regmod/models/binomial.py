@@ -44,6 +44,3 @@ class BinomialModel(Model):
         n = self.obs_sample_sizes
         return [binom.ppf(bounds[0], n=n, p=p),
                 binom.ppf(bounds[1], n=n, p=p)]
-
-    def __repr__(self) -> str:
-        return f"BinomialModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"

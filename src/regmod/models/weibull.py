@@ -41,6 +41,3 @@ class WeibullModel(Model):
         scale = 1 / params[0]**(1 / params[1])
         return [weibull_min.ppf(bounds[0], c=params[1], scale=scale),
                 weibull_min.ppf(bounds[1], c=params[1], scale=scale)]
-
-    def __repr__(self) -> str:
-        return f"WeibullModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"

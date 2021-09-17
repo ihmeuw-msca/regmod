@@ -33,6 +33,3 @@ class PoissonModel(Model):
         mean = params[0]
         return [poisson.ppf(bounds[0], mu=mean),
                 poisson.ppf(bounds[1], mu=mean)]
-
-    def __repr__(self) -> str:
-        return f"PoissonModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"

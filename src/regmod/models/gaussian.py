@@ -28,6 +28,3 @@ class GaussianModel(Model):
         sd = 1.0/np.sqrt(self.data.weights)
         return [norm.ppf(bounds[0], loc=mean, scale=sd),
                 norm.ppf(bounds[1], loc=mean, scale=sd)]
-
-    def __repr__(self) -> str:
-        return f"LinearModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"

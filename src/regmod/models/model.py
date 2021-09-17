@@ -590,3 +590,9 @@ class Model:
             df[param_name] = self.params[i].get_param(coefs[i], data)
 
         return df
+
+    def __repr__(self) -> str:
+        return (f"{type(self).__name__}("
+                f"bnum_obs={self.data.num_obs}, "
+                f"num_params={self.num_params}, "
+                f"size={self.size})")
