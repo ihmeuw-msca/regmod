@@ -4,6 +4,7 @@ Model module
 from typing import Callable, Dict, List, Tuple, Union, Optional
 
 import numpy as np
+import pandas as pd
 from numpy import ndarray
 from scipy.linalg import block_diag
 
@@ -117,6 +118,8 @@ class Model:
         Jacobian function.
     fit(optimizer, **optimizer_options)
         Fit function.
+    predict(df)
+        Predict the parameters.
     """
 
     param_names: Tuple[str] = None
@@ -562,3 +565,28 @@ class Model:
             Model solver, by default scipy_optimize.
         """
         optimizer(self, **optimizer_options)
+
+    def predict(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+        """Predict the parameters.
+
+        Parameters
+        ----------
+        df : pd.DataFrame, optional
+            Data Frame with prediction data. If it is None, using the training
+            data.
+
+        Returns
+        -------
+        pd.DataFrame
+            Data frame with predicted parameters.
+        """
+        if df is None:
+            df = self.data.df.copy()
+        data = self.data.copy()
+        data.attach_df(df)
+
+        coefs = self.split_coefs(self.opt_coefs)
+        for i, param_name in enumerate(self.param_names):
+            df[param_name] = self.params[i].get_param(coefs[i], data)
+
+        return df
