@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Dict, List, Optional
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 from regmod.composite_models.interface import NodeModel
 from regmod.data import Data
@@ -162,10 +163,12 @@ class BaseModel(NodeModel):
         coefs_draws = np.random.multivariate_normal(self.model.opt_coefs,
                                                     self.model.opt_vcov,
                                                     size=size)
-        for i, coefs_draw in enumerate(coefs_draws):
-            df[f"{self.col_value}_{i}"] = self.model.params[0].get_param(
-                coefs_draw, pred_data
-            )
+        draws = pd.DataFrame(np.vstack([
+            self.model.params[0].get_param(coefs_draw, pred_data)
+            for coefs_draw in coefs_draws
+        ]).T, columns=[f"{self.col_value}_{i}" for i in range(size)])
+
+        df = pd.concat([df, draws], axis=1)
         return df
 
     def set_prior(self, priors: Dict[str, List]):
