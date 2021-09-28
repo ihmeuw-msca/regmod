@@ -163,13 +163,17 @@ class BaseModel(NodeModel):
         coefs_draws = np.random.multivariate_normal(self.model.opt_coefs,
                                                     self.model.opt_vcov,
                                                     size=size)
-        draws = pd.DataFrame(np.vstack([
+        draws = np.vstack([
             self.model.params[0].get_param(coefs_draw, pred_data)
             for coefs_draw in coefs_draws
-        ]).T, columns=[f"{self.col_value}_{i}" for i in range(size)])
+        ])
+        df_draws = pd.DataFrame(
+            draws.T,
+            columns=[f"{self.col_value}_{i}" for i in range(size)],
+            index=df.index
+        )
 
-        df = pd.concat([df, draws], axis=1)
-        return df
+        return pd.concat([df, df_draws], axis=1)
 
     def set_prior(self, priors: Dict[str, List]):
         priors = deepcopy(priors)
