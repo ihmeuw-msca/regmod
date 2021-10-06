@@ -1,6 +1,7 @@
 """
 Base Model
 """
+import logging
 from copy import deepcopy
 from typing import Dict, List, Optional
 
@@ -14,6 +15,9 @@ from regmod.models import GaussianModel, PoissonModel, BinomialModel
 from regmod.prior import GaussianPrior
 from regmod.utils import sizes_to_slices
 from regmod.variable import Variable
+
+
+logger = logging.getLogger(__name__)
 
 link_funs = {
     "gaussian": fun_dict[
@@ -136,10 +140,12 @@ class BaseModel(NodeModel):
         self.data.attach_df(self.add_offset(df, copy=True))
 
     def fit(self, **fit_options):
+        logger.info(f"{self}, {self.level:=}, start fitting")
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
+        logger.info(f"{self}, {self.level:=}, finish fitting")
 
     def predict(self, df: DataFrame = None):
         df = self.get_data() if df is None else df.copy()
