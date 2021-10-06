@@ -1,6 +1,7 @@
 """
 Tree Model
 """
+import logging
 from typing import Dict, List
 
 import numpy as np
@@ -9,6 +10,8 @@ from pandas import DataFrame
 from regmod.composite_models.base import BaseModel
 from regmod.composite_models.composite import CompositeModel
 from regmod.composite_models.interface import NodeModel
+
+logger = logging.getLogger(__name__)
 
 
 class TreeModel(CompositeModel):
@@ -21,11 +24,15 @@ class TreeModel(CompositeModel):
     """
 
     def _fit(self, model: NodeModel, **fit_options):
+        logger.info(f"Fitting {get_model_type(model)} '{model.name}'.")
         model.fit(**fit_options)
         prior = model.get_posterior()
-        for sub_model in model.children.named_lists[0]:
-            sub_model.set_prior(prior)
-            self._fit(sub_model, **fit_options)
+        if len(model.children.named_lists[0]) > 0:
+            logger.info(f"Fitting children of '{model.name}'.")
+            for sub_model in model.children.named_lists[0]:
+                sub_model.set_prior(prior)
+                self._fit(sub_model, **fit_options)
+            logger.info(f"Finished fitting children of '{model.name}'.")
 
     def fit(self, **fit_options):
         """Overwrite the fit function in CompositeModel.
@@ -38,6 +45,7 @@ class TreeModel(CompositeModel):
         if len(self.children.named_lists[1]) != 1:
             raise ValueError(f"{type(self).__name__} must only have one "
                              "computational tree.")
+        logger.info(f"Fitting TreeModel '{self.name}'.")
         self._fit(self.children.named_lists[1][0], **fit_options)
 
     @classmethod
@@ -54,6 +62,7 @@ class TreeModel(CompositeModel):
         TreeModel
             A simple tree model.
         """
+        logger.info(f"Creating TreeModel '{name}.'")
         return cls(name, models=[get_simple_basetree(*args, **kwargs)])
 
 
@@ -82,6 +91,9 @@ def get_simple_basetree(df: DataFrame,
     BaseModel
         Root node of the computational tree model.
     """
+    name = model_specs["name"]
+    logger.info(f"Creating BaseModel '{name}'.")
+
     # check data before create model
     data = model_specs["data"]
     variables = model_specs["variables"]
@@ -109,6 +121,7 @@ def get_simple_basetree(df: DataFrame,
 
     # create children model
     df_group = df.groupby(col_label[0])
+    logger.info(f"Creating children of '{name}'.")
     for name in df_group.groups.keys():
         model_specs["name"] = name
         model.append(get_simple_basetree(df_group.get_group(name),
@@ -116,5 +129,10 @@ def get_simple_basetree(df: DataFrame,
                                          model_specs,
                                          var_masks=var_masks,
                                          lvl_masks=final_lvl_masks[1:]))
+    logger.info(f"Finished creating children of '{name}'.")
 
     return model
+
+
+def get_model_type(model: NodeModel) -> str:
+    return str(type(model)).split(".")[-1][:-2]
