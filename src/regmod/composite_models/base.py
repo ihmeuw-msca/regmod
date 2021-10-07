@@ -146,8 +146,8 @@ class BaseModel(NodeModel):
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
         message = f"{self}, level={self.level}, finish fitting, "
-        message += f"success={model.opt_result.success}, "
-        message += f"niter={model.opt_result.niter}"
+        message += f"success={self.model.opt_result.success}, "
+        message += f"niter={self.model.opt_result.niter}"
         logger.info(message)
 
     def predict(self, df: DataFrame = None):
