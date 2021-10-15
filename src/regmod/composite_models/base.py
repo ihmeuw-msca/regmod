@@ -140,14 +140,14 @@ class BaseModel(NodeModel):
         self.data.attach_df(self.add_offset(df, copy=True))
 
     def fit(self, **fit_options):
-        logger.info(f"{self}, level={self.level}, start fitting")
+        logger.info(f"fit_node;start;{self.level};{self.name}")
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
-        message = f"{self}, level={self.level}, finish fitting, "
-        message += f"success={self.model.opt_result.success}, "
-        message += f"niter={self.model.opt_result.niter}"
+        message = f"fit_node;finish;{self.level};{self.name};"
+        message += f"{self.model.opt_result.success};"
+        message += f"{self.model.opt_result.niter}"
         logger.info(message)
 
     def predict(self, df: DataFrame = None):
