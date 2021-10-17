@@ -1,5 +1,5 @@
 /* reduce the size of the main text */
-body {
+p {
   font-size: 0.95rem;
 }
 
