@@ -35,7 +35,6 @@ author = about["__author__"]
 
 # The full version, including alpha/beta/rc tags
 version = about["__version__"]
-release = about["__version__"]
 
 
 # -- General configuration ---------------------------------------------------
@@ -74,10 +73,11 @@ html_theme = 'furo'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 html_css_files = ["custom.css"]
+html_title = f"regmod {version}"
 html_theme_options = {
-    "sidebar_hide_name": True,
-    "light_logo": "logo-light.png",
-    "dark_logo": "logo-dark.png",
+    "sidebar_hide_name": False,
+    "light_logo": "logo/logo-light.png",
+    "dark_logo": "logo/logo-dark.png",
     "light_css_variables": {
         "color-brand-primary": "#008080",
         "color-brand-content": "#008080",
