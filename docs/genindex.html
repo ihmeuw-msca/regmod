@@ -1,0 +1,1081 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#" /><link rel="search" title="Search" href="search.html" />
+
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/><title>Index - regmod 0.0.7</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #008080;
+  --color-brand-content: #008080;
+  --color-problematic: #BF5844;
+  --color-background-secondary: #F8F8F8;
+  
+  }
+  body[data-theme="dark"] {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #6FD8D1;
+  --color-brand-content: #6FD8D1;
+  --color-problematic: #FA9F50;
+  --color-background-secondary: #202020;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #6FD8D1;
+  --color-brand-content: #6FD8D1;
+  --color-problematic: #FA9F50;
+  --color-background-secondary: #202020;
+  
+    }
+  }
+</style></head>
+  <body>
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">regmod 0.0.7</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/logo/logo-light.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/logo/logo-dark.png" alt="Dark Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">regmod 0.0.7</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="getting_started.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api_reference/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/composite_models.html">Composite models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/data.html">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/optimizer.html">Optimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/prior.html">Prior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/variable.html">Variable</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          
+<section class="genindex-section">
+  <h1 id="index">Index</h1>
+  <div class="genindex-jumpbox"><a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#J"><strong>J</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a></div>
+</section>
+<section id="A" class="genindex-section">
+  <h2>A</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#id28">add_offset() (regmod.composite_models.base.BaseModel method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.add_offset">[1]</a>
+</li>
+        <li><a href="api_reference/variable.html#id12">add_priors() (regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.add_priors">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#id29">append() (regmod.composite_models.base.BaseModel method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.append">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id27">(regmod.composite_models.interface.NodeModel method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.NodeModel.append">[1]</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id0">(regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.append">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.as_node">as_node() (regmod.composite_models.node.Node class method)</a>
+</li>
+        <li><a href="api_reference/data.html#id0">attach_df() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.attach_df">[1]</a>
+</li>
+        <li><a href="api_reference/prior.html#id7">attach_spline() (regmod.prior.SplinePrior method)</a>, <a href="api_reference/prior.html#regmod.prior.SplinePrior.attach_spline">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel">BaseModel (class in regmod.composite_models.base)</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.BinomialModel">BinomialModel (class in regmod.models)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.branch">branch (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id1">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="C" class="genindex-section">
+  <h2>C</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.chain.ChainModel">ChainModel (class in regmod.composite_models.chain)</a>
+</li>
+        <li><a href="api_reference/data.html#id1">check_cols() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.check_cols">[1]</a>
+</li>
+        <li><a href="api_reference/variable.html#id0">check_data() (regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.check_data">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id13">(regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.check_data">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.children">children (regmod.composite_models.node.Node attribute)</a>
+</li>
+        <li><a href="api_reference/data.html#id2">col_covs (regmod.data.Data attribute)</a>, <a href="api_reference/data.html#regmod.data.Data.col_covs">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#id17">col_label (regmod.composite_models.interface.ModelInterface attribute)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.col_label">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#id3">col_obs (regmod.data.Data attribute)</a>, <a href="api_reference/data.html#regmod.data.Data.col_obs">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#id4">col_offset (regmod.data.Data attribute)</a>, <a href="api_reference/data.html#regmod.data.Data.col_offset">[1]</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#id18">col_value (regmod.composite_models.interface.ModelInterface attribute)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.col_value">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#id5">col_weights (regmod.data.Data attribute)</a>, <a href="api_reference/data.html#regmod.data.Data.col_weights">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#regmod.data.Data.cols">cols (regmod.data.Data attribute)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel">CompositeModel (class in regmod.composite_models.composite)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#id2">copy() (regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.copy">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/data.html#id6">(regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.copy">[1]</a>
+</li>
+          <li><a href="api_reference/variable.html#id14">(regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.copy">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/data.html#regmod.data.Data.covs">covs (regmod.data.Data attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/data.html#id7">(regmod.data.Data property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="D" class="genindex-section">
+  <h2>D</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#id0">d2nll() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.d2nll">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#regmod.data.Data">Data (class in regmod.data)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.data">data (regmod.composite_models.base.BaseModel attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/models.html#regmod.models.Model.data">(regmod.models.Model attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#regmod.models.Model.default_param_specs">default_param_specs (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#id3">detach() (regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.detach">[1]</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/data.html#id8">detach_df() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.detach_df">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id1">detect_outliers() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.detect_outliers">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#id9">df (regmod.data.Data attribute)</a>, <a href="api_reference/data.html#regmod.data.Data.df">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id2">dnll() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.dnll">[1]</a>
+</li>
+        <li><a href="api_reference/prior.html#id8">domain_lb (regmod.prior.SplinePrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.SplinePrior.domain_lb">[1]</a>
+</li>
+        <li><a href="api_reference/prior.html#id9">domain_type (regmod.prior.SplinePrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.SplinePrior.domain_type">[1]</a>
+</li>
+        <li><a href="api_reference/prior.html#id10">domain_ub (regmod.prior.SplinePrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.SplinePrior.domain_ub">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="E" class="genindex-section">
+  <h2>E</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#id4">extend() (regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.extend">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="F" class="genindex-section">
+  <h2>F</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/data.html#id10">fill_df() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.fill_df">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.fit">fit() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id31">(regmod.composite_models.chain.ChainModel method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.chain.ChainModel.fit">[1]</a>
+</li>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.fit">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id19">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.fit">[1]</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id32">(regmod.composite_models.tree.TreeModel method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.tree.TreeModel.fit">[1]</a>
+</li>
+          <li><a href="api_reference/models.html#id3">(regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.fit">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.from_full_name">from_full_name() (regmod.composite_models.node.Node class method)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.from_names">from_names() (regmod.composite_models.node.Node class method)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.full_name">full_name (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id5">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="G" class="genindex-section">
+  <h2>G</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.GaussianModel">GaussianModel (class in regmod.models)</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.GaussianPrior">GaussianPrior (class in regmod.prior)</a>
+</li>
+        <li><a href="api_reference/data.html#id11">get_cols() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.get_cols">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#id30">get_computational_nodes() (regmod.composite_models.composite.CompositeModel method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.get_computational_nodes">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#id12">get_covs() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.get_covs">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id4">get_d2params() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_d2params">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.get_data">get_data() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.get_data">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id20">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.get_data">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#id5">get_dparams() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_dparams">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.get_draws">get_draws() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.get_draws">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id21">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.get_draws">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#id6">get_gvec() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_gvec">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id15">(regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.get_gvec">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#id6">get_leafs() (regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.get_leafs">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id7">get_linear_gmat() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_linear_gmat">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id1">(regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.get_linear_gmat">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#id8">get_linear_gvec() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_linear_gvec">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id2">(regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.get_linear_gvec">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#id9">get_linear_umat() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_linear_umat">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id3">(regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.get_linear_umat">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#id10">get_linear_uvec() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_linear_uvec">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id4">(regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.get_linear_uvec">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#id11">get_mat() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_mat">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id5">(regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.get_mat">[1]</a>
+</li>
+          <li><a href="api_reference/variable.html#id16">(regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.get_mat">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#id7">get_name() (regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.get_name">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id12">get_params() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_params">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.get_posterior">get_posterior() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.get_posterior">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id22">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.get_posterior">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.chain.get_simple_basechain">get_simple_basechain() (in module regmod.composite_models.chain)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.tree.get_simple_basetree">get_simple_basetree() (in module regmod.composite_models.tree)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.chain.ChainModel.get_simple_chain">get_simple_chain() (regmod.composite_models.chain.ChainModel class method)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.tree.TreeModel.get_simple_tree">get_simple_tree() (regmod.composite_models.tree.TreeModel class method)</a>
+</li>
+        <li><a href="api_reference/models.html#id13">get_ui() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_ui">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id14">get_uvec() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.get_uvec">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id17">(regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.get_uvec">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/variable.html#id18">gprior (regmod.variable.Variable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.gprior">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id15">gradient() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.gradient">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id16">gradient_from_gprior() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.gradient_from_gprior">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model.gvec">gvec (regmod.models.Model attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="H" class="genindex-section">
+  <h2>H</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#id17">hessian() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.hessian">[1]</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#id18">hessian_from_gprior() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.hessian_from_gprior">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="I" class="genindex-section">
+  <h2>I</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.Model.indices">indices (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/data.html#id13">is_empty() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.is_empty">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/prior.html#id2">(regmod.prior.LinearPrior method)</a>, <a href="api_reference/prior.html#regmod.prior.LinearPrior.is_empty">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.isleaf">isleaf (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id8">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.isroot">isroot (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id9">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="J" class="genindex-section">
+  <h2>J</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#id19">jacobian2() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.jacobian2">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="L" class="genindex-section">
+  <h2>L</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/prior.html#id13">lb (regmod.prior.UniformPrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.UniformPrior.lb">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.leafs">leafs (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id10">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.level">level (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id11">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#regmod.models.Model.linear_gmat">linear_gmat (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/variable.html#id6">linear_gpriors (regmod.variable.SplineVariable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.linear_gpriors">[1]</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.Model.linear_gvec">linear_gvec (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model.linear_umat">linear_umat (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/variable.html#id7">linear_upriors (regmod.variable.SplineVariable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.linear_upriors">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model.linear_uvec">linear_uvec (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.LinearGaussianPrior">LinearGaussianPrior (class in regmod.prior)</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.LinearPrior">LinearPrior (class in regmod.prior)</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.LinearUniformPrior">LinearUniformPrior (class in regmod.prior)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="M" class="genindex-section">
+  <h2>M</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.Model.mat">mat (regmod.models.Model attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/prior.html#regmod.prior.LinearGaussianPrior.mat">(regmod.prior.LinearGaussianPrior attribute)</a>
+</li>
+          <li><a href="api_reference/prior.html#id3">(regmod.prior.LinearPrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.LinearPrior.mat">[1]</a>
+</li>
+          <li><a href="api_reference/prior.html#regmod.prior.LinearUniformPrior.mat">(regmod.prior.LinearUniformPrior attribute)</a>
+</li>
+          <li><a href="api_reference/prior.html#regmod.prior.SplineUniformPrior.mat">(regmod.prior.SplineUniformPrior attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/prior.html#id0">mean (regmod.prior.GaussianPrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.GaussianPrior.mean">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#id12">merge() (regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.merge">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model">Model (class in regmod.models)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.model">model (regmod.composite_models.base.BaseModel attribute)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface">ModelInterface (class in regmod.composite_models.interface)</a>
+</li>
+        <li>
+    module
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.base">regmod.composite_models.base</a>
+</li>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.chain">regmod.composite_models.chain</a>
+</li>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.composite">regmod.composite_models.composite</a>
+</li>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.interface">regmod.composite_models.interface</a>
+</li>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.node">regmod.composite_models.node</a>
+</li>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.tree">regmod.composite_models.tree</a>
+</li>
+          <li><a href="api_reference/data.html#module-regmod.data">regmod.data</a>
+</li>
+          <li><a href="api_reference/optimizer.html#module-regmod.optimizer">regmod.optimizer</a>
+</li>
+          <li><a href="api_reference/prior.html#module-regmod.prior">regmod.prior</a>
+</li>
+          <li><a href="api_reference/variable.html#module-regmod.variable">regmod.variable</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.mtype">mtype (regmod.composite_models.base.BaseModel attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="N" class="genindex-section">
+  <h2>N</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.name">name (regmod.composite_models.base.BaseModel attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.name">(regmod.composite_models.node.Node attribute)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id13">(regmod.composite_models.node.Node property)</a>
+</li>
+          <li><a href="api_reference/variable.html#id19">(regmod.variable.Variable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.name">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#regmod.models.NegativeBinomialModel">NegativeBinomialModel (class in regmod.models)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#id20">nll() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.nll">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node">Node (class in regmod.composite_models.node)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.interface.NodeModel">NodeModel (class in regmod.composite_models.interface)</a>
+</li>
+        <li><a href="api_reference/data.html#regmod.data.Data.num_obs">num_obs (regmod.data.Data attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/data.html#id14">(regmod.data.Data property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#regmod.models.Model.num_params">num_params (regmod.models.Model attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="O" class="genindex-section">
+  <h2>O</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#id21">objective() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.objective">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#id22">objective_from_gprior() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.objective_from_gprior">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#regmod.data.Data.obs">obs (regmod.data.Data attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/data.html#id15">(regmod.data.Data property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/data.html#regmod.data.Data.offset">offset (regmod.data.Data attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/data.html#id16">(regmod.data.Data property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.Model.opt_coefs">opt_coefs (regmod.models.Model attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/models.html#id23">(regmod.models.Model property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/models.html#regmod.models.Model.opt_result">opt_result (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model.opt_vcov">opt_vcov (regmod.models.Model attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/models.html#id24">(regmod.models.Model property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/prior.html#id11">order (regmod.prior.SplinePrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.SplinePrior.order">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="P" class="genindex-section">
+  <h2>P</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.Model.param_names">param_names (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.param_specs">param_specs (regmod.composite_models.base.BaseModel attribute)</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model.params">params (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.parent">parent (regmod.composite_models.node.Node attribute)</a>
+</li>
+        <li><a href="api_reference/data.html#id17">parse_df() (regmod.data.Data method)</a>, <a href="api_reference/data.html#regmod.data.Data.parse_df">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.PogitModel">PogitModel (class in regmod.models)</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.PoissonModel">PoissonModel (class in regmod.models)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#id14">pop() (regmod.composite_models.node.Node method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.node.Node.pop">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.predict">predict() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.predict">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id23">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.predict">[1]</a>
+</li>
+          <li><a href="api_reference/models.html#id25">(regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.predict">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/prior.html#regmod.prior.Prior">Prior (class in regmod.prior)</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.prior_mask">prior_mask (regmod.composite_models.base.BaseModel attribute)</a>
+</li>
+        <li><a href="api_reference/variable.html#id20">priors (regmod.variable.Variable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.priors">[1]</a>
+</li>
+        <li><a href="api_reference/variable.html#id8">process_priors() (regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.process_priors">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#id21">(regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.process_priors">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/prior.html#id5">process_size() (regmod.prior.Prior method)</a>, <a href="api_reference/prior.html#regmod.prior.Prior.process_size">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="R" class="genindex-section">
+  <h2>R</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    regmod.composite_models.base
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.base">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.composite_models.chain
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.chain">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.composite_models.composite
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.composite">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.composite_models.interface
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.interface">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.composite_models.node
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.node">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.composite_models.tree
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#module-regmod.composite_models.tree">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.data
+
+        <ul>
+          <li><a href="api_reference/data.html#module-regmod.data">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    regmod.optimizer
+
+        <ul>
+          <li><a href="api_reference/optimizer.html#module-regmod.optimizer">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.prior
+
+        <ul>
+          <li><a href="api_reference/prior.html#module-regmod.prior">module</a>
+</li>
+        </ul></li>
+        <li>
+    regmod.variable
+
+        <ul>
+          <li><a href="api_reference/variable.html#module-regmod.variable">module</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/variable.html#regmod.variable.Variable.reset_prior">reset_prior() (regmod.variable.Variable method)</a>
+</li>
+        <li><a href="api_reference/variable.html#id9">reset_priors() (regmod.variable.SplineVariable method)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.reset_priors">[1]</a>
+
+        <ul>
+          <li><a href="api_reference/variable.html#regmod.variable.Variable.reset_priors">(regmod.variable.Variable method)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/variable.html#id22">rm_priors() (regmod.variable.Variable method)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.rm_priors">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.root">root (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id15">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="S" class="genindex-section">
+  <h2>S</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/optimizer.html#regmod.optimizer.scipy_optimize">scipy_optimize() (in module regmod.optimizer)</a>
+</li>
+        <li><a href="api_reference/prior.html#id1">sd (regmod.prior.GaussianPrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.GaussianPrior.sd">[1]</a>
+</li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.set_data">set_data() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.set_data">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id24">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.set_data">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.set_prior">set_prior() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.set_prior">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id25">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.set_prior">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.set_prior_mask">set_prior_mask() (regmod.composite_models.base.BaseModel method)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#regmod.composite_models.composite.CompositeModel.set_prior_mask">(regmod.composite_models.composite.CompositeModel method)</a>
+</li>
+          <li><a href="api_reference/composite_models.html#id26">(regmod.composite_models.interface.ModelInterface method)</a>, <a href="api_reference/composite_models.html#regmod.composite_models.interface.ModelInterface.set_prior_mask">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/optimizer.html#regmod.optimizer.set_trim_weights">set_trim_weights() (in module regmod.optimizer)</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model.size">size (regmod.models.Model attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/prior.html#regmod.prior.GaussianPrior.size">(regmod.prior.GaussianPrior attribute)</a>
+</li>
+          <li><a href="api_reference/prior.html#id4">(regmod.prior.LinearPrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.LinearPrior.size">[1]</a>
+</li>
+          <li><a href="api_reference/prior.html#id6">(regmod.prior.Prior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.Prior.size">[1]</a>
+</li>
+          <li><a href="api_reference/prior.html#id12">(regmod.prior.SplinePrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.SplinePrior.size">[1]</a>
+</li>
+          <li><a href="api_reference/prior.html#regmod.prior.UniformPrior.size">(regmod.prior.UniformPrior attribute)</a>
+</li>
+          <li><a href="api_reference/variable.html#regmod.variable.SplineVariable.size">(regmod.variable.SplineVariable property)</a>
+</li>
+          <li><a href="api_reference/variable.html#regmod.variable.Variable.size">(regmod.variable.Variable attribute)</a>
+</li>
+          <li><a href="api_reference/variable.html#id23">(regmod.variable.Variable property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.Model.sizes">sizes (regmod.models.Model attribute)</a>
+</li>
+        <li><a href="api_reference/variable.html#id10">spline (regmod.variable.SplineVariable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.spline">[1]</a>
+</li>
+        <li><a href="api_reference/variable.html#id11">spline_specs (regmod.variable.SplineVariable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.SplineVariable.spline_specs">[1]</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.SplineGaussianPrior">SplineGaussianPrior (class in regmod.prior)</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.SplinePrior">SplinePrior (class in regmod.prior)</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.SplineUniformPrior">SplineUniformPrior (class in regmod.prior)</a>
+</li>
+        <li><a href="api_reference/variable.html#regmod.variable.SplineVariable">SplineVariable (class in regmod.variable)</a>
+</li>
+        <li><a href="api_reference/models.html#id26">split_coefs() (regmod.models.Model method)</a>, <a href="api_reference/models.html#regmod.models.Model.split_coefs">[1]</a>
+</li>
+        <li><a href="api_reference/data.html#regmod.data.Data.subset_cols">subset_cols (regmod.data.Data attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="T" class="genindex-section">
+  <h2>T</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.node.Node.tree">tree (regmod.composite_models.node.Node attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/composite_models.html#id16">(regmod.composite_models.node.Node property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.tree.TreeModel">TreeModel (class in regmod.composite_models.tree)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/data.html#regmod.data.Data.trim_weights">trim_weights (regmod.data.Data attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/data.html#id18">(regmod.data.Data property)</a>
+</li>
+        </ul></li>
+        <li><a href="api_reference/optimizer.html#regmod.optimizer.trimming">trimming() (in module regmod.optimizer)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="U" class="genindex-section">
+  <h2>U</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/prior.html#id14">ub (regmod.prior.UniformPrior attribute)</a>, <a href="api_reference/prior.html#regmod.prior.UniformPrior.ub">[1]</a>
+</li>
+        <li><a href="api_reference/prior.html#regmod.prior.UniformPrior">UniformPrior (class in regmod.prior)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/variable.html#id24">uprior (regmod.variable.Variable attribute)</a>, <a href="api_reference/variable.html#regmod.variable.Variable.uprior">[1]</a>
+</li>
+        <li><a href="api_reference/models.html#regmod.models.Model.uvec">uvec (regmod.models.Model attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="V" class="genindex-section">
+  <h2>V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/variable.html#regmod.variable.Variable">Variable (class in regmod.variable)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/composite_models.html#regmod.composite_models.base.BaseModel.variables">variables (regmod.composite_models.base.BaseModel attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/models.html#regmod.models.WeibullModel">WeibullModel (class in regmod.models)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api_reference/data.html#regmod.data.Data.weights">weights (regmod.data.Data attribute)</a>
+
+        <ul>
+          <li><a href="api_reference/data.html#id19">(regmod.data.Data property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+
+        <div class="related-information">
+              Copyright &#169; 2021, IHME Math Sciences |
+            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
+              and
+              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/main.js"></script>
+    </body>
+</html>

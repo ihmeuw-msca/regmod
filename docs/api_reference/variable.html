@@ -1,0 +1,744 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Prior" href="prior.html" />
+
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.10.09"/>
+        <title>Variable - regmod 0.0.7</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=0254c309f5cadf746f1a613e7677379ac9c8cdcd" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --color-brand-primary: #008080;
+  --color-brand-content: #008080;
+  --color-problematic: #BF5844;
+  --color-background-secondary: #F8F8F8;
+  
+  }
+  body[data-theme="dark"] {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #6FD8D1;
+  --color-brand-content: #6FD8D1;
+  --color-problematic: #FA9F50;
+  --color-background-secondary: #202020;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #6FD8D1;
+  --color-brand-content: #6FD8D1;
+  --color-problematic: #FA9F50;
+  --color-background-secondary: #202020;
+  
+    }
+  }
+</style></head>
+  <body>
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">regmod 0.0.7</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="../_static/logo/logo-light.png" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="../_static/logo/logo-dark.png" alt="Dark Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">regmod 0.0.7</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../getting_started.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="composite_models.html">Composite models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optimizer.html">Optimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prior.html">Prior</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Variable</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="module-regmod.variable">
+<span id="variable"></span><h1>Variable<a class="headerlink" href="#module-regmod.variable" title="Permalink to this headline">¶</a></h1>
+<p>Variable module</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">regmod.variable.</span></span><span class="sig-name descname"><span class="pre">SplineVariable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">name:</span> <span class="pre">str</span></em>, <em class="sig-param"><span class="pre">priors:</span> <span class="pre">List[regmod.prior.Prior]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em>, <em class="sig-param"><span class="pre">spline:</span> <span class="pre">Optional[xspline.core.XSpline]</span> <span class="pre">=</span> <span class="pre">None</span></em>, <em class="sig-param"><span class="pre">spline_specs:</span> <span class="pre">Optional[regmod.utils.SplineSpecs]</span> <span class="pre">=</span> <span class="pre">None</span></em>, <em class="sig-param"><span class="pre">linear_gpriors:</span> <span class="pre">List[regmod.prior.LinearPrior]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em>, <em class="sig-param"><span class="pre">linear_upriors:</span> <span class="pre">List[regmod.prior.LinearPrior]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#regmod.variable.Variable" title="regmod.variable.Variable"><code class="xref py py-class docutils literal notranslate"><span class="pre">regmod.variable.Variable</span></code></a></p>
+<p>Spline variable that store information of variable with splines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spline</strong> (<em>XSpline</em><em>, </em><em>optional</em>) – Spline object that in charge of creating design matrix. Default to be
+<cite>None</cite>. <cite>spline</cite> and <cite>spline_specs</cite> cannot be <cite>None</cite> at the same time.</p></li>
+<li><p><strong>spline_specs</strong> (<em>SplineSpecs</em><em>, </em><em>optional</em>) – Spline settings used to create spline object. Recommend to use only when
+use <cite>knots_type={‘rel_domain’, ‘rel_freq’}. Default to be `None</cite>.</p></li>
+<li><p><strong>linear_gpriors</strong> (<em>List</em><em>[</em><a class="reference internal" href="prior.html#regmod.prior.LinearPrior" title="regmod.prior.LinearPrior"><em>LinearPrior</em></a><em>]</em><em>, </em><em>optional</em>) – A list of linear Gaussian priors usually for shape priors of the spline.
+Default to be an empty list.</p></li>
+<li><p><strong>linear_upriors</strong> (<em>List</em><em>[</em><a class="reference internal" href="prior.html#regmod.prior.LinearPrior" title="regmod.prior.LinearPrior"><em>LinearPrior</em></a><em>]</em><em>, </em><em>optional</em>) – A list of linear Uniform priors usually for shape priors of the spline.
+spline. Default to be an empty list.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.spline">
+<span class="sig-name descname"><span class="pre">spline</span></span><a class="headerlink" href="#regmod.variable.SplineVariable.spline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spline object that in charge of creating design matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>XSpline</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.spline_specs">
+<span class="sig-name descname"><span class="pre">spline_specs</span></span><a class="headerlink" href="#regmod.variable.SplineVariable.spline_specs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spline settings used to create spline object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>SplineSpecs</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.linear_gpriors">
+<span class="sig-name descname"><span class="pre">linear_gpriors</span></span><a class="headerlink" href="#regmod.variable.SplineVariable.linear_gpriors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of linear Gaussian priors usually for shape priors of the spline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="prior.html#regmod.prior.LinearPrior" title="regmod.prior.LinearPrior">LinearPrior</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.linear_upriors">
+<span class="sig-name descname"><span class="pre">linear_upriors</span></span><a class="headerlink" href="#regmod.variable.SplineVariable.linear_upriors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of linear Uniform priors usually for shape priors of the spline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="prior.html#regmod.prior.LinearPrior" title="regmod.prior.LinearPrior">LinearPrior</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.check_data">
+<span class="sig-name descname"><span class="pre">check_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.check_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.check_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the data contains the column name <cite>name</cite>. And create the spline
+object, if only <cite>spline_specs</cite> is provided.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.process_priors">
+<span class="sig-name descname"><span class="pre">process_priors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.process_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.process_priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the prior type and extract <cite>gprior</cite>, <cite>uprior</cite>, <cite>linear_gpriors</cite>
+and <cite>linear_upriors</cite>.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.reset_priors">
+<span class="sig-name descname"><span class="pre">reset_priors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.reset_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.reset_priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset direct and linear priors.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.get_mat">
+<span class="sig-name descname"><span class="pre">get_mat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_mat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.get_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get design matrix.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.get_linear_gvec">
+<span class="sig-name descname"><span class="pre">get_linear_gvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_gvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.get_linear_gvec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Gaussian prior vector.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.get_linear_uvec">
+<span class="sig-name descname"><span class="pre">get_linear_uvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_uvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.get_linear_uvec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Uniform prior vector.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.get_linear_gmat">
+<span class="sig-name descname"><span class="pre">get_linear_gmat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_gmat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.get_linear_gmat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Gaussian prior design matrix.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.get_linear_umat">
+<span class="sig-name descname"><span class="pre">get_linear_umat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_umat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.SplineVariable.get_linear_umat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Uniform prior design matrix.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">check_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><span class="pre">regmod.data.Data</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.check_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the data contains the column name <cite>name</cite>. And create the
+spline object, if only <cite>spline_specs</cite> is provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><em>Data</em></a>) – Data object to be checked.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">get_linear_gmat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><span class="pre">regmod.data.Data</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_gmat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Gaussian prior design matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><em>Data</em></a>) – Data object that provides the covariates.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>AssertionError</strong> – Raised when both <cite>data</cite> and <cite>self.spline</cite> are <cite>None</cite>.</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Linear Gaussian prior design matrix.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">get_linear_gvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_gvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Gaussian prior vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Linear Gaussian prior vector.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">get_linear_umat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><span class="pre">regmod.data.Data</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_umat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Uniform prior design matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><em>Data</em></a><em>, </em><em>optional</em>) – Data object that provides the covariates. Default to be <cite>None</cite>.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>AssertionError</strong> – Raised when both <cite>data</cite> and <cite>self.spline</cite> are <cite>None</cite>.</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Linear Uniform prior design matrix.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">get_linear_uvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_linear_uvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear Uniform prior vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Linear uniform prior vector.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">get_mat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><span class="pre">regmod.data.Data</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.get_mat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get design matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><em>Data</em></a>) – Data object that provides the covariates.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Design matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">linear_gpriors</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="prior.html#regmod.prior.LinearPrior" title="regmod.prior.LinearPrior"><span class="pre">regmod.prior.LinearPrior</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id6" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">linear_upriors</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="prior.html#regmod.prior.LinearPrior" title="regmod.prior.LinearPrior"><span class="pre">regmod.prior.LinearPrior</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id7" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">process_priors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.process_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id8" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the prior type and extract <cite>gprior</cite>, <cite>uprior</cite>, <cite>linear_gpriors</cite>
+and <cite>linear_upriors</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AssertionError</strong> – Raised if direct Gaussian prior size not match.</p></li>
+<li><p><strong>AssertionError</strong> – Raised if direct Uniform prior size not match.</p></li>
+<li><p><strong>ValueError</strong> – Raised when any prior in the list is not an instance of Prior.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">reset_priors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#SplineVariable.reset_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id9" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset direct and linear priors.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="regmod.variable.SplineVariable.size">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">size</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#regmod.variable.SplineVariable.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of the variable.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">spline</span></span><em class="property"><span class="pre">:</span> <span class="pre">xspline.core.XSpline</span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#id10" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">spline_specs</span></span><em class="property"><span class="pre">:</span> <span class="pre">regmod.utils.SplineSpecs</span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#id11" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="regmod.variable.Variable">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">regmod.variable.</span></span><span class="sig-name descname"><span class="pre">Variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">name:</span> <span class="pre">str</span></em>, <em class="sig-param"><span class="pre">priors:</span> <span class="pre">List[regmod.prior.Prior]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Variable class is in charge of storing information of variable including
+name and priors, and accessing data in the data frame. Name correspondes to
+column name in the data frame and priors are used to compute the likelihood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – Name of the variable corresponding to the column name in the data frame.</p></li>
+<li><p><strong>priors</strong> (<em>List</em><em>[</em><a class="reference internal" href="prior.html#regmod.prior.Prior" title="regmod.prior.Prior"><em>Prior</em></a><em>]</em><em>, </em><em>optional</em>) – A list of priors for the variable. Default is an empty list.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.Variable.size">
+<span class="sig-name descname"><span class="pre">size</span></span><a class="headerlink" href="#regmod.variable.Variable.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.Variable.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#regmod.variable.Variable.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the variable corresponding to the column name in the data frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.Variable.priors">
+<span class="sig-name descname"><span class="pre">priors</span></span><a class="headerlink" href="#regmod.variable.Variable.priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of priors for the variable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="prior.html#regmod.prior.Prior" title="regmod.prior.Prior">Prior</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.Variable.gprior">
+<span class="sig-name descname"><span class="pre">gprior</span></span><a class="headerlink" href="#regmod.variable.Variable.gprior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Direct Gaussian prior in <cite>priors</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="prior.html#regmod.prior.GaussianPrior" title="regmod.prior.GaussianPrior">GaussianPrior</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="regmod.variable.Variable.uprior">
+<span class="sig-name descname"><span class="pre">uprior</span></span><a class="headerlink" href="#regmod.variable.Variable.uprior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Direct Uniform prior in <cite>priors</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="prior.html#regmod.prior.UniformPrior" title="regmod.prior.UniformPrior">UniformPrior</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.process_priors">
+<span class="sig-name descname"><span class="pre">process_priors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.process_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.process_priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the prior type and extract <cite>gprior</cite> and <cite>uprior</cite>.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.check_data">
+<span class="sig-name descname"><span class="pre">check_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.check_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.check_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the data contains the column name <cite>name</cite>.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.reset_prior">
+<span class="sig-name descname"><span class="pre">reset_prior</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#regmod.variable.Variable.reset_prior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset direct priors.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.add_priors">
+<span class="sig-name descname"><span class="pre">add_priors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">priors</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.add_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.add_priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add priors.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.rm_priors">
+<span class="sig-name descname"><span class="pre">rm_priors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.rm_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.rm_priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove priors.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.get_mat">
+<span class="sig-name descname"><span class="pre">get_mat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.get_mat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.get_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get design matrix.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.get_gvec">
+<span class="sig-name descname"><span class="pre">get_gvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.get_gvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.get_gvec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get direct Gaussian prior vector.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.get_uvec">
+<span class="sig-name descname"><span class="pre">get_uvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.get_uvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.get_uvec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get direct Uniform prior vector.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy current instance.</p>
+</dd></dl>
+<p class="rubric">Notes</p>
+<p>In the future, this class will be combined with the SplineVariable.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">add_priors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">priors</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="prior.html#regmod.prior.Prior" title="regmod.prior.Prior"><span class="pre">regmod.prior.Prior</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="prior.html#regmod.prior.Prior" title="regmod.prior.Prior"><span class="pre">regmod.prior.Prior</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.add_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add priors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>priors</strong> (<em>Union</em><em>[</em><a class="reference internal" href="prior.html#regmod.prior.Prior" title="regmod.prior.Prior"><em>Prior</em></a><em>, </em><em>List</em><em>[</em><a class="reference internal" href="prior.html#regmod.prior.Prior" title="regmod.prior.Prior"><em>Prior</em></a><em>]</em><em>]</em>) – Priors to be added.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">check_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><span class="pre">regmod.data.Data</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.check_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id13" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if the data contains the column name <cite>name</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><em>Data</em></a>) – Data object to be checked.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ValueError</strong> – Raised if data doesn’t contain column name <cite>self.name</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#regmod.variable.Variable" title="regmod.variable.Variable"><span class="pre">regmod.variable.Variable</span></a></span></span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id14" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy current instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Current instance.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#regmod.variable.Variable" title="regmod.variable.Variable">Variable</a></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">get_gvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.get_gvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id15" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get direct Gaussian prior vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Direct Gaussian prior vector.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-name descname"><span class="pre">get_mat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><span class="pre">regmod.data.Data</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.get_mat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id16" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get design matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference internal" href="data.html#regmod.data.Data" title="regmod.data.Data"><em>Data</em></a>) – Data object that provides the covariates.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Design matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-name descname"><span class="pre">get_uvec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.get_uvec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id17" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get direct Uniform prior vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Direct Uniform prior vector.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id18">
+<span class="sig-name descname"><span class="pre">gprior</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="prior.html#regmod.prior.GaussianPrior" title="regmod.prior.GaussianPrior"><span class="pre">regmod.prior.GaussianPrior</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#id18" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id19">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#id19" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id20">
+<span class="sig-name descname"><span class="pre">priors</span></span><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="prior.html#regmod.prior.Prior" title="regmod.prior.Prior"><span class="pre">regmod.prior.Prior</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id20" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id21">
+<span class="sig-name descname"><span class="pre">process_priors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.process_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id21" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the prior type and extract <cite>gprior</cite> and <cite>uprior</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>AssertionError</strong> – Raised if direct Gaussian prior size not match.</p></li>
+<li><p><strong>AssertionError</strong> – Raised if direct Uniform prior size not match.</p></li>
+<li><p><strong>ValueError</strong> – Raised when any prior in the list is not an instance of Prior.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="regmod.variable.Variable.reset_priors">
+<span class="sig-name descname"><span class="pre">reset_priors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.reset_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#regmod.variable.Variable.reset_priors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset direct priors.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="id22">
+<span class="sig-name descname"><span class="pre">rm_priors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/regmod/variable.html#Variable.rm_priors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id22" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove priors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>indices</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>List</em><em>[</em><em>bool</em><em>]</em><em>]</em>) – Indicies of the priors that need to be removed. Indicies come in the
+forms of integer, list of integers or list of booleans. When it is
+integer or list of integers, it requires the integer is within the
+bounds <cite>[0, len(self.priors))</cite>. When it is booleans, it requires the
+list have the same length with <cite>self.priors</cite>.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>AssertionError</strong> – Raised when <cite>indices</cite> has the wrong type.</p></li>
+<li><p><strong>AssertionError</strong> – Raised when <cite>indices</cite> is a list with mixed types.</p></li>
+<li><p><strong>AssertionError</strong> – Raised when <cite>indices</cite> is list of booleans but with different length
+    compare to <cite>self.priors</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="id23">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">size</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#id23" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of the variable.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id24">
+<span class="sig-name descname"><span class="pre">uprior</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="prior.html#regmod.prior.UniformPrior" title="regmod.prior.UniformPrior"><span class="pre">regmod.prior.UniformPrior</span></a></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#id24" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="prior.html">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Prior</div>
+                
+              </div>
+            </a>
+        </div>
+
+        <div class="related-information">
+              Copyright &#169; 2021, IHME Math Sciences |
+            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
+              and
+              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>. |
+            <a class="muted-link" href="../_sources/api_reference/variable.rst.txt"
+               rel="nofollow">
+              Show Source
+            </a>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/scripts/main.js"></script>
+    </body>
+</html>
