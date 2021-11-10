@@ -123,9 +123,6 @@ class BaseModel(NodeModel):
             Data frame with the offset.
         """
         df = df.copy() if copy else df
-        if self.mtype == "binomial":
-            df[self.data.col_offset] = 0.0
-            return df
         if self.col_value in df:
             df[self.data.col_offset] = link_funs[self.mtype](df[self.col_value])
         return df
