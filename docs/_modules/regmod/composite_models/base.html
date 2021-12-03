@@ -171,10 +171,10 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../../getting_started.html">Getting started</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 </ul>
-</li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api_reference/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../api_reference/composite_models.html">Composite models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api_reference/data.html">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../api_reference/models.html">Models</a></li>
@@ -213,6 +213,7 @@
 <span></span><span class="sd">"""</span>
 <span class="sd">Base Model</span>
 <span class="sd">"""</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -226,6 +227,9 @@
 <span class="kn">from</span> <span class="nn">regmod.prior</span> <span class="kn">import</span> <span class="n">GaussianPrior</span>
 <span class="kn">from</span> <span class="nn">regmod.utils</span> <span class="kn">import</span> <span class="n">sizes_to_slices</span>
 <span class="kn">from</span> <span class="nn">regmod.variable</span> <span class="kn">import</span> <span class="n">Variable</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">link_funs</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"gaussian"</span><span class="p">:</span> <span class="n">fun_dict</span><span class="p">[</span>
@@ -348,10 +352,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">attach_df</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">add_offset</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
 
 <div class="viewcode-block" id="BaseModel.fit"><a class="viewcode-back" href="../../../api_reference/composite_models.html#regmod.composite_models.base.BaseModel.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">fit_options</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fit_node;start;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="si">}</span><span class="s2">;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model_constructor</span> <span class="o">=</span> <span class="n">model_constructors</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mtype</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model_constructor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_specs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="o">**</span><span class="n">fit_options</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="o">**</span><span class="n">fit_options</span><span class="p">)</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"fit_node;finish;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="si">}</span><span class="s2">;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">;"</span>
+        <span class="n">message</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">opt_result</span><span class="o">.</span><span class="n">success</span><span class="si">}</span><span class="s2">;"</span>
+        <span class="n">message</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">opt_result</span><span class="o">.</span><span class="n">niter</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="BaseModel.predict"><a class="viewcode-back" href="../../../api_reference/composite_models.html#regmod.composite_models.base.BaseModel.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">DataFrame</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span> <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>

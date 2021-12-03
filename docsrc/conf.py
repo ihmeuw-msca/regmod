@@ -44,6 +44,7 @@ version = about["__version__"]
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",

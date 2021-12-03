@@ -1,11 +1,24 @@
 Regression Models
 =================
 
-This package is design for general regression models including generalized
-linear models and others. a
+Welcome to Regmod's documentation!
+To get started please check section :ref:`User's Guide`.
+And the full reference is provided in section :ref:`API Reference`.
+
+
+User's Guide
+------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   getting_started
+   installation
+
+
+API Reference
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
    api_reference/index
