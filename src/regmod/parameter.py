@@ -299,10 +299,6 @@ class Parameter:
             Returns the derivative of the parameter.
         """
         lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
-        if isinstance(mat, csc_matrix):
-            mat = mat.copy()
-            mat.data *= self.inv_link.dfun(lin_param)[mat.indices]
-            return mat
         return self.inv_link.dfun(lin_param)[:, None]*mat
 
     def get_d2param(self,
