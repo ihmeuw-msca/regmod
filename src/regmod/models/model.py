@@ -1,17 +1,17 @@
 """
 Model module
 """
-from typing import Callable, Dict, List, Tuple, Union, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from numpy import ndarray
-from scipy.linalg import block_diag
-
 from regmod.data import Data
+from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices
-from regmod.optimizer import scipy_optimize
+from scipy.linalg import block_diag
+from scipy.sparse import csc_matrix
 
 
 class Model:
@@ -157,6 +157,7 @@ class Model:
         self.num_params = len(self.params)
 
         self.mat = self.get_mat()
+        self.use_hessian = not any(isinstance(m, csc_matrix) for m in self.mat)
         self.uvec = self.get_uvec()
         self.gvec = self.get_gvec()
         self.linear_uvec = self.get_linear_uvec()

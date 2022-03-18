@@ -2,6 +2,7 @@
 Optimizer module
 """
 from typing import Callable, Dict
+
 import numpy as np
 from numpy import ndarray
 from scipy.optimize import LinearConstraint, minimize
