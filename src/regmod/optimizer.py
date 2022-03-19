@@ -39,7 +39,7 @@ def scipy_optimize(model: "Model",
     result = minimize(model.objective, x0,
                       method="trust-constr",
                       jac=model.gradient,
-                      hess=model.hessian,
+                      # hess=model.hessian,
                       constraints=constraints,
                       bounds=bounds,
                       options=options)

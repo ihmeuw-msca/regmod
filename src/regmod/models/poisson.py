@@ -1,12 +1,14 @@
 """
 Poisson Model
 """
-from typing import List, Tuple
+from typing import Callable, List, Tuple
 
 import numpy as np
+from anml.linalg.matrix import asmatrix
+from anml.optimizer import IPSolver
 from numpy import ndarray
 from regmod.data import Data
-from scipy.sparse import csc_matrix, csr_matrix
+from scipy.sparse import csc_matrix
 from scipy.stats import poisson
 
 from .model import Model
@@ -20,34 +22,12 @@ class PoissonModel(Model):
         if not all(data.obs >= 0):
             raise ValueError("Poisson model requires observations to be non-negagive.")
         super().__init__(data, **kwargs)
-
-    def nll(self, params: List[ndarray]) -> ndarray:
-        return params[0] - self.data.obs*np.log(params[0])
-
-    def dnll(self, params: List[ndarray]) -> List[ndarray]:
-        return [1.0 - self.data.obs/params[0]]
-
-    def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
-        return [[self.data.obs/params[0]**2]]
-
-    def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
-        mean = params[0]
-        return [poisson.ppf(bounds[0], mu=mean),
-                poisson.ppf(bounds[1], mu=mean)]
-
-
-class NewPoissonModel(Model):
-    param_names = ("lam",)
-    default_param_specs = {"lam": {"inv_link": "exp"}}
-
-    def __init__(self, data: Data, **kwargs):
-        if not all(data.obs >= 0):
-            raise ValueError("Poisson model requires observations to be non-negagive.")
-        super().__init__(data, **kwargs)
         mat = self.mat[0]
         sparsity = (mat == 0).sum() / mat.size
-        if sparsity > 0.95:
-            self.mat[0] = csc_matrix(mat)
+        self.sparse = sparsity > 0.95
+        if self.sparse:
+            mat = csc_matrix(mat)
+        self.mat[0] = asmatrix(mat)
 
     def objective(self, coefs: ndarray) -> float:
         """Objective function.
@@ -112,17 +92,42 @@ class NewPoissonModel(Model):
         weights = self.data.weights*self.data.trim_weights
         hess_params = (inv_link.d2fun(lin_param)) * weights
 
-        if isinstance(mat, csc_matrix):
-            scaled_mat = mat.copy()
-            scaled_mat.data *= hess_params[mat.indices]
-        else:
-            scaled_mat = hess_params[:, np.newaxis] * mat
+        scaled_mat = mat.scale_rows(hess_params)
 
         hess_mat = mat.T.dot(scaled_mat)
-        hess_mat_gprior = self.hessian_from_gprior()
-        if isinstance(hess_mat, (csr_matrix, csc_matrix)):
-            hess_mat_gprior = type(hess_mat)(hess_mat_gprior)
+        hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior())
         return hess_mat + hess_mat_gprior
+
+    def fit(self,
+            optimizer: Callable = IPSolver,
+            **optimizer_options):
+        """Fit function.
+
+        Parameters
+        ----------
+        optimizer : Callable, optional
+            Model solver, by default scipy_optimize.
+        """
+        # extract the constraints
+
+        valid_indices = ~np.isclose(self.linear_umat, 0).all(axis=1)
+        umat = np.vstack([
+            np.identity(self.size), self.linear_umat[valid_indices]
+        ])
+        uvec = np.hstack([
+            self.uvec,
+            self.linear_uvec[:, valid_indices]
+        ])
+        lb_indices, ub_indices = ~np.isneginf(uvec[0]), ~np.isposinf(uvec[1])
+        cmat = np.vstack([-umat[lb_indices], umat[ub_indices]])
+        cvec = np.hstack([-uvec[0][lb_indices], uvec[1][ub_indices]])
+        if self.sparse:
+            cmat = asmatrix(csc_matrix(cmat))
+        solver = optimizer(self.gradient, self.hessian, cmat, cvec)
+        self.opt_coefs = solver.minimize(
+            np.zeros(self.size),
+            **optimizer_options
+        )
 
     def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
         mean = params[0]
