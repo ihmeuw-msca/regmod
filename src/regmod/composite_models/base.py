@@ -145,7 +145,7 @@ class BaseModel(NodeModel):
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
         message = f"fit_node;finish;{self.level};{self.name};"
-        message += f"{self.model.opt_result.success};"
+        # message += f"{self.model.opt_result.success};"
         # message += f"{self.model.opt_result.niter}"
         logger.info(message)
 

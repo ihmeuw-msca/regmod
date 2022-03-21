@@ -40,9 +40,10 @@ class PoissonModel(Model):
         float
             Objective value.
         """
-        mat = self.mat[0]
         inv_link = self.params[0].inv_link
-        lin_param = mat.dot(coefs)
+        lin_param = self.params[0].get_lin_param(
+            coefs, self.data, mat=self.mat[0]
+        )
 
         weights = self.data.weights*self.data.trim_weights
         obj_params = (
@@ -65,7 +66,9 @@ class PoissonModel(Model):
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
-        lin_param = mat.dot(coefs)
+        lin_param = self.params[0].get_lin_param(
+            coefs, self.data, mat=self.mat[0]
+        )
 
         weights = self.data.weights*self.data.trim_weights
         grad_params = (inv_link.dfun(lin_param) - self.data.obs) * weights
@@ -87,7 +90,9 @@ class PoissonModel(Model):
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
-        lin_param = mat.dot(coefs)
+        lin_param = self.params[0].get_lin_param(
+            coefs, self.data, mat=self.mat[0]
+        )
 
         weights = self.data.weights*self.data.trim_weights
         hess_params = (inv_link.d2fun(lin_param)) * weights
@@ -122,12 +127,22 @@ class PoissonModel(Model):
         cmat = np.vstack([-umat[lb_indices], umat[ub_indices]])
         cvec = np.hstack([-uvec[0][lb_indices], uvec[1][ub_indices]])
         if self.sparse:
-            cmat = asmatrix(csc_matrix(cmat))
+            cmat = csc_matrix(cmat)
+        cmat = asmatrix(cmat)
         solver = optimizer(self.gradient, self.hessian, cmat, cvec)
         self.opt_coefs = solver.minimize(
             np.zeros(self.size),
             **optimizer_options
         )
+
+    def nll(self, params: List[ndarray]) -> ndarray:
+        return params[0] - self.data.obs*np.log(params[0])
+
+    def dnll(self, params: List[ndarray]) -> List[ndarray]:
+        return [1.0 - self.data.obs/params[0]]
+
+    def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
+        return [[self.data.obs/params[0]**2]]
 
     def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
         mean = params[0]
