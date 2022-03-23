@@ -26,7 +26,7 @@ class PoissonModel(Model):
         sparsity = (mat == 0).sum() / mat.size
         self.sparse = sparsity > 0.95
         if self.sparse:
-            mat = csc_matrix(mat)
+            mat = csc_matrix(mat).astype(np.float64)
         self.mat[0] = asmatrix(mat)
 
     @property
