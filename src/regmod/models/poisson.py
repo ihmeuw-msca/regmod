@@ -1,7 +1,7 @@
 """
 Poisson Model
 """
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Union
 
 import numpy as np
 from anml.linalg.matrix import asmatrix
@@ -28,6 +28,16 @@ class PoissonModel(Model):
         if self.sparse:
             mat = csc_matrix(mat)
         self.mat[0] = asmatrix(mat)
+
+    @property
+    def opt_vcov(self) -> Union[None, ndarray]:
+        if self.opt_coefs is None:
+            return None
+        inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs).to_numpy())
+        jacobian2 = self.jacobian2(self.opt_coefs).to_numpy()
+        vcov = inv_hessian.dot(jacobian2)
+        vcov = inv_hessian.dot(vcov.T)
+        return vcov
 
     def objective(self, coefs: ndarray) -> float:
         """Objective function.
@@ -102,6 +112,32 @@ class PoissonModel(Model):
         hess_mat = mat.T.dot(scaled_mat)
         hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior())
         return hess_mat + hess_mat_gprior
+
+    def jacobian2(self, coefs: ndarray) -> ndarray:
+        """Jacobian function.
+
+        Parameters
+        ----------
+        coefs : ndarray
+            Given coefficients.
+
+        Returns
+        -------
+        ndarray
+            Jacobian matrix.
+        """
+        mat = self.mat[0]
+        inv_link = self.params[0].inv_link
+        lin_param = self.params[0].get_lin_param(
+            coefs, self.data, mat=self.mat[0]
+        )
+        param = inv_link.fun(lin_param)
+        dparam = mat.scale_rows(inv_link.dfun(lin_param))
+        grad_param = 1.0 - self.data.obs/param
+        weights = self.data.weights*self.data.trim_weights
+        jacobian = dparam.T.scale_cols(weights*grad_param)
+        jacobian2 = jacobian.dot(jacobian.T) + self.hessian_from_gprior()
+        return jacobian2
 
     def fit(self,
             optimizer: Callable = IPSolver,
