@@ -1,14 +1,14 @@
 """
 Test optimizer module
 """
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 from regmod.data import Data
-from regmod.variable import Variable, SplineVariable
 from regmod.models import GaussianModel
-from regmod.utils import SplineSpecs
 from regmod.optimizer import scipy_optimize
+from regmod.utils import SplineSpecs
+from regmod.variable import SplineVariable, Variable
 
 
 @pytest.mark.parametrize("seed", [123, 456, 789])
@@ -35,9 +35,10 @@ def test_scipy_optimizer(seed):
 
     coefs = scipy_optimize(model)
 
+    mat = model.mat[0].to_numpy()
     tr_coef = np.linalg.solve(
-        (model.mat[0].T*model.data.weights).dot(model.mat[0]),
-        (model.mat[0].T*model.data.weights).dot(model.data.obs)
+        (mat.T*model.data.weights).dot(mat),
+        (mat.T*model.data.weights).dot(model.data.obs)
     )
 
     assert np.allclose(coefs, tr_coef)
