@@ -140,7 +140,8 @@ class GaussianModel(Model):
         grad_param = param - self.data.obs
         weights = self.data.weights*self.data.trim_weights
         jacobian = dparam.T.scale_cols(weights*grad_param)
-        jacobian2 = jacobian.dot(jacobian.T) + self.hessian_from_gprior()
+        hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
+        jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
         return jacobian2
 
     def fit(self,

@@ -136,7 +136,8 @@ class PoissonModel(Model):
         grad_param = 1.0 - self.data.obs/param
         weights = self.data.weights*self.data.trim_weights
         jacobian = dparam.T.scale_cols(weights*grad_param)
-        jacobian2 = jacobian.dot(jacobian.T) + self.hessian_from_gprior()
+        hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
+        jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
         return jacobian2
 
     def fit(self,
