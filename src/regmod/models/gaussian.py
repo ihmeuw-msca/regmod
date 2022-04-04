@@ -27,16 +27,6 @@ class GaussianModel(Model):
             mat = csc_matrix(mat).astype(np.float64)
         self.mat[0] = asmatrix(mat)
 
-    @property
-    def opt_vcov(self) -> Union[None, ndarray]:
-        if self.opt_coefs is None:
-            return None
-        inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs).to_numpy())
-        jacobian2 = self.jacobian2(self.opt_coefs).to_numpy()
-        vcov = inv_hessian.dot(jacobian2)
-        vcov = inv_hessian.dot(vcov.T)
-        return vcov
-
     def objective(self, coefs: ndarray) -> float:
         """Objective function.
         Parameters
@@ -175,6 +165,7 @@ class GaussianModel(Model):
             np.zeros(self.size),
             **optimizer_options
         )
+        self.opt_vcov = self.get_vcov(self.opt_coefs)
 
     def nll(self, params: List[ndarray]) -> ndarray:
         return 0.5*(params[0] - self.data.obs)**2

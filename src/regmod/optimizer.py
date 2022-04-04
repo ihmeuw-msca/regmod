@@ -46,6 +46,7 @@ def scipy_optimize(model: "Model",
 
     model.opt_result = result
     model.opt_coefs = result.x.copy()
+    model.opt_vcov = model.get_vcov(model.opt_coefs)
     return result.x
 
 

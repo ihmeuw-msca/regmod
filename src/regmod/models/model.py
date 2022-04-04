@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from anml.linalg.matrix import Matrix
 from numpy import ndarray
 from regmod.data import Data
 from regmod.optimizer import scipy_optimize
@@ -168,6 +169,7 @@ class Model:
         # optimization result placeholder
         self.opt_result = None
         self._opt_coefs = None
+        self._opt_vcov = None
 
     @property
     def opt_coefs(self) -> Union[None, ndarray]:
@@ -182,10 +184,21 @@ class Model:
 
     @property
     def opt_vcov(self) -> Union[None, ndarray]:
-        if self.opt_coefs is None:
-            return None
-        inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs))
-        jacobian2 = self.jacobian2(self.opt_coefs)
+        return self._opt_vcov
+
+    @opt_vcov.setter
+    def opt_vcov(self, vcov: ndarray):
+        vcov = np.asarray(vcov)
+        self._opt_vcov = vcov
+
+    def get_vcov(self, coefs: ndarray) -> ndarray:
+        hessian = self.hessian(coefs)
+        if isinstance(hessian, Matrix):
+            hessian = hessian.to_numpy()
+        inv_hessian = np.linalg.pinv(hessian)
+        jacobian2 = self.jacobian2(coefs)
+        if isinstance(jacobian2, Matrix):
+            jacobian2 = jacobian2.to_numpy()
         vcov = inv_hessian.dot(jacobian2)
         vcov = inv_hessian.dot(vcov.T)
         return vcov
