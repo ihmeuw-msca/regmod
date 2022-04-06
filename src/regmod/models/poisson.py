@@ -4,10 +4,11 @@ Poisson Model
 from typing import Callable, List, Tuple, Union
 
 import numpy as np
-from anml.linalg.matrix import asmatrix
-from anml.optimizer import IPSolver
+from msca.linalg.matrix import asmatrix
 from numpy import ndarray
 from regmod.data import Data
+from regmod.optimizer import msca_optimize
+from scipy.linalg import block_diag
 from scipy.sparse import csc_matrix
 from scipy.stats import poisson
 
@@ -28,6 +29,21 @@ class PoissonModel(Model):
         if self.sparse:
             mat = csc_matrix(mat).astype(np.float64)
         self.mat[0] = asmatrix(mat)
+
+        # process constraint matrix
+        cmat = block_diag(np.identity(self.size), self.linear_umat)
+        cvec = np.hstack([self.uvec, self.linear_uvec])
+        index = ~np.isclose(cmat, 0.0).all(axis=1)
+        cmat = cmat[index]
+        scale = np.abs(cmat).max(axis=1)
+        cmat = cmat / scale[:, np.newaxis]
+        lb = cvec[0][index] / scale
+        ub = cvec[1][index] / scale
+        self.cmat = np.vstack([-cmat[~np.isneginf(lb)], cmat[~np.isposinf(ub)]])
+        self.cvec = np.hstack([-lb[~np.isneginf(lb)], ub[~np.isposinf(ub)]])
+        if self.sparse:
+            self.cmat = csc_matrix(self.cmat).astype(np.float64)
+        self.cmat = asmatrix(self.cmat)
 
     @property
     def opt_vcov(self) -> Union[None, ndarray]:
@@ -141,7 +157,7 @@ class PoissonModel(Model):
         return jacobian2
 
     def fit(self,
-            optimizer: Callable = IPSolver,
+            optimizer: Callable = msca_optimize,
             **optimizer_options):
         """Fit function.
 
@@ -150,27 +166,7 @@ class PoissonModel(Model):
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
-        # extract the constraints
-
-        valid_indices = ~np.isclose(self.linear_umat, 0).all(axis=1)
-        umat = np.vstack([
-            np.identity(self.size), self.linear_umat[valid_indices]
-        ])
-        uvec = np.hstack([
-            self.uvec,
-            self.linear_uvec[:, valid_indices]
-        ])
-        lb_indices, ub_indices = ~np.isneginf(uvec[0]), ~np.isposinf(uvec[1])
-        cmat = np.vstack([-umat[lb_indices], umat[ub_indices]])
-        cvec = np.hstack([-uvec[0][lb_indices], uvec[1][ub_indices]])
-        if self.sparse:
-            cmat = csc_matrix(cmat)
-        cmat = asmatrix(cmat)
-        solver = optimizer(self.gradient, self.hessian, cmat, cvec)
-        self.opt_coefs = solver.minimize(
-            np.zeros(self.size),
-            **optimizer_options
-        )
+        optimizer(self, **optimizer_options)
 
     def nll(self, params: List[ndarray]) -> ndarray:
         return params[0] - self.data.obs*np.log(params[0])

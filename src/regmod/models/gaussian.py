@@ -1,13 +1,14 @@
 """
 Gaussian Model
 """
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple
 
 import numpy as np
-from anml.linalg.matrix import asmatrix
-from anml.optimizer import IPSolver
-from numpy import ndarray
+from msca.linalg.matrix import asmatrix
+from numpy.typing import NDArray
 from regmod.data import Data
+from regmod.optimizer import msca_optimize
+from scipy.linalg import block_diag
 from scipy.sparse import csc_matrix
 from scipy.stats import norm
 
@@ -27,11 +28,26 @@ class GaussianModel(Model):
             mat = csc_matrix(mat).astype(np.float64)
         self.mat[0] = asmatrix(mat)
 
-    def objective(self, coefs: ndarray) -> float:
+        # process constraint matrix
+        cmat = block_diag(np.identity(self.size), self.linear_umat)
+        cvec = np.hstack([self.uvec, self.linear_uvec])
+        index = ~np.isclose(cmat, 0.0).all(axis=1)
+        cmat = cmat[index]
+        scale = np.abs(cmat).max(axis=1)
+        cmat = cmat / scale[:, np.newaxis]
+        lb = cvec[0][index] / scale
+        ub = cvec[1][index] / scale
+        self.cmat = np.vstack([-cmat[~np.isneginf(lb)], cmat[~np.isposinf(ub)]])
+        self.cvec = np.hstack([-lb[~np.isneginf(lb)], ub[~np.isposinf(ub)]])
+        if self.sparse:
+            self.cmat = csc_matrix(self.cmat).astype(np.float64)
+        self.cmat = asmatrix(self.cmat)
+
+    def objective(self, coefs: NDArray) -> float:
         """Objective function.
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
         Returns
         -------
@@ -49,17 +65,17 @@ class GaussianModel(Model):
         )**2 * weights
         return obj_params.sum() + self.objective_from_gprior(coefs)
 
-    def gradient(self, coefs: ndarray) -> ndarray:
+    def gradient(self, coefs: NDArray) -> NDArray:
         """Gradient function.
 
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
 
         Returns
         -------
-        ndarray
+        NDArray
             Gradient vector.
         """
         mat = self.mat[0]
@@ -75,17 +91,17 @@ class GaussianModel(Model):
 
         return mat.T.dot(grad_params) + self.gradient_from_gprior(coefs)
 
-    def hessian(self, coefs: ndarray) -> ndarray:
+    def hessian(self, coefs: NDArray) -> NDArray:
         """Hessian function.
 
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
 
         Returns
         -------
-        ndarray
+        NDArray
             Hessian matrix.
         """
         mat = self.mat[0]
@@ -107,17 +123,17 @@ class GaussianModel(Model):
         hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior())
         return hess_mat + hess_mat_gprior
 
-    def jacobian2(self, coefs: ndarray) -> ndarray:
+    def jacobian2(self, coefs: NDArray) -> NDArray:
         """Jacobian function.
 
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
 
         Returns
         -------
-        ndarray
+        NDArray
             Jacobian matrix.
         """
         mat = self.mat[0]
@@ -135,7 +151,7 @@ class GaussianModel(Model):
         return jacobian2
 
     def fit(self,
-            optimizer: Callable = IPSolver,
+            optimizer: Callable = msca_optimize,
             **optimizer_options):
         """Fit function.
 
@@ -144,39 +160,18 @@ class GaussianModel(Model):
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
-        # extract the constraints
+        optimizer(self, **optimizer_options)
 
-        valid_indices = ~np.isclose(self.linear_umat, 0).all(axis=1)
-        umat = np.vstack([
-            np.identity(self.size), self.linear_umat[valid_indices]
-        ])
-        uvec = np.hstack([
-            self.uvec,
-            self.linear_uvec[:, valid_indices]
-        ])
-        lb_indices, ub_indices = ~np.isneginf(uvec[0]), ~np.isposinf(uvec[1])
-        cmat = np.vstack([-umat[lb_indices], umat[ub_indices]])
-        cvec = np.hstack([-uvec[0][lb_indices], uvec[1][ub_indices]])
-        if self.sparse:
-            cmat = csc_matrix(cmat)
-        cmat = asmatrix(cmat)
-        solver = optimizer(self.gradient, self.hessian, cmat, cvec)
-        self.opt_coefs = solver.minimize(
-            np.zeros(self.size),
-            **optimizer_options
-        )
-        self.opt_vcov = self.get_vcov(self.opt_coefs)
-
-    def nll(self, params: List[ndarray]) -> ndarray:
+    def nll(self, params: List[NDArray]) -> NDArray:
         return 0.5*(params[0] - self.data.obs)**2
 
-    def dnll(self, params: List[ndarray]) -> List[ndarray]:
+    def dnll(self, params: List[NDArray]) -> List[NDArray]:
         return [params[0] - self.data.obs]
 
-    def d2nll(self, params: List[ndarray]) -> List[ndarray]:
+    def d2nll(self, params: List[NDArray]) -> List[NDArray]:
         return [[np.ones(self.data.num_obs)]]
 
-    def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
+    def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         mean = params[0]
         sd = 1.0/np.sqrt(self.data.weights)
         return [norm.ppf(bounds[0], loc=mean, scale=sd),
