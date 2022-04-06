@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from anml.linalg.matrix import Matrix
+from msca.linalg.matrix import Matrix
 from numpy import ndarray
 from regmod.data import Data
 from regmod.optimizer import scipy_optimize
