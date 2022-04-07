@@ -4,12 +4,9 @@ Gaussian Model
 from typing import Callable, List, Tuple
 
 import numpy as np
-from msca.linalg.matrix import asmatrix
 from numpy.typing import NDArray
 from regmod.data import Data
 from regmod.optimizer import msca_optimize
-from scipy.linalg import block_diag
-from scipy.sparse import csc_matrix
 from scipy.stats import norm
 
 from .model import Model
@@ -41,12 +38,13 @@ class GaussianModel(Model):
         lin_param = self.params[0].get_lin_param(
             coefs, self.data, mat=self.mat[0]
         )
+        param = inv_link.fun(lin_param)
 
         weights = self.data.weights*self.data.trim_weights
-        obj_params = 0.5*(
-            inv_link.fun(lin_param) - self.data.obs
-        )**2 * weights
-        return obj_params.sum() + self.objective_from_gprior(coefs)
+        obj_param = weights * 0.5 * (
+            param - self.data.obs
+        )**2
+        return obj_param.sum() + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: NDArray) -> NDArray:
         """Gradient function.
@@ -66,13 +64,15 @@ class GaussianModel(Model):
         lin_param = self.params[0].get_lin_param(
             coefs, self.data, mat=self.mat[0]
         )
+        param = inv_link.fun(lin_param)
+        dparam = inv_link.dfun(lin_param)
 
         weights = self.data.weights*self.data.trim_weights
-        grad_params = inv_link.dfun(lin_param) * (
-            inv_link.fun(lin_param) - self.data.obs
-        ) * weights
+        grad_param = weights * (
+            param - self.data.obs
+        ) * dparam
 
-        return mat.T.dot(grad_params) + self.gradient_from_gprior(coefs)
+        return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
 
     def hessian(self, coefs: NDArray) -> NDArray:
         """Hessian function.
@@ -92,16 +92,16 @@ class GaussianModel(Model):
         lin_param = self.params[0].get_lin_param(
             coefs, self.data, mat=self.mat[0]
         )
+        param = inv_link.fun(lin_param)
+        dparam = inv_link.dfun(lin_param)
+        d2param = inv_link.d2fun(lin_param)
 
         weights = self.data.weights*self.data.trim_weights
-        hess_params = (
-            inv_link.d2fun(lin_param) *
-            (inv_link.fun(lin_param) - self.data.obs) +
-            (inv_link.dfun(lin_param))**2
-        ) * weights
+        hess_param = weights * (
+            dparam**2 + (param - self.data.obs)*d2param
+        )
 
-        scaled_mat = mat.scale_rows(hess_params)
-
+        scaled_mat = mat.scale_rows(hess_param)
         hess_mat = mat.T.dot(scaled_mat)
         hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior())
         return hess_mat + hess_mat_gprior
@@ -125,10 +125,10 @@ class GaussianModel(Model):
             coefs, self.data, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
-        dparam = mat.scale_rows(inv_link.dfun(lin_param))
-        grad_param = param - self.data.obs
+        dparam = inv_link.dfun(lin_param)
         weights = self.data.weights*self.data.trim_weights
-        jacobian = dparam.T.scale_cols(weights*grad_param)
+        grad_param = weights * (param - self.data.obs) * dparam
+        jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
         jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
         return jacobian2

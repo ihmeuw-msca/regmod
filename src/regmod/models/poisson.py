@@ -50,12 +50,13 @@ class PoissonModel(Model):
         lin_param = self.params[0].get_lin_param(
             coefs, self.data, mat=self.mat[0]
         )
+        param = inv_link.fun(lin_param)
 
         weights = self.data.weights*self.data.trim_weights
-        obj_params = (
-            inv_link.fun(lin_param) - self.data.obs * lin_param
-        ) * weights
-        return obj_params.sum() + self.objective_from_gprior(coefs)
+        obj_param = weights * (
+            param - self.data.obs * np.log(param)
+        )
+        return obj_param.sum() + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: NDArray) -> NDArray:
         """Gradient function.
@@ -75,11 +76,15 @@ class PoissonModel(Model):
         lin_param = self.params[0].get_lin_param(
             coefs, self.data, mat=self.mat[0]
         )
+        param = inv_link.fun(lin_param)
+        dparam = inv_link.dfun(lin_param)
 
         weights = self.data.weights*self.data.trim_weights
-        grad_params = (inv_link.dfun(lin_param) - self.data.obs) * weights
+        grad_param = weights * (
+            1 - self.data.obs / param
+        ) * dparam
 
-        return mat.T.dot(grad_params) + self.gradient_from_gprior(coefs)
+        return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
 
     def hessian(self, coefs: NDArray) -> NDArray:
         """Hessian function.
@@ -99,12 +104,17 @@ class PoissonModel(Model):
         lin_param = self.params[0].get_lin_param(
             coefs, self.data, mat=self.mat[0]
         )
+        param = inv_link.fun(lin_param)
+        dparam = inv_link.dfun(lin_param)
+        d2param = inv_link.d2fun(lin_param)
 
         weights = self.data.weights*self.data.trim_weights
-        hess_params = (inv_link.d2fun(lin_param)) * weights
+        hess_param = weights * (
+            self.data.obs / param**2 * dparam**2 +
+            (1 - self.data.obs / param) * d2param
+        )
 
-        scaled_mat = mat.scale_rows(hess_params)
-
+        scaled_mat = mat.scale_rows(hess_param)
         hess_mat = mat.T.dot(scaled_mat)
         hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior())
         return hess_mat + hess_mat_gprior
@@ -128,10 +138,10 @@ class PoissonModel(Model):
             coefs, self.data, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
-        dparam = mat.scale_rows(inv_link.dfun(lin_param))
-        grad_param = 1.0 - self.data.obs/param
+        dparam = inv_link.dfun(lin_param)
         weights = self.data.weights*self.data.trim_weights
-        jacobian = dparam.T.scale_cols(weights*grad_param)
+        grad_param = weights * (1.0 - self.data.obs/param) * dparam
+        jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
         jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
         return jacobian2
