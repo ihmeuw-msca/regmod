@@ -1,22 +1,25 @@
 """
 Optimizer module
 """
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
+
 import numpy as np
-from numpy import ndarray
+from msca.optim.ipsolver import IPSolver
+from msca.optim.ntsolver import NTSolver
+from numpy.typing import NDArray
 from scipy.optimize import LinearConstraint, minimize
 
 
 def scipy_optimize(model: "Model",
-                   x0: ndarray = None,
-                   options: Dict = None) -> ndarray:
+                   x0: NDArray = None,
+                   options: Optional[Dict] = None) -> NDArray:
     """Scipy trust-region optimizer.
 
     Parameters
     ----------
     model : Model
         Instance of `regmod.models.Model` class.
-    x0 : ndarray, optional
+    x0 : NDArray, optional
         Initial guess for the variable, by default None. If `None` use zero
         vector as the initial guess.
     options : Dict, optional
@@ -24,10 +27,10 @@ def scipy_optimize(model: "Model",
 
     Returns
     -------
-    ndarray
+    NDArray
         Optimal solution.
     """
-    x0 = np.zeros(model.size) if x0 is None else x0
+    x0 = x0 or np.zeros(model.size)
     bounds = model.uvec.T
     constraints = [LinearConstraint(
         model.linear_umat,
@@ -45,17 +48,45 @@ def scipy_optimize(model: "Model",
 
     model.opt_result = result
     model.opt_coefs = result.x.copy()
+    model.opt_vcov = model.get_vcov(model.opt_coefs)
     return result.x
 
 
-def set_trim_weights(model: "Model", index: ndarray, mask: float):
+def msca_optimize(model: "Model",
+                  x0: NDArray,
+                  options: Optional[Dict] = None):
+    x0 = x0 or np.zeros(model.size)
+    options = options or {}
+
+    if model.cmat.size == 0:
+        solver = NTSolver(
+            model.objective,
+            model.gradient,
+            model.hessian
+        )
+    else:
+        solver = IPSolver(
+            model.objective,
+            model.gradient,
+            model.hessian,
+            model.cmat,
+            model.cvec
+        )
+    result = solver.minimize(x0=x0, **options)
+    model.opt_result = result
+    model.opt_coefs = result.x.copy()
+    model.opt_vcov = model.get_vcov(model.opt_coefs)
+    return result.x
+
+
+def set_trim_weights(model: "Model", index: NDArray, mask: float):
     """Set trimming weights to model object.
 
     Parameters
     ----------
     model : Model
         Instance of `regmod.models.Model` class.
-    index : ndarray
+    index : NDArray
         Index where the weights need to be set.
     mask : float
         Value of the weights to set.
@@ -79,10 +110,10 @@ def trimming(optimize: Callable) -> Callable:
         Trimming optimization solver.
     """
     def optimize_with_trimming(model: "Model",
-                               x0: ndarray = None,
+                               x0: NDArray = None,
                                options: Dict = None,
                                trim_steps: int = 3,
-                               inlier_pct: float = 0.95) -> Dict[str, ndarray]:
+                               inlier_pct: float = 0.95) -> Dict[str, NDArray]:
         if trim_steps < 2:
             raise ValueError("At least two trimming steps.")
         if inlier_pct < 0.0 or inlier_pct > 1.0:

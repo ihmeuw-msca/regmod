@@ -11,11 +11,10 @@ from pandas import DataFrame
 from regmod.composite_models.interface import NodeModel
 from regmod.data import Data
 from regmod.function import fun_dict
-from regmod.models import GaussianModel, PoissonModel, BinomialModel
+from regmod.models import BinomialModel, GaussianModel, PoissonModel
 from regmod.prior import GaussianPrior
 from regmod.utils import sizes_to_slices
 from regmod.variable import Variable
-
 
 logger = logging.getLogger(__name__)
 
@@ -146,8 +145,8 @@ class BaseModel(NodeModel):
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
         message = f"fit_node;finish;{self.level};{self.name};"
-        message += f"{self.model.opt_result.success};"
-        message += f"{self.model.opt_result.niter}"
+        # message += f"{self.model.opt_result.success};"
+        # message += f"{self.model.opt_result.niter}"
         logger.info(message)
 
     def predict(self, df: DataFrame = None):

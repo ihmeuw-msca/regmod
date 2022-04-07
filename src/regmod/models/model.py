@@ -1,17 +1,18 @@
 """
 Model module
 """
-from typing import Callable, Dict, List, Tuple, Union, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from msca.linalg.matrix import Matrix
 from numpy import ndarray
-from scipy.linalg import block_diag
-
 from regmod.data import Data
+from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices
-from regmod.optimizer import scipy_optimize
+from scipy.linalg import block_diag
+from scipy.sparse import csc_matrix
 
 
 class Model:
@@ -157,6 +158,7 @@ class Model:
         self.num_params = len(self.params)
 
         self.mat = self.get_mat()
+        self.use_hessian = not any(isinstance(m, csc_matrix) for m in self.mat)
         self.uvec = self.get_uvec()
         self.gvec = self.get_gvec()
         self.linear_uvec = self.get_linear_uvec()
@@ -167,6 +169,7 @@ class Model:
         # optimization result placeholder
         self.opt_result = None
         self._opt_coefs = None
+        self._opt_vcov = None
 
     @property
     def opt_coefs(self) -> Union[None, ndarray]:
@@ -181,10 +184,21 @@ class Model:
 
     @property
     def opt_vcov(self) -> Union[None, ndarray]:
-        if self.opt_coefs is None:
-            return None
-        inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs))
-        jacobian2 = self.jacobian2(self.opt_coefs)
+        return self._opt_vcov
+
+    @opt_vcov.setter
+    def opt_vcov(self, vcov: ndarray):
+        vcov = np.asarray(vcov)
+        self._opt_vcov = vcov
+
+    def get_vcov(self, coefs: ndarray) -> ndarray:
+        hessian = self.hessian(coefs)
+        if isinstance(hessian, Matrix):
+            hessian = hessian.to_numpy()
+        inv_hessian = np.linalg.pinv(hessian)
+        jacobian2 = self.jacobian2(coefs)
+        if isinstance(jacobian2, Matrix):
+            jacobian2 = jacobian2.to_numpy()
         vcov = inv_hessian.dot(jacobian2)
         vcov = inv_hessian.dot(vcov.T)
         return vcov
