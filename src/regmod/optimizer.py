@@ -11,7 +11,7 @@ from scipy.optimize import LinearConstraint, minimize
 
 
 def scipy_optimize(model: "Model",
-                   x0: NDArray = None,
+                   x0: Optional[NDArray] = None,
                    options: Optional[Dict] = None) -> NDArray:
     """Scipy trust-region optimizer.
 
@@ -53,7 +53,7 @@ def scipy_optimize(model: "Model",
 
 
 def msca_optimize(model: "Model",
-                  x0: NDArray,
+                  x0: Optional[NDArray] = None,
                   options: Optional[Dict] = None):
     x0 = x0 or np.zeros(model.size)
     options = options or {}
