@@ -13,6 +13,7 @@ from scipy.sparse import csc_matrix
 from scipy.stats import norm
 
 from .model import Model
+from .utils import model_post_init
 
 
 class GaussianModel(Model):
@@ -21,27 +22,9 @@ class GaussianModel(Model):
 
     def __init__(self, data: Data, **kwargs):
         super().__init__(data, **kwargs)
-        mat = self.mat[0]
-        sparsity = (mat == 0).sum() / mat.size
-        self.sparse = sparsity > 0.95
-        if self.sparse:
-            mat = csc_matrix(mat).astype(np.float64)
-        self.mat[0] = asmatrix(mat)
-
-        # process constraint matrix
-        cmat = block_diag(np.identity(self.size), self.linear_umat)
-        cvec = np.hstack([self.uvec, self.linear_uvec])
-        index = ~np.isclose(cmat, 0.0).all(axis=1)
-        cmat = cmat[index]
-        scale = np.abs(cmat).max(axis=1)
-        cmat = cmat / scale[:, np.newaxis]
-        lb = cvec[0][index] / scale
-        ub = cvec[1][index] / scale
-        self.cmat = np.vstack([-cmat[~np.isneginf(lb)], cmat[~np.isposinf(ub)]])
-        self.cvec = np.hstack([-lb[~np.isneginf(lb)], ub[~np.isposinf(ub)]])
-        if self.sparse:
-            self.cmat = csc_matrix(self.cmat).astype(np.float64)
-        self.cmat = asmatrix(self.cmat)
+        self.mat[0], self.cmat, self.cvec = model_post_init(
+            self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
+        )
 
     def objective(self, coefs: NDArray) -> float:
         """Objective function.

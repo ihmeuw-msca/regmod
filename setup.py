@@ -1,9 +1,8 @@
-import sys
 from pathlib import Path
 
 from setuptools import find_packages, setup
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     base_dir = Path(__file__).parent
     src_dir = base_dir / "src" / "regmod"
 
@@ -15,16 +14,16 @@ if __name__ == '__main__':
         long_description = f.read()
 
     install_requirements = [
-        'numpy',
-        'scipy',
-        'pandas',
-        'xspline',
-        'msca',
+        "numpy",
+        "scipy",
+        "pandas",
+        "xspline",
+        "msca",
     ]
 
     test_requirements = [
-        'pytest',
-        'pytest-mock',
+        "pytest",
+        "pytest-mock",
     ]
 
     doc_requirements = []
@@ -38,15 +37,15 @@ if __name__ == '__main__':
         url=about["__uri__"],
         author=about["__author__"],
         author_email=about["__email__"],
-        package_dir={'': 'src'},
-        packages=find_packages(where='src'),
+        package_dir={"": "src"},
+        packages=find_packages(where="src"),
         include_package_data=True,
         install_requires=install_requirements,
         tests_require=test_requirements,
         extras_require={
-            'docs': doc_requirements,
-            'test': test_requirements,
-            'dev': doc_requirements + test_requirements
+            "docs": doc_requirements,
+            "test": test_requirements,
+            "dev": doc_requirements + test_requirements
         },
         zip_safe=False,
     )

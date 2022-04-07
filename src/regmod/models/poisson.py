@@ -4,15 +4,13 @@ Poisson Model
 from typing import Callable, List, Tuple, Union
 
 import numpy as np
-from msca.linalg.matrix import asmatrix
-from numpy import ndarray
+from numpy.typing import NDArray
 from regmod.data import Data
 from regmod.optimizer import msca_optimize
-from scipy.linalg import block_diag
-from scipy.sparse import csc_matrix
 from scipy.stats import poisson
 
 from .model import Model
+from .utils import model_post_init
 
 
 class PoissonModel(Model):
@@ -23,30 +21,12 @@ class PoissonModel(Model):
         if not all(data.obs >= 0):
             raise ValueError("Poisson model requires observations to be non-negagive.")
         super().__init__(data, **kwargs)
-        mat = self.mat[0]
-        sparsity = (mat == 0).sum() / mat.size
-        self.sparse = sparsity > 0.95
-        if self.sparse:
-            mat = csc_matrix(mat).astype(np.float64)
-        self.mat[0] = asmatrix(mat)
-
-        # process constraint matrix
-        cmat = block_diag(np.identity(self.size), self.linear_umat)
-        cvec = np.hstack([self.uvec, self.linear_uvec])
-        index = ~np.isclose(cmat, 0.0).all(axis=1)
-        cmat = cmat[index]
-        scale = np.abs(cmat).max(axis=1)
-        cmat = cmat / scale[:, np.newaxis]
-        lb = cvec[0][index] / scale
-        ub = cvec[1][index] / scale
-        self.cmat = np.vstack([-cmat[~np.isneginf(lb)], cmat[~np.isposinf(ub)]])
-        self.cvec = np.hstack([-lb[~np.isneginf(lb)], ub[~np.isposinf(ub)]])
-        if self.sparse:
-            self.cmat = csc_matrix(self.cmat).astype(np.float64)
-        self.cmat = asmatrix(self.cmat)
+        self.mat[0], self.cmat, self.cvec = model_post_init(
+            self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
+        )
 
     @property
-    def opt_vcov(self) -> Union[None, ndarray]:
+    def opt_vcov(self) -> Union[None, NDArray]:
         if self.opt_coefs is None:
             return None
         inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs).to_numpy())
@@ -55,11 +35,11 @@ class PoissonModel(Model):
         vcov = inv_hessian.dot(vcov.T)
         return vcov
 
-    def objective(self, coefs: ndarray) -> float:
+    def objective(self, coefs: NDArray) -> float:
         """Objective function.
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
         Returns
         -------
@@ -77,17 +57,17 @@ class PoissonModel(Model):
         ) * weights
         return obj_params.sum() + self.objective_from_gprior(coefs)
 
-    def gradient(self, coefs: ndarray) -> ndarray:
+    def gradient(self, coefs: NDArray) -> NDArray:
         """Gradient function.
 
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
 
         Returns
         -------
-        ndarray
+        NDArray
             Gradient vector.
         """
         mat = self.mat[0]
@@ -101,17 +81,17 @@ class PoissonModel(Model):
 
         return mat.T.dot(grad_params) + self.gradient_from_gprior(coefs)
 
-    def hessian(self, coefs: ndarray) -> ndarray:
+    def hessian(self, coefs: NDArray) -> NDArray:
         """Hessian function.
 
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
 
         Returns
         -------
-        ndarray
+        NDArray
             Hessian matrix.
         """
         mat = self.mat[0]
@@ -129,17 +109,17 @@ class PoissonModel(Model):
         hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior())
         return hess_mat + hess_mat_gprior
 
-    def jacobian2(self, coefs: ndarray) -> ndarray:
+    def jacobian2(self, coefs: NDArray) -> NDArray:
         """Jacobian function.
 
         Parameters
         ----------
-        coefs : ndarray
+        coefs : NDArray
             Given coefficients.
 
         Returns
         -------
-        ndarray
+        NDArray
             Jacobian matrix.
         """
         mat = self.mat[0]
@@ -168,16 +148,16 @@ class PoissonModel(Model):
         """
         optimizer(self, **optimizer_options)
 
-    def nll(self, params: List[ndarray]) -> ndarray:
+    def nll(self, params: List[NDArray]) -> NDArray:
         return params[0] - self.data.obs*np.log(params[0])
 
-    def dnll(self, params: List[ndarray]) -> List[ndarray]:
+    def dnll(self, params: List[NDArray]) -> List[NDArray]:
         return [1.0 - self.data.obs/params[0]]
 
-    def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
+    def d2nll(self, params: List[NDArray]) -> List[List[NDArray]]:
         return [[self.data.obs/params[0]**2]]
 
-    def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
+    def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         mean = params[0]
         return [poisson.ppf(bounds[0], mu=mean),
                 poisson.ppf(bounds[1], mu=mean)]
