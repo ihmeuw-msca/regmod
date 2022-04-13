@@ -4,8 +4,7 @@ Optimizer module
 from typing import Callable, Dict, Optional
 
 import numpy as np
-from msca.optim.ipsolver import IPSolver
-from msca.optim.ntsolver import NTSolver
+from msca.optim.solver import IPSolver, NTSolver
 from numpy.typing import NDArray
 from scipy.optimize import LinearConstraint, minimize
 
