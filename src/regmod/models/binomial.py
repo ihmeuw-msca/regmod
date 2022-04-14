@@ -4,6 +4,7 @@ Binomial Model
 from typing import Callable, List, Tuple
 
 import numpy as np
+import pandas as pd
 from numpy.typing import NDArray
 from regmod.data import Data
 from regmod.optimizer import msca_optimize
@@ -22,6 +23,9 @@ class BinomialModel(Model):
             raise ValueError("Binomial model requires observations to be "
                              "between zero and one.")
         super().__init__(data, **kwargs)
+
+    def attach_df(self, df: pd.DataFrame):
+        super().attach_df(df)
         self.mat[0], self.cmat, self.cvec = model_post_init(
             self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
         )

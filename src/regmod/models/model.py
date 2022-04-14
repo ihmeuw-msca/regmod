@@ -147,15 +147,23 @@ class Model:
                            for param_name in self.param_names]
 
         self.data = data
-        if self.data.is_empty():
-            raise ValueError("Please attach dataframe before creating model.")
-        for param in self.params:
-            param.check_data(self.data)
+        if not self.data.is_empty():
+            self.attach_df(self.data.df)
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
         self.size = sum(self.sizes)
         self.num_params = len(self.params)
+
+        # optimization result placeholder
+        self.opt_result = None
+        self._opt_coefs = None
+        self._opt_vcov = None
+
+    def attach_df(self, df: pd.DataFrame):
+        self.data.attach_df(df)
+        for param in self.params:
+            param.check_data(self.data)
 
         self.mat = self.get_mat()
         self.use_hessian = not any(isinstance(m, csc_matrix) for m in self.mat)
@@ -165,11 +173,6 @@ class Model:
         self.linear_gvec = self.get_linear_gvec()
         self.linear_umat = self.get_linear_umat()
         self.linear_gmat = self.get_linear_gmat()
-
-        # optimization result placeholder
-        self.opt_result = None
-        self._opt_coefs = None
-        self._opt_vcov = None
 
     @property
     def opt_coefs(self) -> Union[None, ndarray]:
