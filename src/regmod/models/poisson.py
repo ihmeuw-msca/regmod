@@ -29,16 +29,6 @@ class PoissonModel(Model):
             self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
         )
 
-    @property
-    def opt_vcov(self) -> Union[None, NDArray]:
-        if self.opt_coefs is None:
-            return None
-        inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs).to_numpy())
-        jacobian2 = self.jacobian2(self.opt_coefs).to_numpy()
-        vcov = inv_hessian.dot(jacobian2)
-        vcov = inv_hessian.dot(vcov.T)
-        return vcov
-
     def objective(self, coefs: NDArray) -> float:
         """Objective function.
         Parameters

@@ -3,7 +3,6 @@ from typing import Tuple
 import numpy as np
 from msca.linalg.matrix import Matrix, asmatrix
 from numpy.typing import NDArray
-from scipy.linalg import block_diag
 from scipy.sparse import csc_matrix
 
 
@@ -21,7 +20,7 @@ def model_post_init(
     mat = asmatrix(mat)
 
     # constraints
-    cmat = block_diag(np.identity(mat.shape[1]), linear_umat)
+    cmat = np.vstack([np.identity(mat.shape[1]), linear_umat])
     cvec = np.hstack([uvec, linear_uvec])
 
     index = ~np.isclose(cmat, 0.0).all(axis=1)
