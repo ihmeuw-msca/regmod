@@ -150,7 +150,7 @@ def original_trimming(optimize: Callable) -> Callable:
             num_inliers = int(inlier_pct*model.data.obs.size)
             counter = 0
             success = False
-            while counter < trim_steps and success:
+            while (counter < trim_steps) and (not success):
                 counter += 1
                 nll_terms = model.get_nll_terms(coefs)
                 model.data.trim_weights = proj_capped_simplex(
@@ -158,7 +158,7 @@ def original_trimming(optimize: Callable) -> Callable:
                     num_inliers
                 )
                 coefs = optimize(model, x0, options)
-                success = (
+                success = all(
                     np.isclose(model.data.trim_weights, 0.0) |
                     np.isclose(model.data.trim_weights, 1.0)
                 )
