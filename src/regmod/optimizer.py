@@ -4,6 +4,7 @@ Optimizer module
 from typing import Callable, Dict, Optional
 
 import numpy as np
+from msca.optim.prox import proj_capped_simplex
 from msca.optim.solver import IPSolver, NTSolver
 from numpy.typing import NDArray
 from scipy.optimize import LinearConstraint, minimize
@@ -53,7 +54,7 @@ def scipy_optimize(model: "Model",
 
 def msca_optimize(model: "Model",
                   x0: Optional[NDArray] = None,
-                  options: Optional[Dict] = None):
+                  options: Optional[Dict] = None) -> NDArray:
     x0 = x0 or np.zeros(model.size)
     options = options or {}
 
@@ -112,7 +113,7 @@ def trimming(optimize: Callable) -> Callable:
                                x0: NDArray = None,
                                options: Dict = None,
                                trim_steps: int = 3,
-                               inlier_pct: float = 0.95) -> Dict[str, NDArray]:
+                               inlier_pct: float = 0.95) -> NDArray:
         if trim_steps < 2:
             raise ValueError("At least two trimming steps.")
         if inlier_pct < 0.0 or inlier_pct > 1.0:
@@ -125,7 +126,45 @@ def trimming(optimize: Callable) -> Callable:
                 masks = np.append(np.linspace(1.0, 0.0, trim_steps)[1:], 0.0)
                 for mask in masks:
                     set_trim_weights(model, index, mask)
-                    result = optimize(model, coefs, options)
+                    coefs = optimize(model, coefs, options)
                     index = model.detect_outliers(coefs, bounds)
-        return result
+        return coefs
+    return optimize_with_trimming
+
+
+def original_trimming(optimize: Callable) -> Callable:
+    def optimize_with_trimming(
+        model: "Model",
+        x0: NDArray = None,
+        options: Optional[Dict] = None,
+        trim_steps: int = 10,
+        step_size: float = 10.0,
+        inlier_pct: float = 0.95
+    ) -> NDArray:
+        if trim_steps < 2:
+            raise ValueError("At least two trimming steps.")
+        if inlier_pct < 0.0 or inlier_pct > 1.0:
+            raise ValueError("inlier_pct has to be between 0 and 1.")
+        coefs = optimize(model, x0, options)
+        if inlier_pct < 1.0:
+            num_inliers = int(inlier_pct*model.data.obs.size)
+            counter = 0
+            success = False
+            while (counter < trim_steps) and (not success):
+                counter += 1
+                nll_terms = model.get_nll_terms(coefs)
+                model.data.trim_weights = proj_capped_simplex(
+                    model.data.trim_weights - step_size*nll_terms,
+                    num_inliers
+                )
+                coefs = optimize(model, x0, options)
+                success = all(
+                    np.isclose(model.data.trim_weights, 0.0) |
+                    np.isclose(model.data.trim_weights, 1.0)
+                )
+            if not success:
+                sort_indices = np.argsort(model.data.trim_weights)
+                model.data.trim_weights[sort_indices[-num_inliers:]] = 1.0
+                model.data.trim_weights[sort_indices[:-num_inliers]] = 0.0
+        return coefs
     return optimize_with_trimming

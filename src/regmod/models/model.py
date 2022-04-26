@@ -478,6 +478,12 @@ class Model:
             hess += (self.linear_gmat.T/self.linear_gvec[1]**2).dot(self.linear_gmat)
         return hess
 
+    def get_nll_terms(self, coefs: ndarray) -> ndarray:
+        params = self.get_params(coefs)
+        nll_terms = self.nll(params)
+        nll_terms = self.data.weights*nll_terms
+        return nll_terms
+
     def objective(self, coefs: ndarray) -> float:
         """Objective function.
 
@@ -491,10 +497,8 @@ class Model:
         float
             Objective value.
         """
-        params = self.get_params(coefs)
-        obj_params = self.nll(params)
-        weights = self.data.weights*self.data.trim_weights
-        return weights.dot(obj_params) + \
+        nll_terms = self.get_nll_terms(coefs)
+        return self.data.trim_weights.dot(nll_terms) + \
             self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: ndarray) -> ndarray:
