@@ -30,7 +30,7 @@ def scipy_optimize(model: "Model",
     NDArray
         Optimal solution.
     """
-    x0 = x0 or np.zeros(model.size)
+    x0 = np.zeros(model.size) if x0 is None else x0
     bounds = model.uvec.T
     constraints = [LinearConstraint(
         model.linear_umat,
@@ -55,7 +55,7 @@ def scipy_optimize(model: "Model",
 def msca_optimize(model: "Model",
                   x0: Optional[NDArray] = None,
                   options: Optional[Dict] = None) -> NDArray:
-    x0 = x0 or np.zeros(model.size)
+    x0 = np.zeros(model.size) if x0 is None else x0
     options = options or {}
 
     if model.cmat.size == 0:
