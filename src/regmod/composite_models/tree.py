@@ -105,12 +105,13 @@ def get_simple_basetree(df: DataFrame,
 
     mask = {name: prior*final_lvl_masks[0]
             for name, prior in final_var_masks.items()}
-    model_specs["prior_mask"] = mask
 
     # create children model
     df_group = df.groupby(col_label[0])
     for name in df_group.groups.keys():
+        model_specs = model_specs.copy()
         model_specs["name"] = name
+        model_specs["prior_mask"] = mask
         model.append(get_simple_basetree(df_group.get_group(name),
                                          col_label[1:],
                                          model_specs,
