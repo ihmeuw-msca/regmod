@@ -200,7 +200,8 @@ class Model:
             hessian = hessian.to_numpy()
         eig_vals, eig_vecs = np.linalg.eig(hessian)
         if np.isclose(eig_vals, 0.0).any():
-            raise ValueError("singular Hessian matrix")
+            raise ValueError("singular Hessian matrix, please add priors or "
+                             "reduce number of variables")
         inv_hessian = (eig_vecs / eig_vals).dot(eig_vecs.T)
 
         jacobian2 = self.jacobian2(coefs)
@@ -208,7 +209,8 @@ class Model:
             jacobian2 = jacobian2.to_numpy()
         eig_vals = np.linalg.eigvals(jacobian2)
         if np.isclose(eig_vals, 0.0).any():
-            raise ValueError("singular Jacobian matrix")
+            raise ValueError("singular Jacobian matrix, please add priors or "
+                             "reduce number of variables")
 
         vcov = inv_hessian.dot(jacobian2)
         vcov = inv_hessian.dot(vcov.T)
