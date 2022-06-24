@@ -85,9 +85,9 @@ class SplineSpecs:
         If `True`, spline will use left linear tail. Default to be `False`.
     r_linear : bool, default=False
         If `True`, spline will use right linear tail. Default to be `False`.
-    include_first_basis : bool, default=True
+    include_first_basis : bool, default=False
         If `True`, spline will include the first basis of the spline. Default
-        to be `True`.
+        to be `False`.
     knots_type : {'abs', 'rel_domain', 'rel_freq'}, default='abs'
         Type of the spline knots. Can only be choosen from three options,
         `'abs'`, `'rel_domian'` and `'rel_freq'`. When it is `'abs'`
@@ -110,7 +110,7 @@ class SplineSpecs:
     degree: int = 3
     l_linear: bool = False
     r_linear: bool = False
-    include_first_basis: bool = True
+    include_first_basis: bool = False
     knots_type: str = "abs"
 
     def __post_init__(self):
