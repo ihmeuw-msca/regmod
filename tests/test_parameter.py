@@ -1,20 +1,16 @@
 """
 Test parameter module
 """
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 from regmod.data import Data
-from regmod.prior import (GaussianPrior,
-                          UniformPrior,
-                          SplineGaussianPrior,
-                          SplineUniformPrior,
-                          LinearGaussianPrior,
-                          LinearUniformPrior)
-from regmod.variable import Variable, SplineVariable
 from regmod.parameter import Parameter
+from regmod.prior import (GaussianPrior, LinearGaussianPrior,
+                          LinearUniformPrior, SplineGaussianPrior,
+                          SplineUniformPrior, UniformPrior)
 from regmod.utils import SplineSpecs
-
+from regmod.variable import SplineVariable, Variable
 
 # pylint:disable=redefined-outer-name
 
@@ -62,14 +58,14 @@ def spline_uprior():
 @pytest.fixture
 def linear_gprior():
     np.random.seed(123)
-    mat = np.random.randn(2, 8)
+    mat = np.random.randn(2, 7)
     return LinearGaussianPrior(mat=mat, mean=0.0, sd=1.0)
 
 
 @pytest.fixture
 def linear_uprior():
     np.random.seed(123)
-    mat = np.random.randn(2, 8)
+    mat = np.random.randn(2, 7)
     return LinearUniformPrior(mat=mat, lb=0.0, ub=0.0)
 
 
