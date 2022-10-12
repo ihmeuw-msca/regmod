@@ -19,6 +19,7 @@ if __name__ == "__main__":
         "pandas",
         "xspline",
         "msca",
+        "jax",
     ]
 
     test_requirements = [

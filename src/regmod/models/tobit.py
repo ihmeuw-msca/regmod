@@ -174,8 +174,8 @@ class TobitModel(Model):
 
         """
         df = super().predict(df)
-        mu = jnp.asarray(df['mu'])
-        df['mu_censored'] = jnp.where(mu > 0, mu, 0)
+        mu = jnp.asarray(df["mu"])
+        df["mu_censored"] = jnp.where(mu > 0, mu, 0)
         return df
 
 
