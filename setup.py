@@ -19,7 +19,8 @@ if __name__ == "__main__":
         "pandas",
         "xspline",
         "msca",
-        "jax",
+        "jaxlib",
+        "jax[cpu]",
     ]
 
     test_requirements = [
