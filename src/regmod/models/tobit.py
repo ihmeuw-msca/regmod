@@ -9,7 +9,8 @@ from jax import grad, hessian, jit, lax
 import jax.numpy as jnp
 from jax.scipy.stats.norm import logcdf, logpdf
 from numpy.typing import NDArray
-import pandas as pd
+from pandas import DataFrame
+from regmod.data import Data
 
 from .model import Model
 
@@ -25,6 +26,24 @@ class TobitModel(Model):
 
     param_names = ("mu",)
     default_param_specs = {"mu": {"inv_link": "identity"}}
+
+    def __init__(self, data: Data, **kwargs) -> None:
+        """Initialize tobit model.
+
+        Parameters
+        ----------
+        data : Data
+            Training data.
+
+        Raises
+        ------
+        ValueError
+            If negative observations present in `data`.
+
+        """
+        if not jnp.all(data.obs >= 0):
+            raise ValueError("Tobit model requires non-negative observations.")
+        super().__init__(data, **kwargs)
 
     @partial(jit, static_argnums=(0,))
     def objective(self, coefs: NDArray) -> float:
@@ -159,17 +178,17 @@ class TobitModel(Model):
         hess = hessian(lambda mu: jnp.sum(self.nll(mu)))(params)
         return [[jnp.diag(hess[0][0])]]
 
-    def predict(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    def predict(self, df: Optional[DataFrame] = None) -> DataFrame:
         """Predict mu and censored mu.
 
         Parameters
         ----------
-        df : pd.DataFrame, optional
+        df : DataFrame, optional
             Prediction data. If None, use training data.
 
         Returns
         -------
-        pd.DataFrame
+        DataFrame
             Data frame with predicted parameters.
 
         """
