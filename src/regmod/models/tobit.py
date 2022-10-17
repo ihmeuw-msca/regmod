@@ -26,6 +26,15 @@ identity_jax = SmoothFunction(
 )
 
 
+exp_jax = SmoothFunction(
+    name="exp_jax",
+    fun=jnp.exp,
+    inv_fun=jnp.log,
+    dfun=jnp.exp,
+    d2fun=jnp.exp
+)
+
+
 class TobitModel(Model):
     """Tobit model class.
 
@@ -35,8 +44,11 @@ class TobitModel(Model):
 
     """
 
-    param_names = ("mu",)
-    default_param_specs = {"mu": {"inv_link": identity_jax}}
+    param_names = ("mu", "sigma")
+    default_param_specs = {
+        "mu": {"inv_link": identity_jax},
+        "sigma": {"inv_link": exp_jax}
+    }
 
     def __init__(self, data: Data, **kwargs) -> None:
         """Initialize tobit model.
@@ -81,15 +93,12 @@ class TobitModel(Model):
 
     @partial(jit, static_argnums=(0,))
     def objective(self, coefs: ArrayLike) -> float:
-        """Get negative log likelihood wrt beta.
-
-        Assumes the Gaussian model underlying the tobit distribution is
-        parameterized by mu = mat.dot(beta), with sigma fixed at 1.
+        """Get negative log likelihood wrt coefficients.
 
         Parameters
         ----------
         coefs : array_like
-            Beta values.
+            Model coefficients.
 
         Returns
         -------
@@ -103,15 +112,12 @@ class TobitModel(Model):
 
     @partial(jit, static_argnums=(0,))
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
-        """Get gradient of negative log likelihood wrt beta.
-
-        Assumes the Gaussian model underlying the tobit distribution is
-        parameterized by mu = mat.dot(beta), with sigma fixed at 1.
+        """Get gradient of negative log likelihood wrt coefficients.
 
         Parameters
         ----------
         coefs : array_like
-            Beta values.
+            Model coefficients.
 
         Returns
         -------
@@ -123,15 +129,12 @@ class TobitModel(Model):
 
     @partial(jit, static_argnums=(0,))
     def hessian(self, coefs: ArrayLike) -> DeviceArray:
-        """Get hessian of negative log likelihood wrt beta.
-
-        Assumes the Gaussian model underlying the tobit distribution is
-        parameterized by mu = mat.dot(beta), with sigma fixed at 1.
+        """Get hessian of negative log likelihood wrt coefficients.
 
         Parameters
         ----------
         coefs : array_like
-            Beta values.
+            Model coefficients.
 
         Returns
         -------
@@ -143,15 +146,12 @@ class TobitModel(Model):
 
     @partial(jit, static_argnums=(0,))
     def nll(self, params: list[ArrayLike]) -> DeviceArray:
-        """Get terms of negative log likelihood wrt mu.
-
-        Assumes the Gaussian model underlying the tobit distribution is
-        parameterized by mu = mat.dot(beta), with sigma fixed at 1.
+        """Get terms of negative log likelihood wrt parameters.
 
         Parameters
         ----------
         params : list[array_like]
-            [mu = mat.dot(beta) values].
+            Model parameters.
 
         Returns
         -------
@@ -161,7 +161,7 @@ class TobitModel(Model):
         """
         vals = {
             "mu": params[0],
-            "sigma": 1,
+            "sigma": params[1],
             "y": self.data.obs,
             "nll_terms": jnp.zeros(self.data.num_obs)
         }
@@ -170,15 +170,12 @@ class TobitModel(Model):
 
     @partial(jit, static_argnums=(0,))
     def dnll(self, params: list[ArrayLike]) -> list[DeviceArray]:
-        """Get derivative of negative log likelihood wrt mu.
-
-        Assumes the Gaussian model underlying the tobit distribution is
-        parameterized by mu = mat.dot(beta), with sigma fixed at 1.
+        """Get derivative of negative log likelihood wrt parameters.
 
         Parameters
         ----------
         params : list[array_like]
-            [mu = mat.dot(beta) values].
+            Model parameters.
 
         Returns
         -------
@@ -186,7 +183,7 @@ class TobitModel(Model):
             Derivatives of negative log likelihood.
 
         """
-        return grad(lambda mu: jnp.sum(self.nll(mu)))(params)
+        return grad(lambda pars: jnp.sum(self.nll(pars)))(params)
 
     def predict(self, df: Optional[DataFrame] = None) -> DataFrame:
         """Predict mu and censored mu.
@@ -217,10 +214,10 @@ def _nll_term(ii: int, vals: dict) -> dict:
 
 def _pos_term(ii: int, vals: dict) -> float:
     """Get negative log likelihood term for y[ii] > 0."""
-    inner = (vals["y"][ii] - vals["mu"][ii])/vals["sigma"]
-    return jnp.log(vals["sigma"]) - logpdf(inner)
+    inner = (vals["y"][ii] - vals["mu"][ii])/vals["sigma"][ii]
+    return jnp.log(vals["sigma"][ii]) - logpdf(inner)
 
 
 def _npos_term(ii: int, vals: dict) -> float:
     """Get negative log likelihood term for y[ii] <= 0."""
-    return -logcdf(-vals["mu"][ii]/vals["sigma"])
+    return -logcdf(-vals["mu"][ii]/vals["sigma"][ii])
