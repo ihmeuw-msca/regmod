@@ -78,18 +78,16 @@ class TobitModel(Model):
             default_link = self.default_param_specs[param_name]["inv_link"]
             self.params[ii].inv_link = default_link
 
-    def attach_df(self, df: DataFrame) -> None:
-        """Extract training data from data frame.
+    def get_mat(self) -> list[DeviceArray]:
+        """Get the design matrices.
 
-        Parameters
-        ----------
-        df : DataFrame
-            Training data.
+        Returns
+        -------
+        list[DeviceArray]
+            The design matrices.
 
         """
-        #  May need JAX versions of other structures like priors
-        super().attach_df(df)
-        self.mat = [jnp.asarray(mat) for mat in self.mat]
+        return [jnp.asarray(mat) for mat in super().get_mat()]
 
     @partial(jit, static_argnums=(0,))
     def objective(self, coefs: ArrayLike) -> float:
