@@ -6,9 +6,10 @@ from functools import partial
 from typing import Optional
 
 from jax import grad, hessian, jit, lax
+from jax.numpy import DeviceArray
 import jax.numpy as jnp
 from jax.scipy.stats.norm import logcdf, logpdf
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike
 from pandas import DataFrame
 from regmod.data import Data
 from regmod.function import SmoothFunction
@@ -79,7 +80,7 @@ class TobitModel(Model):
         self.mat = [jnp.asarray(mat) for mat in self.mat]
 
     @partial(jit, static_argnums=(0,))
-    def objective(self, coefs: NDArray) -> float:
+    def objective(self, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt beta.
 
         Assumes the Gaussian model underlying the tobit distribution is
@@ -87,7 +88,7 @@ class TobitModel(Model):
 
         Parameters
         ----------
-        coefs : NDArray
+        coefs : array_like
             Beta values.
 
         Returns
@@ -101,7 +102,7 @@ class TobitModel(Model):
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
     @partial(jit, static_argnums=(0,))
-    def gradient(self, coefs: NDArray) -> NDArray:
+    def gradient(self, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt beta.
 
         Assumes the Gaussian model underlying the tobit distribution is
@@ -109,19 +110,19 @@ class TobitModel(Model):
 
         Parameters
         ----------
-        coefs : NDArray
+        coefs : array_like
             Beta values.
 
         Returns
         -------
-        NDArray
+        DeviceArray
             Gradient of negative log likelihood.
 
         """
         return grad(self.objective)(coefs)
 
     @partial(jit, static_argnums=(0,))
-    def hessian(self, coefs: NDArray) -> NDArray:
+    def hessian(self, coefs: ArrayLike) -> DeviceArray:
         """Get hessian of negative log likelihood wrt beta.
 
         Assumes the Gaussian model underlying the tobit distribution is
@@ -129,19 +130,19 @@ class TobitModel(Model):
 
         Parameters
         ----------
-        coefs : NDArray
+        coefs : array_like
             Beta values.
 
         Returns
         -------
-        NDArray
+        DeviceArray
             Hessian of negative log likelihood.
 
         """
         return hessian(self.objective)(coefs)
 
     @partial(jit, static_argnums=(0,))
-    def nll(self, params: list[NDArray]) -> NDArray:
+    def nll(self, params: list[ArrayLike]) -> DeviceArray:
         """Get terms of negative log likelihood wrt mu.
 
         Assumes the Gaussian model underlying the tobit distribution is
@@ -149,12 +150,12 @@ class TobitModel(Model):
 
         Parameters
         ----------
-        params : list[NDArray]
+        params : list[array_like]
             [mu = mat.dot(beta) values].
 
         Returns
         -------
-        NDArray
+        DeviceArray
             Terms of negative log likelihood.
 
         """
@@ -168,7 +169,7 @@ class TobitModel(Model):
         return vals["nll_terms"]
 
     @partial(jit, static_argnums=(0,))
-    def dnll(self, params: list[NDArray]) -> list[NDArray]:
+    def dnll(self, params: list[ArrayLike]) -> list[DeviceArray]:
         """Get derivative of negative log likelihood wrt mu.
 
         Assumes the Gaussian model underlying the tobit distribution is
@@ -176,12 +177,12 @@ class TobitModel(Model):
 
         Parameters
         ----------
-        params : list[NDArray]
+        params : list[array_like]
             [mu = mat.dot(beta) values].
 
         Returns
         -------
-        list[NDArray]
+        list[DeviceArray]
             Derivatives of negative log likelihood.
 
         """
