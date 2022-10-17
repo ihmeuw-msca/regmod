@@ -65,6 +65,19 @@ class TobitModel(Model):
             default_link = self.default_param_specs[param_name]["inv_link"]
             self.params[ii].inv_link = default_link
 
+    def attach_df(self, df: DataFrame) -> None:
+        """Extract training data from data frame.
+
+        Parameters
+        ----------
+        df : DataFrame
+            Training data.
+
+        """
+        #  May need JAX versions of other structures like priors
+        super().attach_df(df)
+        self.mat = [jnp.asarray(mat) for mat in self.mat]
+
     @partial(jit, static_argnums=(0,))
     def objective(self, coefs: NDArray) -> float:
         """Get negative log likelihood wrt beta.
@@ -83,7 +96,7 @@ class TobitModel(Model):
             Negative log likelihood.
 
         """
-        mat = jnp.asarray(self.mat[0])
+        mat = self.mat[0]
         lin_param = self.params[0].get_lin_param(coefs, self.data, mat=mat)
         param = self.params[0].inv_link.fun(lin_param)
         weights = self.data.weights*self.data.trim_weights
