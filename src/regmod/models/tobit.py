@@ -183,6 +183,25 @@ class TobitModel(Model):
         """
         return grad(lambda pars: jnp.sum(self.nll(pars)))(params)
 
+    def get_vcov(self, coefs: ArrayLike) -> DeviceArray:
+        """Get variance-covariance matrix.
+
+        Parameters
+        ----------
+        coefs : array_like
+            Model coefficients.
+
+        Returns
+        -------
+        DeviceArray
+            Variance-covariance matrix.
+
+        """
+        H = self.hessian(coefs)
+        J = self.jacobian2(coefs)
+        inv_H = jnp.linalg.inv(H)
+        return inv_H.dot(J.dot(inv_H.T))
+
     def predict(self, df: Optional[DataFrame] = None) -> DataFrame:
         """Predict mu and censored mu.
 
