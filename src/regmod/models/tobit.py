@@ -35,7 +35,7 @@ class TobitModel(Model):
     """
 
     param_names = ("mu",)
-    default_param_specs = {"mu": {"inv_link": "identity_jax"}}
+    default_param_specs = {"mu": {"inv_link": identity_jax}}
 
     def __init__(self, data: Data, **kwargs) -> None:
         """Initialize tobit model.
@@ -61,9 +61,9 @@ class TobitModel(Model):
         super().__init__(data, **kwargs)
 
         # Use JAX inv_link functions
-        for param_name in self.param_names:
+        for ii, param_name in enumerate(self.param_names):
             default_link = self.default_param_specs[param_name]["inv_link"]
-            self.params[param_name].inv_link = default_link
+            self.params[ii].inv_link = default_link
 
     @partial(jit, static_argnums=(0,))
     def objective(self, coefs: NDArray) -> float:
