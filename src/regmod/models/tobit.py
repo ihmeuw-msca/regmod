@@ -11,8 +11,18 @@ from jax.scipy.stats.norm import logcdf, logpdf
 from numpy.typing import NDArray
 from pandas import DataFrame
 from regmod.data import Data
+from regmod.function import SmoothFunction
 
 from .model import Model
+
+
+identity_jax = SmoothFunction(
+    name="identity_jax",
+    fun=jnp.array,
+    inv_fun=jnp.array,
+    dfun=jnp.ones_like,
+    d2fun=jnp.zeros_like
+)
 
 
 class TobitModel(Model):
@@ -25,7 +35,7 @@ class TobitModel(Model):
     """
 
     param_names = ("mu",)
-    default_param_specs = {"mu": {"inv_link": "identity"}}
+    default_param_specs = {"mu": {"inv_link": "identity_jax"}}
 
     def __init__(self, data: Data, **kwargs) -> None:
         """Initialize tobit model.
@@ -40,10 +50,20 @@ class TobitModel(Model):
         ValueError
             If negative observations present in `data`.
 
+        Notes
+        -----
+        User input for parameter attribute `inv_link` is ingored and
+        defaults used instead.
+
         """
         if not jnp.all(data.obs >= 0):
             raise ValueError("Tobit model requires non-negative observations.")
         super().__init__(data, **kwargs)
+
+        # Use JAX inv_link functions
+        for param_name in self.param_names:
+            default_link = self.default_param_specs[param_name]["inv_link"]
+            self.params[param_name].inv_link = default_link
 
     @partial(jit, static_argnums=(0,))
     def objective(self, coefs: NDArray) -> float:
