@@ -187,27 +187,6 @@ class TobitModel(Model):
         """
         return grad(lambda mu: jnp.sum(self.nll(mu)))(params)
 
-    @partial(jit, static_argnums=(0,))
-    def d2nll(self, params: list[NDArray]) -> list[list[NDArray]]:
-        """Get second derivative of negative log likelihood wrt mu.
-
-        Assumes the Gaussian model underlying the tobit distribution is
-        parameterized by mu = mat.dot(beta), with sigma fixed at 1.
-
-        Parameters
-        ----------
-        params : list[NDArray]
-            [mu = mat.dot(beta) values].
-
-        Returns
-        -------
-        list[list[NDArray][
-            Second derivatives of negative log likelihood.
-
-        """
-        hess = hessian(lambda mu: jnp.sum(self.nll(mu)))(params)
-        return [[jnp.diag(hess[0][0])]]
-
     def predict(self, df: Optional[DataFrame] = None) -> DataFrame:
         """Predict mu and censored mu.
 
