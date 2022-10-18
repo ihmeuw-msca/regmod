@@ -78,16 +78,14 @@ class TobitModel(Model):
             default_link = self.default_param_specs[param_name]["inv_link"]
             self.params[ii].inv_link = default_link
 
-    def get_mat(self) -> list[DeviceArray]:
-        """Get the design matrices.
-
-        Returns
-        -------
-        list[DeviceArray]
-            The design matrices.
-
-        """
-        return [jnp.asarray(mat) for mat in super().get_mat()]
+        # Use JAX data structures
+        self.mat = [jnp.asarray(mat) for mat in self.mat]
+        self.uvec = jnp.asarray(self.uvec)
+        self.gvec = jnp.asarray(self.gvec)
+        self.linear_uvec = jnp.asarray(self.linear_uvec)
+        self.linear_gvec = jnp.asarray(self.linear_gvec)
+        self.linear_umat = jnp.asarray(self.linear_umat)
+        self.linear_gmat = jnp.asarray(self.linear_gmat)
 
     @partial(jit, static_argnums=(0,))
     def objective(self, coefs: ArrayLike) -> float:
