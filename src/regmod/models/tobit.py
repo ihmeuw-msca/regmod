@@ -3,7 +3,7 @@ Tobit Model
 """
 # pylint: disable=C0103
 from functools import partial
-from typing import Optional
+from typing import List, Optional
 
 from jax import grad, hessian, jit, lax
 from jax.numpy import DeviceArray
@@ -141,7 +141,7 @@ class TobitModel(Model):
         return hessian(self.objective)(coefs)
 
     @partial(jit, static_argnums=(0,))
-    def nll(self, params: list[ArrayLike]) -> DeviceArray:
+    def nll(self, params: List[ArrayLike]) -> DeviceArray:
         """Get terms of negative log likelihood wrt parameters.
 
         Parameters
@@ -165,7 +165,7 @@ class TobitModel(Model):
         return vals["nll_terms"]
 
     @partial(jit, static_argnums=(0,))
-    def dnll(self, params: list[ArrayLike]) -> list[DeviceArray]:
+    def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
 
         Parameters
