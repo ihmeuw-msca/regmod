@@ -201,7 +201,7 @@ class TobitModel(Model):
         return inv_H.dot(J.dot(inv_H.T))
 
     def predict(self, df: Optional[DataFrame] = None) -> DataFrame:
-        """Predict mu and censored mu.
+        """Predict mu, sigma, and censored mu.
 
         Parameters
         ----------
