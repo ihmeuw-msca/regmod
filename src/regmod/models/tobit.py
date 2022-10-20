@@ -5,7 +5,7 @@ Tobit Model
 from functools import partial
 from typing import List, Optional
 
-from jax import grad, hessian, jit, vmap
+from jax import grad, hessian, jit
 from jax.numpy import DeviceArray
 import jax.numpy as jnp
 from jax.scipy.stats.norm import logcdf, logpdf
@@ -155,7 +155,12 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        return _nll_term(self.data.obs, params[0], params[1])
+        y = self.data.obs
+        mu = params[0]
+        sigma = params[1]
+        pos_term = jnp.log(sigma) - logpdf((y - mu)/sigma)
+        npos_term = -logcdf(-mu/sigma)
+        return jnp.where(y > 0, pos_term, npos_term)
 
     @partial(jit, static_argnums=(0,))
     def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
@@ -211,11 +216,3 @@ class TobitModel(Model):
         mu = jnp.asarray(df["mu"])
         df["mu_censored"] = jnp.where(mu > 0, mu, 0)
         return df
-
-
-@partial(vmap)
-def _nll_term(y: float, mu: float, sigma: float) -> float:
-    """Get negative log likelihood term for y."""
-    pos_term = jnp.log(sigma) - logpdf((y - mu)/sigma)
-    npos_term = -logcdf(-mu/sigma)
-    return jnp.where(y > 0, pos_term, npos_term)
