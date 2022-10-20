@@ -5,7 +5,7 @@ Tobit Model
 from functools import partial
 from typing import List, Optional
 
-from jax import grad, hessian, jit, lax
+from jax import grad, hessian, jit, lax, vmap
 from jax.numpy import DeviceArray
 import jax.numpy as jnp
 from jax.scipy.stats.norm import logcdf, logpdf
@@ -213,7 +213,7 @@ class TobitModel(Model):
         return df
 
 
-@partial(jnp.vectorize)
+@partial(vmap)
 def _nll_term(y: float, mu: float, sigma: float) -> float:
     """Get negative log likelihood term for y."""
     return lax.cond(y > 0, _pos_term, _npos_term, *(y, mu, sigma))
