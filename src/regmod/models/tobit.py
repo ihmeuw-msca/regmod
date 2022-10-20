@@ -102,8 +102,8 @@ class TobitModel(Model):
             Negative log likelihood.
 
         """
-        weights = self.data.weights*self.data.trim_weights
-        obj_param = weights*self.get_nll_terms(coefs)
+        # self.data.weights included in get_nll_terms
+        obj_param = self.data.trim_weights*self.get_nll_terms(coefs)
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
     @partial(jit, static_argnums=(0,))
