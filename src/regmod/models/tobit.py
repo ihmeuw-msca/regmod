@@ -155,14 +155,7 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        vals = {
-            "mu": params[0],
-            "sigma": params[1],
-            "y": self.data.obs,
-            "nll_terms": jnp.zeros(self.data.num_obs)
-        }
-        vals = lax.fori_loop(0, self.data.num_obs, _nll_term, vals)
-        return vals["nll_terms"]
+        return _nll_term(self.data.obs, params[0], params[1])
 
     @partial(jit, static_argnums=(0,))
     def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
@@ -220,19 +213,17 @@ class TobitModel(Model):
         return df
 
 
-def _nll_term(ii: int, vals: dict) -> dict:
-    """Get negative log likelihood term for y[ii]."""
-    term = lax.cond(vals["y"][ii] > 0, _pos_term, _npos_term, *(ii, vals))
-    vals["nll_terms"] = vals["nll_terms"].at[ii].set(term)
-    return vals
+@partial(jnp.vectorize)
+def _nll_term(y: float, mu: float, sigma: float) -> float:
+    """Get negative log likelihood term for y."""
+    return lax.cond(y > 0, _pos_term, _npos_term, *(y, mu, sigma))
 
 
-def _pos_term(ii: int, vals: dict) -> float:
-    """Get negative log likelihood term for y[ii] > 0."""
-    inner = (vals["y"][ii] - vals["mu"][ii])/vals["sigma"][ii]
-    return jnp.log(vals["sigma"][ii]) - logpdf(inner)
+def _pos_term(y: float, mu: float, sigma: float) -> float:
+    """Get negative log likelihood term for y > 0."""
+    return jnp.log(sigma) - logpdf((y - mu)/sigma)
 
 
-def _npos_term(ii: int, vals: dict) -> float:
-    """Get negative log likelihood term for y[ii] <= 0."""
-    return -logcdf(-vals["mu"][ii]/vals["sigma"][ii])
+def _npos_term(y: float, mu: float, sigma: float) -> float:
+    """Get negative log likelihood term for y <= 0."""
+    return -logcdf(-mu/sigma)
