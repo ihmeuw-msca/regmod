@@ -78,7 +78,16 @@ class TobitModel(Model):
             default_link = self.default_param_specs[param_name]["inv_link"]
             self.params[ii].inv_link = default_link
 
-        # Use JAX data structures
+    def attach_df(self, df: DataFrame) -> None:
+        """Extract training data from data frame.
+
+        Parameters
+        ----------
+        df : DataFrame
+            Training data.
+
+        """
+        super().attach_df(df)
         self.mat = [jnp.asarray(mat) for mat in self.mat]
         self.uvec = jnp.asarray(self.uvec)
         self.gvec = jnp.asarray(self.gvec)
