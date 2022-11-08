@@ -2,7 +2,6 @@
 Tobit Model
 """
 # pylint: disable=C0103
-from functools import partial
 from typing import List, Optional
 
 from jax import grad, hessian, jit
@@ -96,7 +95,6 @@ class TobitModel(Model):
         self.linear_umat = jnp.asarray(self.linear_umat)
         self.linear_gmat = jnp.asarray(self.linear_gmat)
 
-    @partial(jit, static_argnums=(0,))
     def objective(self, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
 
@@ -111,11 +109,20 @@ class TobitModel(Model):
             Negative log likelihood.
 
         """
-        # self.data.weights included in get_nll_terms
-        obj_param = self.data.trim_weights*self.get_nll_terms(coefs)
-        return obj_param.sum() + self.objective_from_gprior(coefs)
+        coef_list = [coefs[index] for index in self.indices]
+        extras = {
+            'num_params': self.num_params,
+            'mat': self.mat,
+            'offset': [param.use_offset*self.data.offset
+                       for param in self.params],
+            'y': self.data.obs,
+            'weights': self.data.trim_weights*self.data.weights,
+            'gvec': self.gvec,
+            'linear_gvec': self.linear_gvec,
+            'linear_gmat': self.linear_gmat
+        }
+        return _objective(coef_list, **extras)
 
-    @partial(jit, static_argnums=(0,))
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
 
@@ -130,9 +137,20 @@ class TobitModel(Model):
             Gradient of negative log likelihood.
 
         """
-        return grad(self.objective)(coefs)
+        coef_list = [coefs[index] for index in self.indices]
+        extras = {
+            'num_params': self.num_params,
+            'mat': self.mat,
+            'offset': [param.use_offset*self.data.offset
+                       for param in self.params],
+            'y': self.data.obs,
+            'weights': self.data.trim_weights*self.data.weights,
+            'gvec': self.gvec,
+            'linear_gvec': self.linear_gvec,
+            'linear_gmat': self.linear_gmat
+        }
+        return jnp.concatenate(_gradient(coef_list, **extras))
 
-    @partial(jit, static_argnums=(0,))
     def hessian(self, coefs: ArrayLike) -> DeviceArray:
         """Get hessian of negative log likelihood wrt coefficients.
 
@@ -147,9 +165,25 @@ class TobitModel(Model):
             Hessian of negative log likelihood.
 
         """
-        return hessian(self.objective)(coefs)
+        coef_list = [coefs[index] for index in self.indices]
+        extras = {
+            'num_params': self.num_params,
+            'mat': self.mat,
+            'offset': [param.use_offset*self.data.offset
+                       for param in self.params],
+            'y': self.data.obs,
+            'weights': self.data.trim_weights*self.data.weights,
+            'gvec': self.gvec,
+            'linear_gvec': self.linear_gvec,
+            'linear_gmat': self.linear_gmat
+        }
+        temp = _hessian(coef_list, **extras)
+        hess = jnp.concatenate([
+            jnp.concatenate(temp[0], axis=1),
+            jnp.concatenate(temp[1], axis=1)
+        ], axis=0)
+        return hess
 
-    @partial(jit, static_argnums=(0,))
     def nll(self, params: List[ArrayLike]) -> DeviceArray:
         """Get terms of negative log likelihood wrt parameters.
 
@@ -164,14 +198,8 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        y = self.data.obs
-        mu = params[0]
-        sigma = params[1]
-        pos_term = jnp.log(sigma) - logpdf((y - mu)/sigma)
-        npos_term = -logcdf(-mu/sigma)
-        return jnp.where(y > 0, pos_term, npos_term)
+        return _nll(self.data.obs, params)
 
-    @partial(jit, static_argnums=(0,))
     def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
 
@@ -186,7 +214,7 @@ class TobitModel(Model):
             Derivatives of negative log likelihood.
 
         """
-        return grad(lambda pars: jnp.sum(self.nll(pars)))(params)
+        return _dnll(self.data.obs, params)
 
     def get_vcov(self, coefs: ArrayLike) -> DeviceArray:
         """Get variance-covariance matrix.
@@ -225,3 +253,65 @@ class TobitModel(Model):
         mu = jnp.asarray(df["mu"])
         df["mu_censored"] = jnp.where(mu > 0, mu, 0)
         return df
+
+
+@jit
+def _objective(coef_list: List[ArrayLike], **kwargs) -> float:
+    """Get negative log likelihood wrt coefficients.
+
+    Parameters
+    ----------
+    coefs : list of array_like
+        Model coefficients.
+
+    Returns
+    -------
+    float
+        Negative log likelihood.
+
+    """
+    # Get objective from parameters
+    param_list = [
+        kwargs['mat'][0].dot(coef_list[0]) + kwargs['offset'][0],
+        jnp.exp(kwargs['mat'][1].dot(coef_list[1]) + kwargs['offset'][1])
+    ]
+    nll_terms = _nll(kwargs['y'], param_list)
+    obj_param = jnp.sum(kwargs['weights']*nll_terms)
+
+    # Get objective from prior
+    coefs = jnp.concatenate(coef_list)
+    obj_prior = jnp.sum((coefs - kwargs['gvec'][0])**2/kwargs['gvec'][1]**2)/2
+    if kwargs['linear_gvec'].size > 0:
+        num = (kwargs['linear_gmat'].dot(coefs) - kwargs['linear_gvec'][0])**2
+        obj_prior += 0.5*jnp.sum(num/kwargs['linear_gvec'][1]**2)
+
+    return obj_param + obj_prior
+
+
+@jit
+def _nll(y: ArrayLike, params: List[ArrayLike]) -> DeviceArray:
+    """Get terms of negative log likelihood wrt parameters.
+
+    Parameters
+    ----------
+    y : array_like
+        Observations.
+    params : list[array_like]
+        Model parameters.
+
+    Returns
+    -------
+    DeviceArray
+        Terms of negative log likelihood.
+
+    """
+    mu = params[0]
+    sigma = params[1]
+    pos_term = jnp.log(sigma) - logpdf((y - mu)/sigma)
+    npos_term = -logcdf(-mu/sigma)
+    return jnp.where(y > 0, pos_term, npos_term)
+
+
+_gradient = jit(grad(_objective))
+_hessian = jit(hessian(_objective))
+_dnll = jit(grad(lambda y, params: jnp.sum(_nll(y, params))))
