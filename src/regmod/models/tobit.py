@@ -95,6 +95,11 @@ class TobitModel(Model):
         self.linear_umat = jnp.asarray(self.linear_umat)
         self.linear_gmat = jnp.asarray(self.linear_gmat)
 
+        # Data structures for objective
+        self.offset = [jnp.asarray(param.use_offset*self.data.offset)
+                       for param in self.params]
+        self.weights = jnp.asarray(self.data.trim_weights*self.data.weights)
+
     def objective(self, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
 
@@ -110,18 +115,9 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        extras = {
-            'num_params': self.num_params,
-            'mat': self.mat,
-            'offset': [param.use_offset*self.data.offset
-                       for param in self.params],
-            'y': self.data.obs,
-            'weights': self.data.trim_weights*self.data.weights,
-            'gvec': self.gvec,
-            'linear_gvec': self.linear_gvec,
-            'linear_gmat': self.linear_gmat
-        }
-        return _objective(coef_list, **extras)
+        return _objective(coef_list, self.mat, self.offset, self.data.obs,
+                          self.weights, self.gvec, self.linear_gvec,
+                          self.linear_gmat)
 
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
@@ -138,18 +134,10 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        extras = {
-            'num_params': self.num_params,
-            'mat': self.mat,
-            'offset': [param.use_offset*self.data.offset
-                       for param in self.params],
-            'y': self.data.obs,
-            'weights': self.data.trim_weights*self.data.weights,
-            'gvec': self.gvec,
-            'linear_gvec': self.linear_gvec,
-            'linear_gmat': self.linear_gmat
-        }
-        return jnp.concatenate(_gradient(coef_list, **extras))
+        temp = _gradient(coef_list, self.mat, self.offset, self.data.obs,
+                         self.weights, self.gvec, self.linear_gvec,
+                         self.linear_gmat)
+        return jnp.concatenate(temp)
 
     def hessian(self, coefs: ArrayLike) -> DeviceArray:
         """Get hessian of negative log likelihood wrt coefficients.
@@ -166,18 +154,9 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        extras = {
-            'num_params': self.num_params,
-            'mat': self.mat,
-            'offset': [param.use_offset*self.data.offset
-                       for param in self.params],
-            'y': self.data.obs,
-            'weights': self.data.trim_weights*self.data.weights,
-            'gvec': self.gvec,
-            'linear_gvec': self.linear_gvec,
-            'linear_gmat': self.linear_gmat
-        }
-        temp = _hessian(coef_list, **extras)
+        temp = _hessian(coef_list, self.mat, self.offset, self.data.obs,
+                        self.weights, self.gvec, self.linear_gvec,
+                        self.linear_gmat)
         hess = jnp.concatenate([
             jnp.concatenate(temp[0], axis=1),
             jnp.concatenate(temp[1], axis=1)
@@ -229,6 +208,11 @@ class TobitModel(Model):
         DeviceArray
             Variance-covariance matrix.
 
+        Notes
+        -----
+        Currently does not warn for singular hessian or jacobian,
+        unlike other RegMod models.
+
         """
         H = self.hessian(coefs)
         J = self.jacobian2(coefs)
@@ -256,13 +240,30 @@ class TobitModel(Model):
 
 
 @jit
-def _objective(coef_list: List[ArrayLike], **kwargs) -> float:
+def _objective(coef_list: List[ArrayLike], mat: List[ArrayLike],
+               offset: ArrayLike, y: ArrayLike, weights: ArrayLike,
+               gvec: ArrayLike, linear_gvec: ArrayLike,
+               linear_gmat: ArrayLike) -> float:
     """Get negative log likelihood wrt coefficients.
 
     Parameters
     ----------
     coefs : list of array_like
-        Model coefficients.
+        Model coefficients for each parameter.
+    mat : list of array_like
+        Design matrices for each parameter.
+    offset : list of array_like
+        Offset vector for each parameter.
+    y : array_like
+        Vector of observations.
+    weights : array_like
+        Vector of weights for each observation.
+    gvec : array_like
+        Direct Gaussian prior vector.
+    linear_gvec : array_like
+        Linear Gaussian prior vector.
+    linear_gmat : array_like
+        Linear Gaussian prior design matrix.
 
     Returns
     -------
@@ -272,18 +273,18 @@ def _objective(coef_list: List[ArrayLike], **kwargs) -> float:
     """
     # Get objective from parameters
     param_list = [
-        kwargs['mat'][0].dot(coef_list[0]) + kwargs['offset'][0],
-        jnp.exp(kwargs['mat'][1].dot(coef_list[1]) + kwargs['offset'][1])
+        mat[0].dot(coef_list[0]) + offset[0],
+        jnp.exp(mat[1].dot(coef_list[1]) + offset[1])
     ]
-    nll_terms = _nll(kwargs['y'], param_list)
-    obj_param = jnp.sum(kwargs['weights']*nll_terms)
+    nll_terms = _nll(y, param_list)
+    obj_param = jnp.sum(weights*nll_terms)
 
     # Get objective from prior
     coefs = jnp.concatenate(coef_list)
-    obj_prior = jnp.sum((coefs - kwargs['gvec'][0])**2/kwargs['gvec'][1]**2)/2
-    if kwargs['linear_gvec'].size > 0:
-        num = (kwargs['linear_gmat'].dot(coefs) - kwargs['linear_gvec'][0])**2
-        obj_prior += 0.5*jnp.sum(num/kwargs['linear_gvec'][1]**2)
+    obj_prior = jnp.sum((coefs - gvec[0])**2/gvec[1]**2)/2
+    if linear_gvec.size > 0:
+        num = (linear_gmat.dot(coefs) - linear_gvec[0])**2
+        obj_prior += 0.5*jnp.sum(num/linear_gvec[1]**2)
 
     return obj_param + obj_prior
 
