@@ -45,8 +45,8 @@ class TobitModel(Model):
 
     param_names = ("mu", "sigma")
     default_param_specs = {
-        "mu": {"inv_link": identity_jax},
-        "sigma": {"inv_link": exp_jax}
+        "mu": {"inv_link": 'identity'},
+        "sigma": {"inv_link": 'exp'}
     }
 
     def __init__(self, data: Data, **kwargs) -> None:
@@ -73,9 +73,15 @@ class TobitModel(Model):
         super().__init__(data, **kwargs)
 
         # Use JAX inv_link functions
-        for ii, param_name in enumerate(self.param_names):
-            default_link = self.default_param_specs[param_name]["inv_link"]
-            self.params[ii].inv_link = default_link
+        for param in self.params:
+            link_name = param.inv_link.name
+            if link_name == 'identity':
+                param.inv_link = identity_jax
+            elif link_name == 'exp':
+                param.inv_link = exp_jax
+            else:
+                msg = f"No JAX implementation of {link_name} inv_link."
+                raise ValueError(msg)
 
     def attach_df(self, df: DataFrame) -> None:
         """Extract training data from data frame.
