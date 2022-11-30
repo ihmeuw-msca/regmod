@@ -4,7 +4,7 @@ Tobit Model
 # pylint: disable=C0103
 from typing import List, Optional
 
-from jax import grad, hessian, jit
+from jax import grad, hessian, jit, lax
 from jax.numpy import DeviceArray
 import jax.numpy as jnp
 from jax.scipy.stats.norm import logcdf, logpdf
@@ -121,9 +121,10 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        return _objective(coef_list, self.mat, self.offset, self.data.obs,
-                          self.weights, self.gvec, self.linear_gvec,
-                          self.linear_gmat)
+        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
+        return _objective(coef_list, link_list, self.mat, self.offset,
+                          self.data.obs, self.weights, self.gvec,
+                          self.linear_gvec, self.linear_gmat)
 
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
@@ -140,9 +141,10 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        temp = _gradient(coef_list, self.mat, self.offset, self.data.obs,
-                         self.weights, self.gvec, self.linear_gvec,
-                         self.linear_gmat)
+        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
+        temp = _gradient(coef_list, link_list, self.mat, self.offset,
+                         self.data.obs, self.weights, self.gvec,
+                         self.linear_gvec, self.linear_gmat)
         return jnp.concatenate(temp)
 
     def hessian(self, coefs: ArrayLike) -> DeviceArray:
@@ -160,9 +162,10 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        temp = _hessian(coef_list, self.mat, self.offset, self.data.obs,
-                        self.weights, self.gvec, self.linear_gvec,
-                        self.linear_gmat)
+        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
+        temp = _hessian(coef_list, link_list, self.mat, self.offset,
+                        self.data.obs, self.weights, self.gvec,
+                        self.linear_gvec, self.linear_gmat)
         hess = jnp.concatenate([
             jnp.concatenate(temp[0], axis=1),
             jnp.concatenate(temp[1], axis=1)
@@ -246,9 +249,9 @@ class TobitModel(Model):
 
 
 @jit
-def _objective(coef_list: List[ArrayLike], mat: List[ArrayLike],
-               offset: ArrayLike, y: ArrayLike, weights: ArrayLike,
-               gvec: ArrayLike, linear_gvec: ArrayLike,
+def _objective(coef_list: List[ArrayLike], link_list: List[bool],
+               mat: List[ArrayLike], offset: ArrayLike, y: ArrayLike,
+               weights: ArrayLike, gvec: ArrayLike, linear_gvec: ArrayLike,
                linear_gmat: ArrayLike) -> float:
     """Get negative log likelihood wrt coefficients.
 
@@ -256,6 +259,8 @@ def _objective(coef_list: List[ArrayLike], mat: List[ArrayLike],
     ----------
     coefs : list of array_like
         Model coefficients for each parameter.
+    link_list : list of bool
+        True if inv_link is exp_jax for each parameter.
     mat : list of array_like
         Design matrices for each parameter.
     offset : list of array_like
@@ -278,19 +283,29 @@ def _objective(coef_list: List[ArrayLike], mat: List[ArrayLike],
 
     """
     # Get objective from parameters
-    param_list = [
-        mat[0].dot(coef_list[0]) + offset[0],
-        jnp.exp(mat[1].dot(coef_list[1]) + offset[1])
-    ]
+    param_list = []
+    for ii in range(len(coef_list)):
+        param_list.append(
+            lax.cond(
+                link_list[ii],
+                lambda x: jnp.exp(x),
+                lambda x: x,
+                mat[ii].dot(coef_list[ii]) + offset[ii]
+            )
+        )
     nll_terms = _nll(y, param_list)
     obj_param = jnp.sum(weights*nll_terms)
 
     # Get objective from prior
     coefs = jnp.concatenate(coef_list)
     obj_prior = jnp.sum((coefs - gvec[0])**2/gvec[1]**2)/2
-    if linear_gvec.size > 0:
-        num = (linear_gmat.dot(coefs) - linear_gvec[0])**2
-        obj_prior += 0.5*jnp.sum(num/linear_gvec[1]**2)
+    obj_prior = lax.cond(
+        linear_gvec.size > 0,
+        lambda x: x + 0.5*jnp.sum((linear_gmat.dot(coefs) -
+                                   linear_gvec[0])**2/linear_gvec[1]**2),
+        lambda x: x,
+        obj_prior
+    )
 
     return obj_param + obj_prior
 
