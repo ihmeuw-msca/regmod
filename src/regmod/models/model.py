@@ -1,16 +1,18 @@
 """
 Model module
 """
-from typing import Callable, Dict, List, Tuple, Union, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import pandas as pd
+from msca.linalg.matrix import Matrix
 from numpy import ndarray
-from scipy.linalg import block_diag
-
 from regmod.data import Data
+from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices
-from regmod.optimizer import scipy_optimize
+from scipy.linalg import block_diag
+from scipy.sparse import csc_matrix
 
 
 class Model:
@@ -117,6 +119,8 @@ class Model:
         Jacobian function.
     fit(optimizer, **optimizer_options)
         Fit function.
+    predict(df)
+        Predict the parameters.
     """
 
     param_names: Tuple[str] = None
@@ -143,27 +147,32 @@ class Model:
                            for param_name in self.param_names]
 
         self.data = data
-        if self.data.is_empty():
-            raise ValueError("Please attach dataframe before creating model.")
-        for param in self.params:
-            param.check_data(self.data)
+        if not self.data.is_empty():
+            self.attach_df(self.data.df)
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
         self.size = sum(self.sizes)
         self.num_params = len(self.params)
 
+        # optimization result placeholder
+        self.opt_result = None
+        self._opt_coefs = None
+        self._opt_vcov = None
+
+    def attach_df(self, df: pd.DataFrame):
+        self.data.attach_df(df)
+        for param in self.params:
+            param.check_data(self.data)
+
         self.mat = self.get_mat()
+        self.use_hessian = not any(isinstance(m, csc_matrix) for m in self.mat)
         self.uvec = self.get_uvec()
         self.gvec = self.get_gvec()
         self.linear_uvec = self.get_linear_uvec()
         self.linear_gvec = self.get_linear_gvec()
         self.linear_umat = self.get_linear_umat()
         self.linear_gmat = self.get_linear_gmat()
-
-        # optimization result placeholder
-        self.opt_result = None
-        self._opt_coefs = None
 
     @property
     def opt_coefs(self) -> Union[None, ndarray]:
@@ -178,10 +187,31 @@ class Model:
 
     @property
     def opt_vcov(self) -> Union[None, ndarray]:
-        if self.opt_coefs is None:
-            return None
-        inv_hessian = np.linalg.pinv(self.hessian(self.opt_coefs))
-        jacobian2 = self.jacobian2(self.opt_coefs)
+        return self._opt_vcov
+
+    @opt_vcov.setter
+    def opt_vcov(self, vcov: ndarray):
+        vcov = np.asarray(vcov)
+        self._opt_vcov = vcov
+
+    def get_vcov(self, coefs: ndarray) -> ndarray:
+        hessian = self.hessian(coefs)
+        if isinstance(hessian, Matrix):
+            hessian = hessian.to_numpy()
+        eig_vals, eig_vecs = np.linalg.eig(hessian)
+        if np.isclose(eig_vals, 0.0).any():
+            raise ValueError("singular Hessian matrix, please add priors or "
+                             "reduce number of variables")
+        inv_hessian = (eig_vecs / eig_vals).dot(eig_vecs.T)
+
+        jacobian2 = self.jacobian2(coefs)
+        if isinstance(jacobian2, Matrix):
+            jacobian2 = jacobian2.to_numpy()
+        eig_vals = np.linalg.eigvals(jacobian2)
+        if np.isclose(eig_vals, 0.0).any():
+            raise ValueError("singular Jacobian matrix, please add priors or "
+                             "reduce number of variables")
+
         vcov = inv_hessian.dot(jacobian2)
         vcov = inv_hessian.dot(vcov.T)
         return vcov
@@ -458,6 +488,12 @@ class Model:
             hess += (self.linear_gmat.T/self.linear_gvec[1]**2).dot(self.linear_gmat)
         return hess
 
+    def get_nll_terms(self, coefs: ndarray) -> ndarray:
+        params = self.get_params(coefs)
+        nll_terms = self.nll(params)
+        nll_terms = self.data.weights*nll_terms
+        return nll_terms
+
     def objective(self, coefs: ndarray) -> float:
         """Objective function.
 
@@ -471,10 +507,8 @@ class Model:
         float
             Objective value.
         """
-        params = self.get_params(coefs)
-        obj_params = self.nll(params)
-        weights = self.data.weights*self.data.trim_weights
-        return weights.dot(obj_params) + \
+        nll_terms = self.get_nll_terms(coefs)
+        return self.data.trim_weights.dot(nll_terms) + \
             self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: ndarray) -> ndarray:
@@ -562,3 +596,34 @@ class Model:
             Model solver, by default scipy_optimize.
         """
         optimizer(self, **optimizer_options)
+
+    def predict(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+        """Predict the parameters.
+
+        Parameters
+        ----------
+        df : pd.DataFrame, optional
+            Data Frame with prediction data. If it is None, using the training
+            data.
+
+        Returns
+        -------
+        pd.DataFrame
+            Data frame with predicted parameters.
+        """
+        if df is None:
+            df = self.data.df.copy()
+        data = self.data.copy()
+        data.attach_df(df)
+
+        coefs = self.split_coefs(self.opt_coefs)
+        for i, param_name in enumerate(self.param_names):
+            df[param_name] = self.params[i].get_param(coefs[i], data)
+
+        return df
+
+    def __repr__(self) -> str:
+        return (f"{type(self).__name__}("
+                f"bnum_obs={self.data.num_obs}, "
+                f"num_params={self.num_params}, "
+                f"size={self.size})")

@@ -42,6 +42,3 @@ class NegativeBinomialModel(Model):
         p = params[1]
         return [nbinom.ppf(bounds[0], n=n, p=p),
                 nbinom.ppf(bounds[1], n=n, p=p)]
-
-    def __repr__(self) -> str:
-        return f"NegativeBinomialModel(num_obs={self.data.num_obs}, num_params={self.num_params}, size={self.size})"

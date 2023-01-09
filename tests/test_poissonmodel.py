@@ -1,16 +1,16 @@
 """
 Test Poisson Model
 """
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 from regmod.data import Data
-from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
-from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
 from regmod.models import PoissonModel
+from regmod.prior import (GaussianPrior, SplineGaussianPrior,
+                          SplineUniformPrior, UniformPrior)
 from regmod.utils import SplineSpecs
-
+from regmod.variable import SplineVariable, Variable
 
 # pylint:disable=redefined-outer-name
 
@@ -133,7 +133,7 @@ def test_model_hessian(model, inv_link):
     model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
     coefs_c = coefs + 0j
-    my_hess = model.hessian(coefs)
+    my_hess = model.hessian(coefs).to_numpy()
     tr_hess = np.zeros((model.size, model.size))
     for i in range(model.size):
         for j in range(model.size):

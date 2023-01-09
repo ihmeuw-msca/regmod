@@ -6,6 +6,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 from scipy.linalg import block_diag
+from scipy.sparse import csc_matrix
 
 from regmod.data import Data
 from regmod.function import SmoothFunction, fun_dict

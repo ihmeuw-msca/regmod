@@ -1,18 +1,22 @@
 """
 Base Model
 """
+import logging
 from copy import deepcopy
 from typing import Dict, List, Optional
 
 import numpy as np
+import pandas as pd
 from pandas import DataFrame
 from regmod.composite_models.interface import NodeModel
 from regmod.data import Data
 from regmod.function import fun_dict
-from regmod.models import GaussianModel, PoissonModel, BinomialModel
+from regmod.models import BinomialModel, GaussianModel, PoissonModel
 from regmod.prior import GaussianPrior
 from regmod.utils import sizes_to_slices
 from regmod.variable import Variable
+
+logger = logging.getLogger(__name__)
 
 link_funs = {
     "gaussian": fun_dict[
@@ -135,10 +139,15 @@ class BaseModel(NodeModel):
         self.data.attach_df(self.add_offset(df, copy=True))
 
     def fit(self, **fit_options):
+        logger.info(f"fit_node;start;{self.level};{self.name}")
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
             self.model = model_constructor(self.data, self.param_specs)
         self.model.fit(**fit_options)
+        message = f"fit_node;finish;{self.level};{self.name};"
+        # message += f"{self.model.opt_result.success};"
+        # message += f"{self.model.opt_result.niter}"
+        logger.info(message)
 
     def predict(self, df: DataFrame = None):
         df = self.get_data() if df is None else df.copy()
@@ -162,11 +171,17 @@ class BaseModel(NodeModel):
         coefs_draws = np.random.multivariate_normal(self.model.opt_coefs,
                                                     self.model.opt_vcov,
                                                     size=size)
-        for i, coefs_draw in enumerate(coefs_draws):
-            df[f"{self.col_value}_{i}"] = self.model.params[0].get_param(
-                coefs_draw, pred_data
-            )
-        return df
+        draws = np.vstack([
+            self.model.params[0].get_param(coefs_draw, pred_data)
+            for coefs_draw in coefs_draws
+        ])
+        df_draws = pd.DataFrame(
+            draws.T,
+            columns=[f"{self.col_value}_{i}" for i in range(size)],
+            index=df.index
+        )
+
+        return pd.concat([df, df_draws], axis=1)
 
     def set_prior(self, priors: Dict[str, List]):
         priors = deepcopy(priors)

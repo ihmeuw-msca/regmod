@@ -18,15 +18,17 @@ from regmod.utils import SplineSpecs
 @pytest.fixture
 def data():
     num_obs = 5
-    obs_1s = np.random.rand(num_obs)*10
+    obs = np.random.rand(num_obs)
+    sample_size = np.random.poisson(lam=5, size=num_obs)
     df = pd.DataFrame({
-        "obs_1s": obs_1s,
-        "obs_sample_sizes": obs_1s + 1.0,
+        "obs": obs,
+        "sample_size": sample_size,
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs=["obs_1s", "obs_sample_sizes"],
+    return Data(col_obs="obs",
                 col_covs=["cov0", "cov1"],
+                col_weights="sample_size",
                 df=df)
 
 

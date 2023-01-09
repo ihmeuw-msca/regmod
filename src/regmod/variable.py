@@ -10,9 +10,9 @@ import numpy as np
 from xspline import XSpline
 
 from regmod.data import Data
-from regmod.prior import (Prior, GaussianPrior, UniformPrior,
-                          LinearPrior, LinearGaussianPrior, LinearUniformPrior,
-                          SplinePrior, SplineGaussianPrior, SplineUniformPrior)
+from regmod.prior import (GaussianPrior, LinearGaussianPrior, LinearPrior,
+                          LinearUniformPrior, Prior, SplineGaussianPrior,
+                          SplinePrior, SplineUniformPrior, UniformPrior)
 from regmod.utils import SplineSpecs
 
 
@@ -118,7 +118,7 @@ class Variable:
         ValueError
             Raised if data doesn't contain column name `self.name`.
         """
-        if self.name not in data.col_covs:
+        if self.name not in data.df.columns:
             raise ValueError(f"Data do not contain column {self.name}")
 
     @property

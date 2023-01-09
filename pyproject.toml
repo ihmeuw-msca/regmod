@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "regmod"
+version = "0.0.8"
+description = "General regression models"
+readme = "REDME.rst"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+    { name = "IHME Math Sciences", email = "ihme.math.sciences@gmail.com" },
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "xspline",
+    "msca",
+    "jaxlib",
+    "jax[cpu]",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+stash = "https://github.com/ihmeuw-msca/regmod"

@@ -1,16 +1,16 @@
 """
 Test Gaussian Model
 """
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 from regmod.data import Data
-from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
-from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
 from regmod.models import GaussianModel
+from regmod.prior import (GaussianPrior, SplineGaussianPrior,
+                          SplineUniformPrior, UniformPrior)
 from regmod.utils import SplineSpecs
-
+from regmod.variable import SplineVariable, Variable
 
 # pylint:disable=redefined-outer-name
 
@@ -126,7 +126,7 @@ def test_model_hessian(model, inv_link):
     model.params[0].inv_link = fun_dict[inv_link]
     coefs = np.random.randn(model.size)
     coefs_c = coefs + 0j
-    my_hess = model.hessian(coefs)
+    my_hess = model.hessian(coefs).to_numpy()
     tr_hess = np.zeros((model.size, model.size))
     for i in range(model.size):
         for j in range(model.size):
@@ -147,9 +147,9 @@ def test_model_get_ui(model):
 
 def test_model_jacobian2(model):
     beta = np.zeros(model.size)
-    jacobian2 = model.jacobian2(beta)
+    jacobian2 = model.jacobian2(beta).to_numpy()
 
-    mat = model.mat[0]
+    mat = model.mat[0].to_numpy()
     param = model.get_params(beta)[0]
     residual = (model.data.obs - param)*np.sqrt(model.data.weights)
     jacobian = mat.T*residual

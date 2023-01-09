@@ -2,7 +2,7 @@
 Data Module
 """
 from dataclasses import dataclass, field
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 from numpy import ndarray
@@ -29,6 +29,8 @@ class Data:
         to the data frame filled with 0.
     df : pd.DataFrame, optional
         Data frame for the object. Default is an empty data frame.
+    subset_cols : bool, optional
+        If True only keep the enssential columns. Default to False.
 
     Attributes
     ----------
@@ -94,6 +96,7 @@ class Data:
     col_weights: str = "weights"
     col_offset: str = "offset"
     df: DataFrame = field(default_factory=DataFrame)
+    subset_cols: bool = False
 
     def __post_init__(self):
         self.col_covs = list(set(self.col_covs).union({'intercept'}))
@@ -147,8 +150,11 @@ class Data:
         DataFrame
             Copy of input data frame with given subset columns.
         """
-        df = self.df if df is None else df
-        self.df = df.loc[:, df.columns.isin(self.cols)].copy()
+        if df is not None:
+            if self.subset_cols:
+                self.df = df.loc[:, df.columns.isin(self.cols)].copy()
+            else:
+                self.df = df.copy()
 
     def fill_df(self) -> None:
         """Automatically add columns `'intercept'`, `col_weights`, `col_offset`
