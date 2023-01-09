@@ -2,10 +2,9 @@
 Tobit Model
 """
 # pylint: disable=C0103
-from functools import partial
 from typing import List, Optional
 
-from jax import grad, hessian, jit
+from jax import grad, hessian, jit, lax
 from jax.numpy import DeviceArray
 import jax.numpy as jnp
 from jax.scipy.stats.norm import logcdf, logpdf
@@ -46,8 +45,8 @@ class TobitModel(Model):
 
     param_names = ("mu", "sigma")
     default_param_specs = {
-        "mu": {"inv_link": identity_jax},
-        "sigma": {"inv_link": exp_jax}
+        "mu": {"inv_link": 'identity'},
+        "sigma": {"inv_link": 'exp'}
     }
 
     def __init__(self, data: Data, **kwargs) -> None:
@@ -74,9 +73,15 @@ class TobitModel(Model):
         super().__init__(data, **kwargs)
 
         # Use JAX inv_link functions
-        for ii, param_name in enumerate(self.param_names):
-            default_link = self.default_param_specs[param_name]["inv_link"]
-            self.params[ii].inv_link = default_link
+        for param in self.params:
+            link_name = param.inv_link.name
+            if link_name == 'identity':
+                param.inv_link = identity_jax
+            elif link_name == 'exp':
+                param.inv_link = exp_jax
+            else:
+                msg = f"No JAX implementation of {link_name} inv_link."
+                raise ValueError(msg)
 
     def attach_df(self, df: DataFrame) -> None:
         """Extract training data from data frame.
@@ -96,7 +101,11 @@ class TobitModel(Model):
         self.linear_umat = jnp.asarray(self.linear_umat)
         self.linear_gmat = jnp.asarray(self.linear_gmat)
 
-    @partial(jit, static_argnums=(0,))
+        # Data structures for objective
+        self.offset = [jnp.asarray(param.use_offset*self.data.offset)
+                       for param in self.params]
+        self.weights = jnp.asarray(self.data.trim_weights*self.data.weights)
+
     def objective(self, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
 
@@ -111,11 +120,12 @@ class TobitModel(Model):
             Negative log likelihood.
 
         """
-        # self.data.weights included in get_nll_terms
-        obj_param = self.data.trim_weights*self.get_nll_terms(coefs)
-        return obj_param.sum() + self.objective_from_gprior(coefs)
+        coef_list = [coefs[index] for index in self.indices]
+        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
+        return _objective(coef_list, link_list, self.mat, self.offset,
+                          self.data.obs, self.weights, self.gvec,
+                          self.linear_gvec, self.linear_gmat)
 
-    @partial(jit, static_argnums=(0,))
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
 
@@ -130,9 +140,13 @@ class TobitModel(Model):
             Gradient of negative log likelihood.
 
         """
-        return grad(self.objective)(coefs)
+        coef_list = [coefs[index] for index in self.indices]
+        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
+        temp = _gradient(coef_list, link_list, self.mat, self.offset,
+                         self.data.obs, self.weights, self.gvec,
+                         self.linear_gvec, self.linear_gmat)
+        return jnp.concatenate(temp)
 
-    @partial(jit, static_argnums=(0,))
     def hessian(self, coefs: ArrayLike) -> DeviceArray:
         """Get hessian of negative log likelihood wrt coefficients.
 
@@ -147,9 +161,17 @@ class TobitModel(Model):
             Hessian of negative log likelihood.
 
         """
-        return hessian(self.objective)(coefs)
+        coef_list = [coefs[index] for index in self.indices]
+        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
+        temp = _hessian(coef_list, link_list, self.mat, self.offset,
+                        self.data.obs, self.weights, self.gvec,
+                        self.linear_gvec, self.linear_gmat)
+        hess = jnp.concatenate([
+            jnp.concatenate(temp[0], axis=1),
+            jnp.concatenate(temp[1], axis=1)
+        ], axis=0)
+        return hess
 
-    @partial(jit, static_argnums=(0,))
     def nll(self, params: List[ArrayLike]) -> DeviceArray:
         """Get terms of negative log likelihood wrt parameters.
 
@@ -164,14 +186,8 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        y = self.data.obs
-        mu = params[0]
-        sigma = params[1]
-        pos_term = jnp.log(sigma) - logpdf((y - mu)/sigma)
-        npos_term = -logcdf(-mu/sigma)
-        return jnp.where(y > 0, pos_term, npos_term)
+        return _nll(self.data.obs, params)
 
-    @partial(jit, static_argnums=(0,))
     def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
 
@@ -186,7 +202,7 @@ class TobitModel(Model):
             Derivatives of negative log likelihood.
 
         """
-        return grad(lambda pars: jnp.sum(self.nll(pars)))(params)
+        return _dnll(self.data.obs, params)
 
     def get_vcov(self, coefs: ArrayLike) -> DeviceArray:
         """Get variance-covariance matrix.
@@ -200,6 +216,11 @@ class TobitModel(Model):
         -------
         DeviceArray
             Variance-covariance matrix.
+
+        Notes
+        -----
+        Currently does not warn for singular hessian or jacobian,
+        unlike other RegMod models.
 
         """
         H = self.hessian(coefs)
@@ -225,3 +246,94 @@ class TobitModel(Model):
         mu = jnp.asarray(df["mu"])
         df["mu_censored"] = jnp.where(mu > 0, mu, 0)
         return df
+
+
+@jit
+def _objective(coef_list: List[ArrayLike], link_list: List[bool],
+               mat: List[ArrayLike], offset: ArrayLike, y: ArrayLike,
+               weights: ArrayLike, gvec: ArrayLike, linear_gvec: ArrayLike,
+               linear_gmat: ArrayLike) -> float:
+    """Get negative log likelihood wrt coefficients.
+
+    Parameters
+    ----------
+    coefs : list of array_like
+        Model coefficients for each parameter.
+    link_list : list of bool
+        True if inv_link is exp_jax for each parameter.
+    mat : list of array_like
+        Design matrices for each parameter.
+    offset : list of array_like
+        Offset vector for each parameter.
+    y : array_like
+        Vector of observations.
+    weights : array_like
+        Vector of weights for each observation.
+    gvec : array_like
+        Direct Gaussian prior vector.
+    linear_gvec : array_like
+        Linear Gaussian prior vector.
+    linear_gmat : array_like
+        Linear Gaussian prior design matrix.
+
+    Returns
+    -------
+    float
+        Negative log likelihood.
+
+    """
+    # Get objective from parameters
+    param_list = []
+    for ii in range(len(coef_list)):
+        param_list.append(
+            lax.cond(
+                link_list[ii],
+                lambda x: jnp.exp(x),
+                lambda x: x,
+                mat[ii].dot(coef_list[ii]) + offset[ii]
+            )
+        )
+    nll_terms = _nll(y, param_list)
+    obj_param = jnp.sum(weights*nll_terms)
+
+    # Get objective from prior
+    coefs = jnp.concatenate(coef_list)
+    obj_prior = jnp.sum((coefs - gvec[0])**2/gvec[1]**2)/2
+    obj_prior = lax.cond(
+        linear_gvec.size > 0,
+        lambda x: x + 0.5*jnp.sum((linear_gmat.dot(coefs) -
+                                   linear_gvec[0])**2/linear_gvec[1]**2),
+        lambda x: x,
+        obj_prior
+    )
+
+    return obj_param + obj_prior
+
+
+@jit
+def _nll(y: ArrayLike, params: List[ArrayLike]) -> DeviceArray:
+    """Get terms of negative log likelihood wrt parameters.
+
+    Parameters
+    ----------
+    y : array_like
+        Observations.
+    params : list[array_like]
+        Model parameters.
+
+    Returns
+    -------
+    DeviceArray
+        Terms of negative log likelihood.
+
+    """
+    mu = params[0]
+    sigma = params[1]
+    pos_term = jnp.log(sigma) - logpdf((y - mu)/sigma)
+    npos_term = -logcdf(-mu/sigma)
+    return jnp.where(y > 0, pos_term, npos_term)
+
+
+_gradient = jit(grad(_objective))
+_hessian = jit(hessian(_objective))
+_dnll = jit(grad(lambda y, params: jnp.sum(_nll(y, params))))
