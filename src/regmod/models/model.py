@@ -613,6 +613,8 @@ class Model:
         """
         if df is None:
             df = self.data.df.copy()
+        else:
+            df = df.copy()
         data = self.data.copy()
         data.attach_df(df)
 
