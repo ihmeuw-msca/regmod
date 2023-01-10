@@ -1,16 +1,17 @@
 """
 Test Binomial Model
 """
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
+
 from regmod.data import Data
-from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
-from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
 from regmod.models import BinomialModel
+from regmod.prior import (GaussianPrior, SplineGaussianPrior,
+                          SplineUniformPrior, UniformPrior)
 from regmod.utils import SplineSpecs
-
+from regmod.variable import SplineVariable, Variable
 
 # pylint:disable=redefined-outer-name
 
@@ -160,3 +161,29 @@ def test_get_ui(model):
     ui = model.get_ui(params, bounds)
     assert np.allclose(ui[0], 40)
     assert np.allclose(ui[1], 60)
+
+
+def test_model_no_variables():
+    num_obs = 5
+    obs = np.random.rand(num_obs)
+    sample_size = np.random.poisson(lam=5, size=num_obs)
+    df = pd.DataFrame({
+        "obs": obs,
+        "sample_size": sample_size,
+        "offset": np.ones(num_obs),
+    })
+    data = Data(
+        col_obs="obs",
+        col_offset="offset",
+        col_weights="sample_size",
+        df=df,
+    )
+    model = BinomialModel(data, param_specs={"p": {"offset": "offset"}})
+    coefs = np.array([])
+    grad = model.gradient(coefs)
+    hessian = model.hessian(coefs)
+    assert grad.size == 0
+    assert hessian.size == 0
+
+    model.fit()
+    assert model.opt_result == "no parameter to fit"

@@ -274,7 +274,7 @@ class Parameter:
             Returns the derivative of the parameter.
         """
         if len(self.variables) == 0:
-            return np.zeros(data.df.shape[0])
+            return np.empty((data.df.shape[0], 0))
         lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
         return self.inv_link.dfun(lin_param)[:, None]*mat
 
@@ -299,6 +299,6 @@ class Parameter:
             Returns the second order derivative of the parameter.
         """
         if len(self.variables) == 0:
-            return np.zeros(data.df.shape[0])
+            return np.empty((data.df.shape[0], 0, 0))
         lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
         return self.inv_link.d2fun(lin_param)[:, None, None]*(mat[..., None]*mat[:, None, :])

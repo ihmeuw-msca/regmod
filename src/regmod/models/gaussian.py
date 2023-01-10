@@ -6,9 +6,9 @@ from typing import Callable, List, Tuple
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
-from regmod.data import Data
-from regmod.optimizer import msca_optimize
 from scipy.stats import norm
+
+from regmod.optimizer import msca_optimize
 
 from .model import Model
 from .utils import model_post_init
@@ -144,6 +144,11 @@ class GaussianModel(Model):
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
+        if self.size == 0:
+            self.opt_coefs = np.empty((0,))
+            self.opt_vcov = np.empty((0, 0))
+            self.opt_result = "no parameter to fit"
+            return
         optimizer(self, **optimizer_options)
 
     def nll(self, params: List[NDArray]) -> NDArray:

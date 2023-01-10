@@ -4,6 +4,7 @@ Test Tobit Model
 import numpy as np
 import pandas as pd
 import pytest
+
 from regmod.data import Data
 from regmod.models import TobitModel
 from regmod.variable import Variable
@@ -79,3 +80,50 @@ def test_pred_values(model):
     df_pred = model.predict()
     assert np.all(df_pred["mu_censored"] >= 0)
     assert np.all(df_pred["sigma"] > 0)
+
+
+def test_model_no_variables():
+    num_obs = 5
+    df = pd.DataFrame({
+        "obs": np.random.rand(num_obs)*10,
+        "offset": np.ones(num_obs),
+    })
+    data = Data(
+        col_obs="obs",
+        col_offset="offset",
+        df=df,
+    )
+    model = TobitModel(
+        data,
+        param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
+    )
+    coefs = np.array([])
+    grad = model.gradient(coefs)
+    hessian = model.hessian(coefs)
+    assert grad.size == 0
+    assert hessian.size == 0
+
+    model.fit()
+    assert model.opt_result == "no parameter to fit"
+
+
+def test_model_one_variable():
+    num_obs = 5
+    df = pd.DataFrame({
+        "obs": np.random.rand(num_obs)*10,
+        "offset": np.ones(num_obs),
+    })
+    data = Data(
+        col_obs="obs",
+        col_offset="offset",
+        df=df,
+    )
+    model = TobitModel(
+        data,
+        param_specs={
+            "sigma": {"offset": "offset"},
+            "mu": {"variables": [Variable("intercept")]},
+        }
+    )
+    model.fit()
+    assert model.opt_coefs.size == 1
