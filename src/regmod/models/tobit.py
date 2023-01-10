@@ -4,17 +4,17 @@ Tobit Model
 # pylint: disable=C0103
 from typing import List, Optional
 
+import jax.numpy as jnp
 from jax import grad, hessian, jit, lax
 from jax.numpy import DeviceArray
-import jax.numpy as jnp
 from jax.scipy.stats.norm import logcdf, logpdf
 from numpy.typing import ArrayLike
 from pandas import DataFrame
+
 from regmod.data import Data
 from regmod.function import SmoothFunction
 
 from .model import Model
-
 
 identity_jax = SmoothFunction(
     name="identity_jax",
@@ -102,8 +102,11 @@ class TobitModel(Model):
         self.linear_gmat = jnp.asarray(self.linear_gmat)
 
         # Data structures for objective
-        self.offset = [jnp.asarray(param.use_offset*self.data.offset)
-                       for param in self.params]
+        self.offset = [
+            jnp.asarray(df[param.offset])
+            if param.offset is not None else jnp.zeros(df.shape[0])
+            for param in self.params
+        ]
         self.weights = jnp.asarray(self.data.trim_weights*self.data.weights)
 
     def objective(self, coefs: ArrayLike) -> float:
