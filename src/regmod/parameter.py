@@ -39,8 +39,8 @@ class Parameter:
     """
 
     name: str
-    variables: list[Variable] = field(repr=False)
-    inv_link: Union[str, SmoothFunction] = field(repr=False)
+    variables: list[Variable] = field(default_factory=list, repr=False)
+    inv_link: Union[str, SmoothFunction] = field(default="identity", repr=False)
     offset: Optional[str] = field(default=None, repr=False)
     linear_gpriors: list[LinearGaussianPrior] = field(default_factory=list, repr=False)
     linear_upriors: list[LinearUniformPrior] = field(default_factory=list, repr=False)
@@ -60,6 +60,9 @@ class Parameter:
             "linear_upriors size not match."
         assert all([isinstance(var, Variable) for var in self.variables]), \
             "variables has to be a list of Variable."
+        if len(self.variables) == 0 and self.offset is None:
+            raise ValueError("Please provide at least one variable when "
+                             "parameter does not have an offset")
 
     @property
     def size(self) -> int:
@@ -90,6 +93,8 @@ class Parameter:
         np.ndarray
             The design matrix.
         """
+        if len(self.variables) == 0:
+            return np.empty(shape=(data.df.shape[0], 0))
         return np.hstack([var.get_mat(data) for var in self.variables])
 
     def get_uvec(self) -> np.ndarray:
@@ -100,6 +105,8 @@ class Parameter:
         np.ndarray
             Uniform prior information array.
         """
+        if len(self.variables) == 0:
+            return np.empty(shape=(2, 0))
         return np.hstack([var.get_uvec() for var in self.variables])
 
     def get_gvec(self) -> np.ndarray:
@@ -110,6 +117,8 @@ class Parameter:
         np.ndarray
             Gaussian prior information array.
         """
+        if len(self.variables) == 0:
+            return np.empty(shape=(2, 0))
         return np.hstack([var.get_gvec() for var in self.variables])
 
     def get_linear_uvec(self) -> np.ndarray:
@@ -120,6 +129,8 @@ class Parameter:
         np.ndarray
             Uniform prior information array.
         """
+        if len(self.variables) == 0:
+            return np.empty(shape=(2, 0))
         uvec = np.hstack([
             var.get_linear_uvec() if isinstance(var, SplineVariable) else np.empty((2, 0))
             for var in self.variables
@@ -137,6 +148,8 @@ class Parameter:
         np.ndarray
             Gaussian prior information array.
         """
+        if len(self.variables) == 0:
+            return np.empty(shape=(2, 0))
         gvec = np.hstack([
             var.get_linear_gvec() if isinstance(var, SplineVariable) else np.empty((2, 0))
             for var in self.variables
@@ -154,6 +167,8 @@ class Parameter:
         np.ndarray
             Uniform prior design matrix.
         """
+        if len(self.variables) == 0:
+            return np.empty(shape=(0, 0))
         umat = block_diag(*[
             var.get_linear_umat() if isinstance(var, SplineVariable) else np.empty((0, 1))
             for var in self.variables
@@ -170,6 +185,8 @@ class Parameter:
         np.ndarray
             Gaussian prior design matrix.
         """
+        if len(self.variables) == 0:
+            return np.empty(shape=(0, 0))
         gmat = block_diag(*[
             var.get_linear_gmat() if isinstance(var, SplineVariable) else np.empty((0, 1))
             for var in self.variables
@@ -202,6 +219,8 @@ class Parameter:
             Linear parameter vector, or when `return_mat=True` also returns the
             design matrix.
         """
+        if len(self.variables) == 0:
+            return data.df[self.offset].numpy()
         if mat is None:
             mat = self.get_mat(data)
         lin_param = mat.dot(coefs)
@@ -254,6 +273,8 @@ class Parameter:
         np.ndarray
             Returns the derivative of the parameter.
         """
+        if len(self.variables) == 0:
+            return np.zeros(data.df.shape[0])
         lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
         return self.inv_link.dfun(lin_param)[:, None]*mat
 
@@ -277,5 +298,7 @@ class Parameter:
         np.ndarray
             Returns the second order derivative of the parameter.
         """
+        if len(self.variables) == 0:
+            return np.zeros(data.df.shape[0])
         lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
         return self.inv_link.d2fun(lin_param)[:, None, None]*(mat[..., None]*mat[:, None, :])
