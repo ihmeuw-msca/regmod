@@ -220,7 +220,7 @@ class Parameter:
             design matrix.
         """
         if len(self.variables) == 0:
-            return data.df[self.offset].numpy()
+            return data.df[self.offset].to_numpy()
         if mat is None:
             mat = self.get_mat(data)
         lin_param = mat.dot(coefs)

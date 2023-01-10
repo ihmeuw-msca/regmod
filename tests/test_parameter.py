@@ -197,3 +197,20 @@ def test_offset(var_cov0, var_cov1, linear_gprior, linear_uprior, data):
     lin_param1 = param1.get_lin_param(coefs, data)
 
     assert np.allclose(lin_param1 - lin_param0, 1)
+
+
+def test_empty_variable_list(data):
+    param = Parameter(
+        name="mu",
+        inv_link="exp",
+        offset="mu_offset",
+    )
+
+    coefs = np.empty(shape=(0,))
+    p = param.get_param(coefs, data)
+    dp = param.get_dparam(coefs, data)
+    d2p = param.get_d2param(coefs, data)
+
+    assert np.allclose(p, np.exp(1.0))
+    assert np.allclose(dp, 0)
+    assert np.allclose(d2p, 0)
