@@ -151,12 +151,10 @@ class PoissonModel(Model):
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
-        if self.size == 0:
-            self.opt_coefs = np.empty((0,))
-            self.opt_vcov = np.empty((0, 0))
-            self.opt_result = "no parameter to fit"
-            return
-        optimizer(self, **optimizer_options)
+        super().fit(
+            optimizer=optimizer,
+            **optimizer_options
+        )
 
     def nll(self, params: List[NDArray]) -> NDArray:
         return params[0] - self.data.obs*np.log(params[0])
