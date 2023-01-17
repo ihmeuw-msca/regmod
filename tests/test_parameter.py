@@ -17,14 +17,18 @@ from regmod.variable import SplineVariable, Variable
 
 
 @pytest.fixture
-def data():
+def df():
     num_obs = 5
-    df = pd.DataFrame({
+    return pd.DataFrame({
         "obs": np.random.randn(num_obs),
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs),
         "mu_offset": np.ones(num_obs),
     })
+
+
+@pytest.fixture
+def data(df):
     return Data(col_obs="obs",
                 col_covs=["cov0", "cov1", "mu_offset"],
                 df=df)
@@ -93,17 +97,17 @@ def param(var_cov0, var_cov1, linear_gprior, linear_uprior):
                      linear_upriors=[linear_uprior])
 
 
-def test_check_data(param, data):
-    param.check_data(data)
+def test_check_data(param, df):
+    param.check_data(df)
     assert all([var.spline is not None
                 for var in param.variables
                 if isinstance(var, SplineVariable)])
 
 
-def test_get_mat(param, data):
-    param.check_data(data)
-    mat = param.get_mat(data)
-    assert mat.shape == (data.num_obs, param.size)
+def test_get_mat(param, df):
+    param.check_data(df)
+    mat = param.get_mat(df)
+    assert mat.shape == (df.shape[0], param.size)
 
 
 def test_get_uvec(param):
@@ -126,55 +130,55 @@ def test_get_linear_gvec(param, spline_gprior):
     assert gvec.shape == (2, spline_gprior.size + 2)
 
 
-def test_get_linear_umat(param, data, spline_uprior):
-    param.check_data(data)
+def test_get_linear_umat(param, df, spline_uprior):
+    param.check_data(df)
     umat = param.get_linear_umat()
     assert umat.shape == (spline_uprior.size + 2, param.size)
 
 
-def test_get_linear_gmat(param, data, spline_gprior):
-    param.check_data(data)
+def test_get_linear_gmat(param, df, spline_gprior):
+    param.check_data(df)
     gmat = param.get_linear_gmat()
     assert gmat.shape == (spline_gprior.size + 2, param.size)
 
 
-def test_get_lin_param(param, data):
-    param.check_data(data)
+def test_get_lin_param(param, df):
+    param.check_data(df)
     coefs = np.ones(param.size)
-    mat = param.get_mat(data)
-    lin_param1 = param.get_lin_param(coefs, data)
-    lin_param2 = param.get_lin_param(coefs, data, mat=mat)
+    mat = param.get_mat(df)
+    lin_param1 = param.get_lin_param(coefs, df)
+    lin_param2 = param.get_lin_param(coefs, df, mat=mat)
     assert np.allclose(lin_param1, lin_param2)
 
 
-def test_get_param(param, data):
-    param.check_data(data)
+def test_get_param(param, df):
+    param.check_data(df)
     coefs = np.ones(param.size)
-    mat = param.get_mat(data)
-    param1 = param.get_param(coefs, data)
-    param2 = param.get_param(coefs, data, mat=mat)
+    mat = param.get_mat(df)
+    param1 = param.get_param(coefs, df)
+    param2 = param.get_param(coefs, df, mat=mat)
     assert np.allclose(param1, param2)
 
 
-def test_get_dparam(param, data):
-    param.check_data(data)
+def test_get_dparam(param, df):
+    param.check_data(df)
     coefs = np.ones(param.size)
-    mat = param.get_mat(data)
-    dparam1 = param.get_dparam(coefs, data)
-    dparam2 = param.get_dparam(coefs, data, mat=mat)
+    mat = param.get_mat(df)
+    dparam1 = param.get_dparam(coefs, df)
+    dparam2 = param.get_dparam(coefs, df, mat=mat)
     assert np.allclose(dparam1, dparam2)
 
 
-def test_get_d2param(param, data):
-    param.check_data(data)
+def test_get_d2param(param, df):
+    param.check_data(df)
     coefs = np.ones(param.size)
-    mat = param.get_mat(data)
-    d2param1 = param.get_d2param(coefs, data)
-    d2param2 = param.get_d2param(coefs, data, mat=mat)
+    mat = param.get_mat(df)
+    d2param1 = param.get_d2param(coefs, df)
+    d2param2 = param.get_d2param(coefs, df, mat=mat)
     assert np.allclose(d2param1, d2param2)
 
 
-def test_offset(var_cov0, var_cov1, linear_gprior, linear_uprior, data):
+def test_offset(var_cov0, var_cov1, linear_gprior, linear_uprior, df):
     param0 = Parameter(
         name="mu",
         variables=[var_cov0, var_cov1],
@@ -193,13 +197,13 @@ def test_offset(var_cov0, var_cov1, linear_gprior, linear_uprior, data):
         linear_upriors=[linear_uprior]
     )
     coefs = np.ones(param0.size)
-    lin_param0 = param0.get_lin_param(coefs, data)
-    lin_param1 = param1.get_lin_param(coefs, data)
+    lin_param0 = param0.get_lin_param(coefs, df)
+    lin_param1 = param1.get_lin_param(coefs, df)
 
     assert np.allclose(lin_param1 - lin_param0, 1)
 
 
-def test_empty_variable_list(data):
+def test_empty_variable_list(df):
     param = Parameter(
         name="mu",
         inv_link="exp",
@@ -207,9 +211,9 @@ def test_empty_variable_list(data):
     )
 
     coefs = np.empty(shape=(0,))
-    p = param.get_param(coefs, data)
-    dp = param.get_dparam(coefs, data)
-    d2p = param.get_d2param(coefs, data)
+    p = param.get_param(coefs, df)
+    dp = param.get_dparam(coefs, df)
+    d2p = param.get_d2param(coefs, df)
 
     assert np.allclose(p, np.exp(1.0))
     assert np.allclose(dp, 0)

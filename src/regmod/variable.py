@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import List, Union
 
 import numpy as np
+import pandas as pd
 from xspline import XSpline
 
 from regmod.data import Data
@@ -105,20 +106,21 @@ class Variable:
             else:
                 raise ValueError("Unknown prior type.")
 
-    def check_data(self, data: Data):
+    def check_data(self, df: pd.DataFrame):
         """Check if the data contains the column name `name`.
 
         Parameters
         ----------
-        data : Data
-            Data object to be checked.
+        df
+            Data frame that contains the covariate.
 
         Raises
         ------
         ValueError
             Raised if data doesn't contain column name `self.name`.
+
         """
-        if self.name not in data.df.columns:
+        if self.name not in df.columns and self.name != "intercept":
             raise ValueError(f"Data do not contain column {self.name}")
 
     @property
@@ -183,21 +185,24 @@ class Variable:
         self.reset_priors()
         self.process_priors()
 
-    def get_mat(self, data: Data) -> np.ndarray:
+    def get_mat(self, df: pd.DataFrame) -> np.ndarray:
         """Get design matrix.
 
         Parameters
         ----------
-        data : Data
-            Data object that provides the covariates.
+        data
+            Data frame contains the covariate.
 
         Returns
         -------
         np.ndarray
             Design matrix.
+
         """
-        self.check_data(data)
-        return data.get_covs(self.name)
+        self.check_data(df)
+        if self.name == "intercept":
+            return np.ones((df.shape[0], 1))
+        return df[[self.name]].to_numpy()
 
     def get_gvec(self) -> np.ndarray:
         """Get direct Gaussian prior vector.
@@ -300,18 +305,19 @@ class SplineVariable(Variable):
             raise ValueError("At least one of spline and spline_specs is not None.")
         self.process_priors()
 
-    def check_data(self, data: Data):
+    def check_data(self, df: pd.DataFrame):
         """Check if the data contains the column name `name`. And create the
         spline object, if only `spline_specs` is provided.
 
         Parameters
         ----------
-        data : Data
-            Data object to be checked.
+        df
+            Data frame that contains the covariate.
+
         """
-        super().check_data(data)
+        super().check_data(df)
         if self.spline is None:
-            cov = data.get_cols(self.name)
+            cov = df[self.name].to_numpy()
             self.spline = self.spline_specs.create_spline(cov)
             for prior in self.linear_upriors + self.linear_gpriors:
                 if isinstance(prior, SplinePrior):
@@ -366,21 +372,22 @@ class SplineVariable(Variable):
         self.linear_gpriors = list()
         self.linear_upriors = list()
 
-    def get_mat(self, data: Data) -> np.ndarray:
+    def get_mat(self, df: pd.DataFrame) -> np.ndarray:
         """Get design matrix.
 
         Parameters
         ----------
-        data : Data
-            Data object that provides the covariates.
+        df
+            Data frame that contains the covariate.
 
         Returns
         -------
         np.ndarray
             Design matrix.
+
         """
-        self.check_data(data)
-        cov = data.get_cols(self.name)
+        self.check_data(df)
+        cov = df[self.name].to_numpy()
         return self.spline.design_mat(cov, l_extra=True, r_extra=True)
 
     def get_linear_uvec(self) -> np.ndarray:
@@ -423,7 +430,7 @@ class SplineVariable(Variable):
         Parameters
         ----------
         data : Data, optional
-            Data object that provides the covariates. Default to be `None`.
+            Data object that provides the covariate. Default to be `None`.
 
         Raises
         ------
@@ -452,7 +459,7 @@ class SplineVariable(Variable):
         Parameters
         ----------
         data : Data
-            Data object that provides the covariates.
+            Data object that provides the covariate.
 
         Raises
         ------

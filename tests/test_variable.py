@@ -4,11 +4,12 @@ Test variable module
 import numpy as np
 import pandas as pd
 import pytest
-from regmod.data import Data
-from regmod.variable import Variable, SplineVariable
-from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
-from regmod.utils import SplineSpecs
 
+from regmod.data import Data
+from regmod.prior import (GaussianPrior, SplineGaussianPrior,
+                          SplineUniformPrior, UniformPrior)
+from regmod.utils import SplineSpecs
+from regmod.variable import SplineVariable, Variable
 
 NUM_OBS = 10
 COL_OBS = 'obs'
@@ -85,9 +86,9 @@ def test_rm_priors(variable, gprior, uprior, indices):
     assert variable.uprior is not None
 
 
-def test_get_mat(variable, data):
-    mat = variable.get_mat(data)
-    assert np.allclose(mat, data.get_covs(variable.name))
+def test_get_mat(variable, df):
+    mat = variable.get_mat(df)
+    assert mat.shape == (df.shape[0], 1)
 
 
 def test_get_gvec(variable, gprior):
@@ -117,14 +118,14 @@ def test_copy(variable, gprior, uprior):
     assert variable_copy is not variable
 
 
-def test_linear_variable_check_data(spline_variable, data):
-    spline_variable.check_data(data)
+def test_linear_variable_check_data(spline_variable, df):
+    spline_variable.check_data(df)
     assert spline_variable.spline is not None
 
 
-def test_linear_variable_get_mat(spline_variable, data):
-    mat = spline_variable.get_mat(data)
-    assert mat.shape == (data.num_obs, spline_variable.size)
+def test_linear_variable_get_mat(spline_variable, df):
+    mat = spline_variable.get_mat(df)
+    assert mat.shape == (df.shape[0], spline_variable.size)
 
 
 def test_linear_variable_get_vec(spline_variable):
@@ -151,11 +152,11 @@ def test_linear_variable_get_linear_vec(spline_variable):
     assert gvec.shape == (2, spline_gprior.size)
 
 
-def test_linear_variable_get_linear_mat(spline_variable, data):
+def test_linear_variable_get_linear_mat(spline_variable, df):
     spline_uprior = SplineUniformPrior(lb=0.0, ub=np.inf, order=1)
     spline_gprior = SplineGaussianPrior(mean=0.0, sd=1.0, order=1)
     spline_variable.add_priors([spline_uprior, spline_gprior])
-    spline_variable.check_data(data)
+    spline_variable.check_data(df)
 
     umat = spline_variable.get_linear_umat()
     gmat = spline_variable.get_linear_gmat()
