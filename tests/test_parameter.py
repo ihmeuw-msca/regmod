@@ -4,6 +4,7 @@ Test parameter module
 import numpy as np
 import pandas as pd
 import pytest
+
 from regmod.data import Data
 from regmod.parameter import Parameter
 from regmod.prior import (GaussianPrior, LinearGaussianPrior,
@@ -21,10 +22,11 @@ def data():
     df = pd.DataFrame({
         "obs": np.random.randn(num_obs),
         "cov0": np.random.randn(num_obs),
-        "cov1": np.random.randn(num_obs)
+        "cov1": np.random.randn(num_obs),
+        "mu_offset": np.ones(num_obs),
     })
     return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
+                col_covs=["cov0", "cov1", "mu_offset"],
                 df=df)
 
 
@@ -170,3 +172,45 @@ def test_get_d2param(param, data):
     d2param1 = param.get_d2param(coefs, data)
     d2param2 = param.get_d2param(coefs, data, mat=mat)
     assert np.allclose(d2param1, d2param2)
+
+
+def test_offset(var_cov0, var_cov1, linear_gprior, linear_uprior, data):
+    param0 = Parameter(
+        name="mu",
+        variables=[var_cov0, var_cov1],
+        inv_link="exp",
+        offset=None,
+        linear_gpriors=[linear_gprior],
+        linear_upriors=[linear_uprior]
+    )
+
+    param1 = Parameter(
+        name="mu",
+        variables=[var_cov0, var_cov1],
+        inv_link="exp",
+        offset="mu_offset",
+        linear_gpriors=[linear_gprior],
+        linear_upriors=[linear_uprior]
+    )
+    coefs = np.ones(param0.size)
+    lin_param0 = param0.get_lin_param(coefs, data)
+    lin_param1 = param1.get_lin_param(coefs, data)
+
+    assert np.allclose(lin_param1 - lin_param0, 1)
+
+
+def test_empty_variable_list(data):
+    param = Parameter(
+        name="mu",
+        inv_link="exp",
+        offset="mu_offset",
+    )
+
+    coefs = np.empty(shape=(0,))
+    p = param.get_param(coefs, data)
+    dp = param.get_dparam(coefs, data)
+    d2p = param.get_d2param(coefs, data)
+
+    assert np.allclose(p, np.exp(1.0))
+    assert np.allclose(dp, 0)
+    assert np.allclose(d2p, 0)

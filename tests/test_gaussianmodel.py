@@ -4,6 +4,7 @@ Test Gaussian Model
 import numpy as np
 import pandas as pd
 import pytest
+
 from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import GaussianModel
@@ -156,3 +157,25 @@ def test_model_jacobian2(model):
     true_jacobian2 = jacobian.dot(jacobian.T) + model.hessian_from_gprior()
 
     assert np.allclose(jacobian2, true_jacobian2)
+
+
+def test_model_no_variables():
+    num_obs = 5
+    df = pd.DataFrame({
+        "obs": np.random.randn(num_obs),
+        "offset": np.ones(num_obs),
+    })
+    data = Data(
+        col_obs="obs",
+        col_offset="offset",
+        df=df,
+    )
+    model = GaussianModel(data, param_specs={"mu": {"offset": "offset"}})
+    coefs = np.array([])
+    grad = model.gradient(coefs)
+    hessian = model.hessian(coefs)
+    assert grad.size == 0
+    assert hessian.size == 0
+
+    model.fit()
+    assert model.opt_result == "no parameter to fit"

@@ -13,8 +13,7 @@ def model_post_init(
     linear_uvec: NDArray,
 ) -> Tuple[Matrix, Matrix, NDArray]:
     # design matrix
-    sparsity = (mat == 0).sum() / mat.size
-    issparse = sparsity > 0.95
+    issparse = mat.size == 0 or ((mat == 0).sum() / mat.size) > 0.95
     if issparse:
         mat = csc_matrix(mat).astype(np.float64)
     mat = asmatrix(mat)
@@ -27,9 +26,10 @@ def model_post_init(
     cmat = cmat[index]
     cvec = cvec[:, index]
 
-    scale = np.abs(cmat).max(axis=1)
-    cmat = cmat / scale[:, np.newaxis]
-    cvec = cvec / scale
+    if cmat.size > 0:
+        scale = np.abs(cmat).max(axis=1)
+        cmat = cmat / scale[:, np.newaxis]
+        cvec = cvec / scale
 
     cmat = np.vstack([
         -cmat[~np.isneginf(cvec[0])], cmat[~np.isposinf(cvec[1])]

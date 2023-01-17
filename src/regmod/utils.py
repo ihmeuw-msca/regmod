@@ -192,8 +192,8 @@ def sizes_to_slices(sizes: List[int]) -> List[slice]:
     [[0], [1, 2], [3, 4, 5]]
     """
     sizes = np.asarray(sizes).astype(int)
-    if any(sizes <= 0):
-        raise ValueError("Size must be positive.")
+    if any(sizes < 0):
+        raise ValueError("Size must be non-negative.")
     ends = np.cumsum(sizes)
     starts = np.insert(ends, 0, 0)[:-1]
     return [slice(*pair) for pair in zip(starts, ends)]

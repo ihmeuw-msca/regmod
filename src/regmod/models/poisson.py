@@ -6,9 +6,10 @@ from typing import Callable, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
+from scipy.stats import poisson
+
 from regmod.data import Data
 from regmod.optimizer import msca_optimize
-from scipy.stats import poisson
 
 from .model import Model
 from .utils import model_post_init
@@ -150,7 +151,10 @@ class PoissonModel(Model):
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
-        optimizer(self, **optimizer_options)
+        super().fit(
+            optimizer=optimizer,
+            **optimizer_options
+        )
 
     def nll(self, params: List[NDArray]) -> NDArray:
         return params[0] - self.data.obs*np.log(params[0])

@@ -1,17 +1,18 @@
 """
 Test Weibull Model
 """
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 from scipy.stats import expon
+
 from regmod.data import Data
-from regmod.prior import GaussianPrior, UniformPrior, SplineGaussianPrior, SplineUniformPrior
-from regmod.variable import Variable, SplineVariable
 from regmod.function import fun_dict
 from regmod.models import WeibullModel
+from regmod.prior import (GaussianPrior, SplineGaussianPrior,
+                          SplineUniformPrior, UniformPrior)
 from regmod.utils import SplineSpecs
-
+from regmod.variable import SplineVariable, Variable
 
 # pylint:disable=redefined-outer-name
 
@@ -158,3 +159,50 @@ def test_get_ui(model):
     ui = model.get_ui(params, bounds)
     assert np.allclose(ui[0], expon.ppf(bounds[0], scale=scale))
     assert np.allclose(ui[1], expon.ppf(bounds[1], scale=scale))
+
+
+def test_model_no_variables():
+    num_obs = 5
+    df = pd.DataFrame({
+        "obs": np.random.exponential(size=num_obs),
+        "offset": np.ones(num_obs),
+    })
+    data = Data(
+        col_obs="obs",
+        col_offset="offset",
+        df=df,
+    )
+    model = WeibullModel(
+        data,
+        param_specs={"b": {"offset": "offset"}, "k": {"offset": "offset"}}
+    )
+    coefs = np.array([])
+    grad = model.gradient(coefs)
+    hessian = model.hessian(coefs)
+    assert grad.size == 0
+    assert hessian.size == 0
+
+    model.fit()
+    assert model.opt_result == "no parameter to fit"
+
+
+def test_model_one_variable():
+    num_obs = 5
+    df = pd.DataFrame({
+        "obs": np.random.exponential(size=num_obs),
+        "offset": np.ones(num_obs),
+    })
+    data = Data(
+        col_obs="obs",
+        col_offset="offset",
+        df=df,
+    )
+    model = WeibullModel(
+        data,
+        param_specs={
+            "b": {"offset": "offset"},
+            "k": {"variables": [Variable("intercept")]},
+        }
+    )
+    model.fit()
+    assert model.opt_coefs.size == 1

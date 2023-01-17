@@ -7,12 +7,13 @@ import numpy as np
 import pandas as pd
 from msca.linalg.matrix import Matrix
 from numpy import ndarray
+from scipy.linalg import block_diag
+from scipy.sparse import csc_matrix
+
 from regmod.data import Data
 from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices
-from scipy.linalg import block_diag
-from scipy.sparse import csc_matrix
 
 
 class Model:
@@ -595,6 +596,11 @@ class Model:
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
+        if self.size == 0:
+            self.opt_coefs = np.empty((0,))
+            self.opt_vcov = np.empty((0, 0))
+            self.opt_result = "no parameter to fit"
+            return
         optimizer(self, **optimizer_options)
 
     def predict(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
