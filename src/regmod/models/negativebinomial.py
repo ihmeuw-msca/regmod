@@ -5,9 +5,11 @@ Negative Binomial Model
 from typing import List, Tuple
 
 import numpy as np
+import pandas as pd
 from numpy import ndarray
-from scipy.stats import nbinom
 from scipy.special import digamma, loggamma, polygamma
+from scipy.stats import nbinom
+
 from regmod.data import Data
 
 from .model import Model
@@ -18,24 +20,24 @@ class NegativeBinomialModel(Model):
     default_param_specs = {"n": {"inv_link": "exp"},
                            "p": {"inv_link": "expit"}}
 
-    def __init__(self, data: Data, **kwargs):
-        if not np.all(data.obs >= 0):
+    def attach_df(self, df: pd.DataFrame):
+        super().attach_df(df)
+        if not np.all(self.obs >= 0):
             raise ValueError("Negative-Binomial model requires observations to be non-negative.")
-        super().__init__(data, **kwargs)
 
     def nll(self, params: List[ndarray]) -> ndarray:
-        return -(loggamma(params[0] + self.data.obs) -
+        return -(loggamma(params[0] + self.obs) -
                  loggamma(params[0]) +
-                 self.data.obs*np.log(1 - params[1]) +
+                 self.obs*np.log(1 - params[1]) +
                  params[0]*np.log(params[1]))
 
     def dnll(self, params: List[ndarray]) -> List[ndarray]:
-        return [-(digamma(params[0] + self.data.obs) - digamma(params[0]) + np.log(params[1])),
-                self.data.obs/(1 - params[1]) - params[0]/params[1]]
+        return [-(digamma(params[0] + self.obs) - digamma(params[0]) + np.log(params[1])),
+                self.obs/(1 - params[1]) - params[0]/params[1]]
 
     def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
-        return [[polygamma(1, params[0]) - polygamma(1, params[0] + self.data.obs), -1/params[1]],
-                [-1/params[1], params[0]/params[1]**2 + self.data.obs/(1 - params[1])**2]]
+        return [[polygamma(1, params[0]) - polygamma(1, params[0] + self.obs), -1/params[1]],
+                [-1/params[1], params[0]/params[1]**2 + self.obs/(1 - params[1])**2]]
 
     def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> np.ndarray:
         n = params[0]

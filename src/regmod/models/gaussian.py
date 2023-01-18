@@ -41,7 +41,7 @@ class GaussianModel(Model):
         )
         param = inv_link.fun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         obj_param = weights * 0.5 * (
             param - self.data.obs
         )**2
@@ -68,7 +68,7 @@ class GaussianModel(Model):
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         grad_param = weights * (
             param - self.data.obs
         ) * dparam
@@ -97,7 +97,7 @@ class GaussianModel(Model):
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         hess_param = weights * (
             dparam**2 + (param - self.data.obs)*d2param
         )
@@ -127,7 +127,7 @@ class GaussianModel(Model):
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         grad_param = weights * (param - self.data.obs) * dparam
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
@@ -150,16 +150,16 @@ class GaussianModel(Model):
         )
 
     def nll(self, params: List[NDArray]) -> NDArray:
-        return 0.5*(params[0] - self.data.obs)**2
+        return 0.5*(params[0] - self.obs)**2
 
     def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [params[0] - self.data.obs]
+        return [params[0] - self.obs]
 
     def d2nll(self, params: List[NDArray]) -> List[NDArray]:
-        return [[np.ones(self.data.num_obs)]]
+        return [[np.ones(self.data.shape[0])]]
 
     def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         mean = params[0]
-        sd = 1.0/np.sqrt(self.data.weights)
+        sd = 1.0/np.sqrt(self.weights)
         return [norm.ppf(bounds[0], loc=mean, scale=sd),
                 norm.ppf(bounds[1], loc=mean, scale=sd)]

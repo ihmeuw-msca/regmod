@@ -27,10 +27,7 @@ def data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                col_weights="sample_size",
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -41,9 +38,7 @@ def wrong_data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -88,7 +83,11 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return BinomialModel(data, param_specs={"p": {"variables": [var_cov0, var_cov1]}})
+    return BinomialModel(
+        obs="obs",
+        data=data,
+        param_specs={"p": {"variables": [var_cov0, var_cov1]}}
+    )
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -151,7 +150,11 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        BinomialModel(wrong_data, param_specs={"p": {"variables": [var_cov0, var_cov1]}})
+        BinomialModel(
+            obs="obs",
+            data=wrong_data,
+            param_specs={"p": {"variables": [var_cov0, var_cov1]}}
+        )
 
 
 def test_get_ui(model):
@@ -172,13 +175,11 @@ def test_model_no_variables():
         "sample_size": sample_size,
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        col_weights="sample_size",
-        df=df,
+    model = BinomialModel(
+        obs="obs",
+        data=df,
+        param_specs={"p": {"offset": "offset"}}
     )
-    model = BinomialModel(data, param_specs={"p": {"offset": "offset"}})
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)

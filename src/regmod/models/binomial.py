@@ -19,14 +19,11 @@ class BinomialModel(Model):
     param_names = ("p",)
     default_param_specs = {"p": {"inv_link": "expit"}}
 
-    def __init__(self, data: Data, **kwargs):
-        if not np.all((data.obs >= 0) & (data.obs <= 1)):
-            raise ValueError("Binomial model requires observations to be "
-                             "between zero and one.")
-        super().__init__(data, **kwargs)
-
     def attach_df(self, df: pd.DataFrame):
         super().attach_df(df)
+        if not np.all((self.obs >= 0) & (self.obs <= 1)):
+            raise ValueError("Binomial model requires observations to be "
+                             "between zero and one.")
         self.mat[0], self.cmat, self.cvec = model_post_init(
             self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
         )
@@ -48,10 +45,10 @@ class BinomialModel(Model):
         )
         param = inv_link.fun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         obj_param = -weights * (
-            self.data.obs * np.log(param) +
-            (1 - self.data.obs) * np.log(1 - param)
+            self.obs * np.log(param) +
+            (1 - self.obs) * np.log(1 - param)
         )
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
@@ -76,9 +73,9 @@ class BinomialModel(Model):
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         grad_param = weights * (
-            (param - self.data.obs) / (param*(1 - param)) * dparam
+            (param - self.obs) / (param*(1 - param)) * dparam
         )
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
@@ -105,10 +102,10 @@ class BinomialModel(Model):
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         hess_param = weights * (
-            (self.data.obs / param**2 + (1 - self.data.obs) / (1 - param)**2) * dparam**2 +
-            (param - self.data.obs) / (param*(1 - param)) * d2param
+            (self.obs / param**2 + (1 - self.obs) / (1 - param)**2) * dparam**2 +
+            (param - self.obs) / (param*(1 - param)) * d2param
         )
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -136,9 +133,9 @@ class BinomialModel(Model):
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         grad_param = weights * (
-            (param - self.data.obs) / (param*(1 - param)) * dparam
+            (param - self.obs) / (param*(1 - param)) * dparam
         )
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
@@ -161,13 +158,13 @@ class BinomialModel(Model):
         )
 
     def nll(self, params: List[NDArray]) -> NDArray:
-        return -(self.data.obs*np.log(params[0]) + (1 - self.data.obs)*np.log(1.0 - params[0]))
+        return -(self.obs*np.log(params[0]) + (1 - self.obs)*np.log(1.0 - params[0]))
 
     def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [-(self.data.obs/params[0] - (1 - self.data.obs)/(1.0 - params[0]))]
+        return [-(self.obs/params[0] - (1 - self.obs)/(1.0 - params[0]))]
 
     def d2nll(self, params: List[NDArray]) -> List[List[NDArray]]:
-        return [[self.data.obs/params[0]**2 + (1 - self.data.obs)/(1.0 - params[0])**2]]
+        return [[self.obs/params[0]**2 + (1 - self.obs)/(1.0 - params[0])**2]]
 
     def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         p = params[0]

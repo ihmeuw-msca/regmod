@@ -33,15 +33,19 @@ def param_specs():
 
 
 @pytest.fixture
-def model(data, param_specs):
-    return TobitModel(data=data, param_specs=param_specs)
+def model(df, param_specs):
+    return TobitModel(
+        obs="z",
+        data=df,
+        param_specs=param_specs
+    )
 
 
-def test_jax_inv_link(data, param_specs):
+def test_jax_inv_link(df, param_specs):
     """User-supplied inv_link functions replaced with JAX versions."""
     param_specs["mu"]["inv_link"] = "identity"
     param_specs["sigma"]["inv_link"] = "exp"
-    model = TobitModel(data=data, param_specs=param_specs)
+    model = TobitModel(obs="z", data=df, param_specs=param_specs)
     assert model.params[0].inv_link.name == "identity_jax"
     assert model.params[1].inv_link.name == "exp_jax"
 
@@ -50,7 +54,8 @@ def test_neg_obs(df, param_specs):
     """ValueError if data contains negative observations."""
     with pytest.raises(ValueError, match="requires non-negative observations"):
         TobitModel(
-            data=Data(col_obs="y", col_covs=["x"], df=df),
+            obs="y",
+            data=df,
             param_specs=param_specs
         )
 
@@ -88,13 +93,9 @@ def test_model_no_variables():
         "obs": np.random.rand(num_obs)*10,
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
-    )
     model = TobitModel(
-        data,
+        obs="obs",
+        data=df,
         param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
     )
     coefs = np.array([])
@@ -113,13 +114,9 @@ def test_model_one_variable():
         "obs": np.random.rand(num_obs)*10,
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
-    )
     model = TobitModel(
-        data,
+        obs="obs",
+        data=df,
         param_specs={
             "sigma": {"offset": "offset"},
             "mu": {"variables": [Variable("intercept")]},

@@ -24,22 +24,18 @@ def data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
 def wrong_data():
     num_obs = 5
     df = pd.DataFrame({
-        "obs": np.random.randn(num_obs),
+        "obs": -np.ones(num_obs),
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -84,7 +80,11 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return PoissonModel(data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})
+    return PoissonModel(
+        obs="obs",
+        data=data,
+        param_specs={"lam": {"variables": [var_cov0, var_cov1]}}
+    )
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -147,7 +147,11 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        PoissonModel(wrong_data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})
+        PoissonModel(
+            obs="obs",
+            data=wrong_data,
+            param_specs={"lam": {"variables": [var_cov0, var_cov1]}}
+        )
 
 
 def test_get_ui(model):
@@ -164,12 +168,11 @@ def test_model_no_variables():
         "obs": np.random.rand(num_obs)*10,
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
+    model = PoissonModel(
+        obs="obs",
+        data=df,
+        param_specs={"lam": {"offset": "offset"}}
     )
-    model = PoissonModel(data, param_specs={"lam": {"offset": "offset"}})
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)

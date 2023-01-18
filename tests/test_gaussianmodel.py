@@ -24,9 +24,7 @@ def data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -71,7 +69,11 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return GaussianModel(data, param_specs={"mu": {"variables": [var_cov0, var_cov1]}})
+    return GaussianModel(
+        obs="obs",
+        data=data,
+        param_specs={"mu": {"variables": [var_cov0, var_cov1]}}
+    )
 
 
 def test_model_result(model):
@@ -152,7 +154,7 @@ def test_model_jacobian2(model):
 
     mat = model.mat[0].to_numpy()
     param = model.get_params(beta)[0]
-    residual = (model.data.obs - param)*np.sqrt(model.data.weights)
+    residual = (model.obs - param)*np.sqrt(model.weights)
     jacobian = mat.T*residual
     true_jacobian2 = jacobian.dot(jacobian.T) + model.hessian_from_gprior()
 
@@ -165,12 +167,11 @@ def test_model_no_variables():
         "obs": np.random.randn(num_obs),
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
+    model = GaussianModel(
+        obs="obs",
+        data=df,
+        param_specs={"mu": {"offset": "offset"}}
     )
-    model = GaussianModel(data, param_specs={"mu": {"offset": "offset"}})
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)
