@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from regmod.data import Data
 from regmod.models import GaussianModel
 from regmod.optimizer import scipy_optimize
 from regmod.utils import SplineSpecs

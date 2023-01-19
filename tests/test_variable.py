@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from regmod.data import Data
 from regmod.prior import (GaussianPrior, SplineGaussianPrior,
                           SplineUniformPrior, UniformPrior)
 from regmod.utils import SplineSpecs
@@ -35,11 +34,6 @@ def df():
     for cov, val in covs.items():
         df[cov] = val
     return df
-
-
-@pytest.fixture
-def data(df):
-    return Data(COL_OBS, COL_COVS, COL_WEIGHTS, COL_WEIGHTS, df)
 
 
 @pytest.fixture

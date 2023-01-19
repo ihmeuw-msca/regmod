@@ -8,8 +8,8 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+
 from regmod.composite_models.interface import NodeModel
-from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import BinomialModel, GaussianModel, PoissonModel
 from regmod.prior import GaussianPrior
@@ -88,8 +88,10 @@ class BaseModel(NodeModel):
 
     def __init__(self,
                  name: str,
-                 data: Data,
+                 obs: str,
                  variables: List[Variable],
+                 data: Optional[pd.DataFrame] = None,
+                 weights: str = "weights",
                  mtype: str = "gaussian",
                  prior_mask: Optional[Dict] = None,
                  **param_specs):
@@ -101,8 +103,10 @@ class BaseModel(NodeModel):
         data = deepcopy(data)
         variables = list(deepcopy(variables))
 
+        self.obs = obs
         self.mtype = mtype
         self.data = data
+        self.weights = weights
         self.variables = {v.name: v for v in variables}
         self.param_specs = {"variables": variables,
                             "use_offset": True,
@@ -127,11 +131,13 @@ class BaseModel(NodeModel):
         """
         df = df.copy() if copy else df
         if self.col_value in df:
-            df[self.data.col_offset] = link_funs[self.mtype](df[self.col_value])
+            df["offset"] = link_funs[self.mtype](df[self.col_value])
         return df
 
-    def get_data(self) -> DataFrame:
-        return self.data.df.copy()
+    def get_data(self) -> Optional[DataFrame]:
+        if self.data is not None:
+            return self.data.copy()
+        return None
 
     def set_data(self, df: DataFrame):
         if df.shape[0] == 0:
@@ -142,7 +148,12 @@ class BaseModel(NodeModel):
         logger.info(f"fit_node;start;{self.level};{self.name}")
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
-            self.model = model_constructor(self.data, self.param_specs)
+            self.model = model_constructor(
+                self.obs,
+                data=self.data,
+                weights=self.weights,
+                param_specs=self.param_specs
+            )
         self.model.fit(**fit_options)
         message = f"fit_node;finish;{self.level};{self.name};"
         # message += f"{self.model.opt_result.success};"

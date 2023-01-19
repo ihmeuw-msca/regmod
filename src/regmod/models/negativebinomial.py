@@ -10,8 +10,6 @@ from numpy import ndarray
 from scipy.special import digamma, loggamma, polygamma
 from scipy.stats import nbinom
 
-from regmod.data import Data
-
 from .model import Model
 
 

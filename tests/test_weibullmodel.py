@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from scipy.stats import expon
 
-from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import WeibullModel
 from regmod.prior import (GaussianPrior, SplineGaussianPrior,

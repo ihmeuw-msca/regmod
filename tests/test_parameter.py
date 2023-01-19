@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from regmod.data import Data
 from regmod.parameter import Parameter
 from regmod.prior import (GaussianPrior, LinearGaussianPrior,
                           LinearUniformPrior, SplineGaussianPrior,
@@ -25,13 +24,6 @@ def df():
         "cov1": np.random.randn(num_obs),
         "mu_offset": np.ones(num_obs),
     })
-
-
-@pytest.fixture
-def data(df):
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1", "mu_offset"],
-                df=df)
 
 
 @pytest.fixture

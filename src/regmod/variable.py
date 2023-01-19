@@ -4,13 +4,12 @@ Variable module
 from collections.abc import Iterable
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
 from xspline import XSpline
 
-from regmod.data import Data
 from regmod.prior import (GaussianPrior, LinearGaussianPrior, LinearPrior,
                           LinearUniformPrior, Prior, SplineGaussianPrior,
                           SplinePrior, SplineUniformPrior, UniformPrior)
@@ -424,7 +423,7 @@ class SplineVariable(Variable):
             ])
         return gvec
 
-    def get_linear_umat(self, data: Data = None) -> np.ndarray:
+    def get_linear_umat(self, data: Optional[pd.DataFrame] = None) -> np.ndarray:
         """Get linear Uniform prior design matrix.
 
         Parameters
@@ -453,7 +452,7 @@ class SplineVariable(Variable):
             ])
         return umat
 
-    def get_linear_gmat(self, data: Data = None) -> np.ndarray:
+    def get_linear_gmat(self, data: Optional[pd.DataFrame] = None) -> np.ndarray:
         """Get linear Gaussian prior design matrix.
 
         Parameters

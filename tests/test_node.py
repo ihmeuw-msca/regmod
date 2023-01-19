@@ -2,10 +2,8 @@
 Test Tree Node
 """
 import pytest
-from pandas import DataFrame
 
 from regmod.composite_models import Node
-
 
 # pylint: disable=redefined-outer-name
 

@@ -11,7 +11,6 @@ from jax.scipy.stats.norm import logcdf, logpdf
 from numpy.typing import ArrayLike
 from pandas import DataFrame
 
-from regmod.data import Data
 from regmod.function import SmoothFunction
 
 from .model import Model

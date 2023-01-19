@@ -8,8 +8,6 @@ import pandas as pd
 from numpy import ndarray
 from scipy.stats import weibull_min
 
-from regmod.data import Data
-
 from .model import Model
 
 

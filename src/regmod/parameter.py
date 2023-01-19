@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 from scipy.linalg import block_diag
 
-from regmod.data import Data
 from regmod.function import SmoothFunction, fun_dict
 from regmod.prior import LinearGaussianPrior, LinearUniformPrior
 from regmod.variable import SplineVariable, Variable

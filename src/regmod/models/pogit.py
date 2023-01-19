@@ -8,8 +8,6 @@ import pandas as pd
 from numpy import ndarray
 from scipy.stats import poisson
 
-from regmod.data import Data
-
 from .model import Model
 
 

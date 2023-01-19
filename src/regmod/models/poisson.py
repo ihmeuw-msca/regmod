@@ -1,14 +1,13 @@
 """
 Poisson Model
 """
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 from scipy.stats import poisson
 
-from regmod.data import Data
 from regmod.optimizer import msca_optimize
 
 from .model import Model

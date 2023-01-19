@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import NegativeBinomialModel
 from regmod.prior import (GaussianPrior, SplineGaussianPrior,

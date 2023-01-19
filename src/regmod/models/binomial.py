@@ -8,7 +8,6 @@ import pandas as pd
 from numpy.typing import NDArray
 from scipy.stats import binom
 
-from regmod.data import Data
 from regmod.optimizer import msca_optimize
 
 from .model import Model

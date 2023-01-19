@@ -10,7 +10,6 @@ from numpy import ndarray
 from scipy.linalg import block_diag
 from scipy.sparse import csc_matrix
 
-from regmod.data import Data
 from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices

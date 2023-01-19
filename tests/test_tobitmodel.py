@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from regmod.data import Data
 from regmod.models import TobitModel
 from regmod.variable import Variable
 
@@ -16,11 +15,6 @@ def df():
     x = np.random.normal(size=n)
     y = np.random.normal(size=n)
     return pd.DataFrame({"x": x, "y": y, "z": np.where(y > 0, y, 0)})
-
-
-@pytest.fixture
-def data(df):
-    return Data(col_obs="z", col_covs=["x"], df=df)
 
 
 @pytest.fixture
