@@ -30,7 +30,7 @@ def param_specs():
 def model(df, param_specs):
     return TobitModel(
         y="z",
-        data=df,
+        df=df,
         param_specs=param_specs
     )
 
@@ -39,7 +39,7 @@ def test_jax_inv_link(df, param_specs):
     """User-supplied inv_link functions replaced with JAX versions."""
     param_specs["mu"]["inv_link"] = "identity"
     param_specs["sigma"]["inv_link"] = "exp"
-    model = TobitModel(y="z", data=df, param_specs=param_specs)
+    model = TobitModel(y="z", df=df, param_specs=param_specs)
     assert model.params[0].inv_link.name == "identity_jax"
     assert model.params[1].inv_link.name == "exp_jax"
 
@@ -49,7 +49,7 @@ def test_neg_obs(df, param_specs):
     with pytest.raises(ValueError, match="requires non-negative observations"):
         TobitModel(
             y="y",
-            data=df,
+            df=df,
             param_specs=param_specs
         )
 
@@ -89,7 +89,7 @@ def test_model_no_variables():
     })
     model = TobitModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
     )
     coefs = np.array([])
@@ -110,7 +110,7 @@ def test_model_one_variable():
     })
     model = TobitModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={
             "sigma": {"offset": "offset"},
             "mu": {"variables": [Variable("intercept")]},

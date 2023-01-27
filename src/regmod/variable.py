@@ -423,7 +423,7 @@ class SplineVariable(Variable):
             ])
         return gvec
 
-    def get_linear_umat(self, data: Optional[pd.DataFrame] = None) -> np.ndarray:
+    def get_linear_umat(self, df: Optional[pd.DataFrame] = None) -> np.ndarray:
         """Get linear Uniform prior design matrix.
 
         Parameters
@@ -452,7 +452,7 @@ class SplineVariable(Variable):
             ])
         return umat
 
-    def get_linear_gmat(self, data: Optional[pd.DataFrame] = None) -> np.ndarray:
+    def get_linear_gmat(self, df: Optional[pd.DataFrame] = None) -> np.ndarray:
         """Get linear Gaussian prior design matrix.
 
         Parameters

@@ -70,7 +70,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 def model(data, var_cov0, var_cov1):
     return GaussianModel(
         y="obs",
-        data=data,
+        df=data,
         param_specs={"mu": {"variables": [var_cov0, var_cov1]}}
     )
 
@@ -168,7 +168,7 @@ def test_model_no_variables():
     })
     model = GaussianModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={"mu": {"offset": "offset"}}
     )
     coefs = np.array([])

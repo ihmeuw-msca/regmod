@@ -81,7 +81,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 def model(data, var_cov0, var_cov1):
     return NegativeBinomialModel(
         y="obs",
-        data=data,
+        df=data,
         param_specs={"n": {"variables": [var_cov0]},
                      "p": {"variables": [var_cov1]}}
     )
@@ -149,7 +149,7 @@ def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         NegativeBinomialModel(
             y="obs",
-            data=wrong_data,
+            df=wrong_data,
             param_specs={"n": {"variables": [var_cov0]},
                          "p": {"variables": [var_cov1]}}
         )
@@ -171,7 +171,7 @@ def test_model_no_variables():
     })
     model = NegativeBinomialModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={"n": {"offset": "offset"}, "p": {"offset": "offset"}}
     )
     coefs = np.array([])
@@ -192,7 +192,7 @@ def test_model_one_variable():
     })
     model = NegativeBinomialModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={
             "n": {"offset": "offset"},
             "p": {"variables": [Variable("intercept")]},

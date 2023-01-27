@@ -46,7 +46,7 @@ class Model:
     def __init__(self,
                  y: str,
                  weights: str = "weights",
-                 data: Optional[pd.DataFrame] = None,
+                 df: Optional[pd.DataFrame] = None,
                  params: Optional[List[Parameter]] = None,
                  param_specs: Optional[Dict[str, Dict]] = None):
         if params is None and param_specs is None:
@@ -66,12 +66,12 @@ class Model:
                            for param_name in self.param_names]
         self._y = y
         self._weights = weights
-        self.data = data
+        self.df = df
         self.y = None
         self.weights = None
         self.trim_weights = None
-        if self.data is not None:
-            self.attach_df(self.data)
+        if self.df is not None:
+            self.attach_df(self.df)
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
@@ -84,7 +84,7 @@ class Model:
         self._opt_vcov = None
 
     def attach_df(self, df: pd.DataFrame):
-        self.data = df
+        self.df = df
         for param in self.params:
             param.check_data(df)
 
@@ -97,11 +97,11 @@ class Model:
         self.linear_umat = self.get_linear_umat()
         self.linear_gmat = self.get_linear_gmat()
         self.trim_weights = np.ones(df.shape[0])
-        self.y = self.data[self._y].to_numpy()
-        if self._weights not in self.data:
-            self.weights = np.ones(self.data.shape[0])
+        self.y = self.df[self._y].to_numpy()
+        if self._weights not in self.df:
+            self.weights = np.ones(self.df.shape[0])
         else:
-            self.weights = self.data[self._weights].to_numpy()
+            self.weights = self.df[self._weights].to_numpy()
 
     @property
     def opt_coefs(self) -> Union[None, ndarray]:
@@ -153,7 +153,7 @@ class Model:
         List[ndarray]
             The design matrices.
         """
-        return [param.get_mat(self.data) for param in self.params]
+        return [param.get_mat(self.df) for param in self.params]
 
     def get_uvec(self) -> ndarray:
         """Get the direct Uniform prior array.
@@ -245,7 +245,7 @@ class Model:
             The parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_param(coefs[i], self.data, mat=self.mat[i])
+        return [param.get_param(coefs[i], self.df, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
     def get_dparams(self, coefs: ndarray) -> List[ndarray]:
@@ -262,7 +262,7 @@ class Model:
             The derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_dparam(coefs[i], self.data, mat=self.mat[i])
+        return [param.get_dparam(coefs[i], self.df, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
     def get_d2params(self, coefs: ndarray) -> List[ndarray]:
@@ -279,7 +279,7 @@ class Model:
             The second order derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_d2param(coefs[i], self.data, mat=self.mat[i])
+        return [param.get_d2param(coefs[i], self.df, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
     def nll(self, params: List[ndarray]) -> ndarray:
@@ -366,7 +366,7 @@ class Model:
         """
         params = self.get_params(coefs)
         ui = self.get_ui(params, bounds)
-        obs = self.data[self.y].to_numpy()
+        obs = self.df[self.y].to_numpy()
         return (obs < ui[0]) | (obs > ui[1])
 
     def objective_from_gprior(self, coefs: ndarray) -> float:
@@ -547,7 +547,7 @@ class Model:
             Data frame with predicted parameters.
         """
         if df is None:
-            df = self.data
+            df = self.df
         df = df.copy()
 
         coefs = self.split_coefs(self.opt_coefs)
@@ -558,6 +558,6 @@ class Model:
 
     def __repr__(self) -> str:
         return (f"{type(self).__name__}("
-                f"bnum_y={self.data.shape[0]}, "
+                f"bnum_y={self.df.shape[0]}, "
                 f"num_params={self.num_params}, "
                 f"size={self.size})")

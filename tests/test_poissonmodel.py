@@ -81,7 +81,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 def model(data, var_cov0, var_cov1):
     return PoissonModel(
         y="obs",
-        data=data,
+        df=data,
         param_specs={"lam": {"variables": [var_cov0, var_cov1]}}
     )
 
@@ -148,7 +148,7 @@ def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         PoissonModel(
             y="obs",
-            data=wrong_data,
+            df=wrong_data,
             param_specs={"lam": {"variables": [var_cov0, var_cov1]}}
         )
 
@@ -169,7 +169,7 @@ def test_model_no_variables():
     })
     model = PoissonModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={"lam": {"offset": "offset"}}
     )
     coefs = np.array([])

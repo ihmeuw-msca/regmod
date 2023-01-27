@@ -81,7 +81,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 def model(data, var_cov0, var_cov1):
     return PogitModel(
         y="obs",
-        data=data,
+        df=data,
         param_specs={"p": {"variables": [var_cov0]},
                      "lam": {"variables": [var_cov1]}}
     )
@@ -149,7 +149,7 @@ def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         PogitModel(
             y="obs",
-            data=wrong_data,
+            df=wrong_data,
             param_specs={"p": {"variables": [var_cov0]},
                          "lam": {"variables": [var_cov1]}}
         )
@@ -171,7 +171,7 @@ def test_model_no_variables():
     })
     model = PogitModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={"p": {"offset": "offset"}, "lam": {"offset": "offset"}}
     )
     coefs = np.array([])
@@ -192,7 +192,7 @@ def test_model_one_variable():
     })
     model = PogitModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={
             "p": {"offset": "offset"},
             "lam": {"variables": [Variable("intercept")]},

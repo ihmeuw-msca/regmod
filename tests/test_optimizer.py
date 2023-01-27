@@ -29,7 +29,7 @@ def test_scipy_optimizer(seed):
 
     model = GaussianModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={"mu": {"variables": [var_cov0, var_cov1]}}
     )
 

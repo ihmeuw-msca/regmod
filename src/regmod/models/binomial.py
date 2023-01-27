@@ -40,7 +40,7 @@ class BinomialModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
 
@@ -67,7 +67,7 @@ class BinomialModel(Model):
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -95,7 +95,7 @@ class BinomialModel(Model):
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -128,7 +128,7 @@ class BinomialModel(Model):
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)

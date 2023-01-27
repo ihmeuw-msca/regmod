@@ -82,7 +82,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 def model(data, var_cov0, var_cov1):
     return WeibullModel(
         y="obs",
-        data=data,
+        df=data,
         param_specs={"b": {"variables": [var_cov0]},
                      "k": {"variables": [var_cov1]}}
     )
@@ -150,7 +150,7 @@ def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         WeibullModel(
             y="obs",
-            data=wrong_data,
+            df=wrong_data,
             param_specs={"b": {"variables": [var_cov0]},
                          "k": {"variables": [var_cov1]}}
         )
@@ -173,7 +173,7 @@ def test_model_no_variables():
     })
     model = WeibullModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={"b": {"offset": "offset"}, "k": {"offset": "offset"}}
     )
     coefs = np.array([])
@@ -194,7 +194,7 @@ def test_model_one_variable():
     })
     model = WeibullModel(
         y="obs",
-        data=df,
+        df=df,
         param_specs={
             "b": {"offset": "offset"},
             "k": {"variables": [Variable("intercept")]},

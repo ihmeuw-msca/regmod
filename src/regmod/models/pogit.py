@@ -30,7 +30,7 @@ class PogitModel(Model):
                 params[0] - self.y/params[1]]
 
     def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
-        ones = np.ones(self.data.shape[0])
+        ones = np.ones(self.df.shape[0])
         return [[self.y/params[0]**2, ones],
                 [ones, self.y/params[1]**2]]
 

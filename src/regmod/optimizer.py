@@ -91,7 +91,7 @@ def set_trim_weights(model: "Model", index: NDArray, mask: float):
     mask : float
         Value of the weights to set.
     """
-    weights = np.ones(model.data.num_obs)
+    weights = np.ones(model.df.num_obs)
     weights[index] = mask
     model.trim_weights = weights
 
