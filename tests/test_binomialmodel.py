@@ -83,7 +83,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
     return BinomialModel(
-        obs="obs",
+        y="obs",
         data=data,
         param_specs={"p": {"variables": [var_cov0, var_cov1]}}
     )
@@ -150,14 +150,14 @@ def test_model_hessian(model, inv_link):
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         BinomialModel(
-            obs="obs",
+            y="obs",
             data=wrong_data,
             param_specs={"p": {"variables": [var_cov0, var_cov1]}}
         )
 
 
 def test_get_ui(model):
-    model.obs_sample_sizes = np.array([100]*5)
+    model.y_sample_sizes = np.array([100]*5)
     params = [np.full(5, 0.5)]
     bounds = [0.025, 0.975]
     ui = model.get_ui(params, bounds)
@@ -175,7 +175,7 @@ def test_model_no_variables():
         "offset": np.ones(num_obs),
     })
     model = BinomialModel(
-        obs="obs",
+        y="obs",
         data=df,
         param_specs={"p": {"offset": "offset"}}
     )

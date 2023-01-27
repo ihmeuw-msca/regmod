@@ -17,22 +17,22 @@ class WeibullModel(Model):
 
     def attach_df(self, df: pd.DataFrame):
         super().attach_df(df)
-        if not all(self.obs > 0):
+        if not all(self.y > 0):
             raise ValueError("Weibull model requires observations to be positive.")
 
     def nll(self, params: List[ndarray]) -> ndarray:
-        t = self.obs
+        t = self.y
         ln_t = np.log(t)
         return params[0]*(t**params[1]) - (params[1] - 1)*ln_t - np.log(params[0]) - np.log(params[1])
 
     def dnll(self, params: List[ndarray]) -> List[ndarray]:
-        t = self.obs
+        t = self.y
         ln_t = np.log(t)
         return [t**params[1] - 1/params[0],
                 ln_t*params[0]*(t**params[1]) - ln_t - 1/params[1]]
 
     def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
-        t = self.obs
+        t = self.y
         ln_t = np.log(t)
         return [[1/params[0]**2, ln_t*(t**params[1])],
                 [ln_t*(t**params[1]), 1/params[1]**2 + params[0]*(ln_t**2)*(t**params[1])]]

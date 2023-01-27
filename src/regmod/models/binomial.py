@@ -20,7 +20,7 @@ class BinomialModel(Model):
 
     def attach_df(self, df: pd.DataFrame):
         super().attach_df(df)
-        if not np.all((self.obs >= 0) & (self.obs <= 1)):
+        if not np.all((self.y >= 0) & (self.y <= 1)):
             raise ValueError("Binomial model requires observations to be "
                              "between zero and one.")
         self.mat[0], self.cmat, self.cvec = model_post_init(
@@ -46,8 +46,8 @@ class BinomialModel(Model):
 
         weights = self.weights*self.trim_weights
         obj_param = -weights * (
-            self.obs * np.log(param) +
-            (1 - self.obs) * np.log(1 - param)
+            self.y * np.log(param) +
+            (1 - self.y) * np.log(1 - param)
         )
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
@@ -74,7 +74,7 @@ class BinomialModel(Model):
 
         weights = self.weights*self.trim_weights
         grad_param = weights * (
-            (param - self.obs) / (param*(1 - param)) * dparam
+            (param - self.y) / (param*(1 - param)) * dparam
         )
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
@@ -103,8 +103,8 @@ class BinomialModel(Model):
 
         weights = self.weights*self.trim_weights
         hess_param = weights * (
-            (self.obs / param**2 + (1 - self.obs) / (1 - param)**2) * dparam**2 +
-            (param - self.obs) / (param*(1 - param)) * d2param
+            (self.y / param**2 + (1 - self.y) / (1 - param)**2) * dparam**2 +
+            (param - self.y) / (param*(1 - param)) * d2param
         )
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -134,7 +134,7 @@ class BinomialModel(Model):
         dparam = inv_link.dfun(lin_param)
         weights = self.weights*self.trim_weights
         grad_param = weights * (
-            (param - self.obs) / (param*(1 - param)) * dparam
+            (param - self.y) / (param*(1 - param)) * dparam
         )
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
@@ -157,16 +157,16 @@ class BinomialModel(Model):
         )
 
     def nll(self, params: List[NDArray]) -> NDArray:
-        return -(self.obs*np.log(params[0]) + (1 - self.obs)*np.log(1.0 - params[0]))
+        return -(self.y*np.log(params[0]) + (1 - self.y)*np.log(1.0 - params[0]))
 
     def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [-(self.obs/params[0] - (1 - self.obs)/(1.0 - params[0]))]
+        return [-(self.y/params[0] - (1 - self.y)/(1.0 - params[0]))]
 
     def d2nll(self, params: List[NDArray]) -> List[List[NDArray]]:
-        return [[self.obs/params[0]**2 + (1 - self.obs)/(1.0 - params[0])**2]]
+        return [[self.y/params[0]**2 + (1 - self.y)/(1.0 - params[0])**2]]
 
     def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         p = params[0]
-        n = self.obs_sample_sizes
+        n = self.y_sample_sizes
         return [binom.ppf(bounds[0], n=n, p=p),
                 binom.ppf(bounds[1], n=n, p=p)]

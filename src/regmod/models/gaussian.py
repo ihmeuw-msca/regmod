@@ -43,7 +43,7 @@ class GaussianModel(Model):
 
         weights = self.weights*self.trim_weights
         obj_param = weights * 0.5 * (
-            param - self.data.obs
+            param - self.y
         )**2
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
@@ -70,7 +70,7 @@ class GaussianModel(Model):
 
         weights = self.weights*self.trim_weights
         grad_param = weights * (
-            param - self.data.obs
+            param - self.y
         ) * dparam
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
@@ -99,7 +99,7 @@ class GaussianModel(Model):
 
         weights = self.weights*self.trim_weights
         hess_param = weights * (
-            dparam**2 + (param - self.data.obs)*d2param
+            dparam**2 + (param - self.y)*d2param
         )
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -128,7 +128,7 @@ class GaussianModel(Model):
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
         weights = self.weights*self.trim_weights
-        grad_param = weights * (param - self.data.obs) * dparam
+        grad_param = weights * (param - self.y) * dparam
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
         jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
@@ -150,10 +150,10 @@ class GaussianModel(Model):
         )
 
     def nll(self, params: List[NDArray]) -> NDArray:
-        return 0.5*(params[0] - self.obs)**2
+        return 0.5*(params[0] - self.y)**2
 
     def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [params[0] - self.obs]
+        return [params[0] - self.y]
 
     def d2nll(self, params: List[NDArray]) -> List[NDArray]:
         return [[np.ones(self.data.shape[0])]]

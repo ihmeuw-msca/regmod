@@ -44,7 +44,7 @@ class Model:
     default_param_specs: Dict[str, Dict] = None
 
     def __init__(self,
-                 obs: str,
+                 y: str,
                  weights: str = "weights",
                  data: Optional[pd.DataFrame] = None,
                  params: Optional[List[Parameter]] = None,
@@ -64,10 +64,10 @@ class Model:
                                      **{**self.default_param_specs[param_name],
                                         **param_specs[param_name]})
                            for param_name in self.param_names]
-        self._obs = obs
+        self._y = y
         self._weights = weights
         self.data = data
-        self.obs = None
+        self.y = None
         self.weights = None
         self.trim_weights = None
         if self.data is not None:
@@ -97,7 +97,7 @@ class Model:
         self.linear_umat = self.get_linear_umat()
         self.linear_gmat = self.get_linear_gmat()
         self.trim_weights = np.ones(df.shape[0])
-        self.obs = self.data[self._obs].to_numpy()
+        self.y = self.data[self._y].to_numpy()
         if self._weights not in self.data:
             self.weights = np.ones(self.data.shape[0])
         else:
@@ -366,7 +366,7 @@ class Model:
         """
         params = self.get_params(coefs)
         ui = self.get_ui(params, bounds)
-        obs = self.data[self.obs].to_numpy()
+        obs = self.data[self.y].to_numpy()
         return (obs < ui[0]) | (obs > ui[1])
 
     def objective_from_gprior(self, coefs: ndarray) -> float:
@@ -558,6 +558,6 @@ class Model:
 
     def __repr__(self) -> str:
         return (f"{type(self).__name__}("
-                f"bnum_obs={self.data.shape[0]}, "
+                f"bnum_y={self.data.shape[0]}, "
                 f"num_params={self.num_params}, "
                 f"size={self.size})")

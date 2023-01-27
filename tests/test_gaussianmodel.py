@@ -69,7 +69,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
     return GaussianModel(
-        obs="obs",
+        y="obs",
         data=data,
         param_specs={"mu": {"variables": [var_cov0, var_cov1]}}
     )
@@ -153,7 +153,7 @@ def test_model_jacobian2(model):
 
     mat = model.mat[0].to_numpy()
     param = model.get_params(beta)[0]
-    residual = (model.obs - param)*np.sqrt(model.weights)
+    residual = (model.y - param)*np.sqrt(model.weights)
     jacobian = mat.T*residual
     true_jacobian2 = jacobian.dot(jacobian.T) + model.hessian_from_gprior()
 
@@ -167,7 +167,7 @@ def test_model_no_variables():
         "offset": np.ones(num_obs),
     })
     model = GaussianModel(
-        obs="obs",
+        y="obs",
         data=df,
         param_specs={"mu": {"offset": "offset"}}
     )

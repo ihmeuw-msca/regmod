@@ -18,21 +18,21 @@ class PogitModel(Model):
 
     def attach_df(self, df: pd.DataFrame):
         super().attach_df(df)
-        if not all(self.obs >= 0):
+        if not all(self.y >= 0):
             raise ValueError("Pogit model requires observations to be non-negagive.")
 
     def nll(self, params: List[ndarray]) -> ndarray:
         mean = params[0]*params[1]
-        return mean - self.obs*np.log(mean)
+        return mean - self.y*np.log(mean)
 
     def dnll(self, params: List[ndarray]) -> List[ndarray]:
-        return [params[1] - self.obs/params[0],
-                params[0] - self.obs/params[1]]
+        return [params[1] - self.y/params[0],
+                params[0] - self.y/params[1]]
 
     def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
         ones = np.ones(self.data.shape[0])
-        return [[self.obs/params[0]**2, ones],
-                [ones, self.obs/params[1]**2]]
+        return [[self.y/params[0]**2, ones],
+                [ones, self.y/params[1]**2]]
 
     def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
         mean = params[0]*params[1]

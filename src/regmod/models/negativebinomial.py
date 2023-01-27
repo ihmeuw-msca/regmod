@@ -20,22 +20,22 @@ class NegativeBinomialModel(Model):
 
     def attach_df(self, df: pd.DataFrame):
         super().attach_df(df)
-        if not np.all(self.obs >= 0):
+        if not np.all(self.y >= 0):
             raise ValueError("Negative-Binomial model requires observations to be non-negative.")
 
     def nll(self, params: List[ndarray]) -> ndarray:
-        return -(loggamma(params[0] + self.obs) -
+        return -(loggamma(params[0] + self.y) -
                  loggamma(params[0]) +
-                 self.obs*np.log(1 - params[1]) +
+                 self.y*np.log(1 - params[1]) +
                  params[0]*np.log(params[1]))
 
     def dnll(self, params: List[ndarray]) -> List[ndarray]:
-        return [-(digamma(params[0] + self.obs) - digamma(params[0]) + np.log(params[1])),
-                self.obs/(1 - params[1]) - params[0]/params[1]]
+        return [-(digamma(params[0] + self.y) - digamma(params[0]) + np.log(params[1])),
+                self.y/(1 - params[1]) - params[0]/params[1]]
 
     def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
-        return [[polygamma(1, params[0]) - polygamma(1, params[0] + self.obs), -1/params[1]],
-                [-1/params[1], params[0]/params[1]**2 + self.obs/(1 - params[1])**2]]
+        return [[polygamma(1, params[0]) - polygamma(1, params[0] + self.y), -1/params[1]],
+                [-1/params[1], params[0]/params[1]**2 + self.y/(1 - params[1])**2]]
 
     def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> np.ndarray:
         n = params[0]

@@ -80,7 +80,7 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
     return NegativeBinomialModel(
-        obs="obs",
+        y="obs",
         data=data,
         param_specs={"n": {"variables": [var_cov0]},
                      "p": {"variables": [var_cov1]}}
@@ -148,7 +148,7 @@ def test_model_hessian(model, inv_link):
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
         NegativeBinomialModel(
-            obs="obs",
+            y="obs",
             data=wrong_data,
             param_specs={"n": {"variables": [var_cov0]},
                          "p": {"variables": [var_cov1]}}
@@ -170,7 +170,7 @@ def test_model_no_variables():
         "offset": np.ones(num_obs),
     })
     model = NegativeBinomialModel(
-        obs="obs",
+        y="obs",
         data=df,
         param_specs={"n": {"offset": "offset"}, "p": {"offset": "offset"}}
     )
@@ -191,7 +191,7 @@ def test_model_one_variable():
         "offset": np.ones(num_obs),
     })
     model = NegativeBinomialModel(
-        obs="obs",
+        y="obs",
         data=df,
         param_specs={
             "n": {"offset": "offset"},

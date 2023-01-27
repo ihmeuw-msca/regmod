@@ -90,7 +90,7 @@ class TobitModel(Model):
 
         """
         super().attach_df(df)
-        if not jnp.all(self.obs >= 0):
+        if not jnp.all(self.y >= 0):
             raise ValueError("Tobit model requires non-negative observations.")
 
         self.mat = [jnp.asarray(mat) for mat in self.mat]
@@ -107,7 +107,7 @@ class TobitModel(Model):
             if param.offset is not None else jnp.zeros(df.shape[0])
             for param in self.params
         ]
-        self.obs = jnp.asarray(self.obs)
+        self.y = jnp.asarray(self.y)
         self.weights = jnp.asarray(self.trim_weights*self.weights)
 
     def objective(self, coefs: ArrayLike) -> float:
@@ -127,7 +127,7 @@ class TobitModel(Model):
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
         return _objective(coef_list, link_list, self.mat, self.offset,
-                          self.obs, self.weights, self.gvec,
+                          self.y, self.weights, self.gvec,
                           self.linear_gvec, self.linear_gmat)
 
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
@@ -147,7 +147,7 @@ class TobitModel(Model):
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
         temp = _gradient(coef_list, link_list, self.mat, self.offset,
-                         self.obs, self.weights, self.gvec,
+                         self.y, self.weights, self.gvec,
                          self.linear_gvec, self.linear_gmat)
         return jnp.concatenate(temp)
 
@@ -168,7 +168,7 @@ class TobitModel(Model):
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
         temp = _hessian(coef_list, link_list, self.mat, self.offset,
-                        self.obs, self.weights, self.gvec,
+                        self.y, self.weights, self.gvec,
                         self.linear_gvec, self.linear_gmat)
         hess = jnp.concatenate([
             jnp.concatenate(temp[0], axis=1),
@@ -190,7 +190,7 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        return _nll(self.obs, params)
+        return _nll(self.y, params)
 
     def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
@@ -206,7 +206,7 @@ class TobitModel(Model):
             Derivatives of negative log likelihood.
 
         """
-        return _dnll(self.obs, params)
+        return _dnll(self.y, params)
 
     def get_vcov(self, coefs: ArrayLike) -> DeviceArray:
         """Get variance-covariance matrix.

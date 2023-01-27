@@ -28,7 +28,7 @@ def test_scipy_optimizer(seed):
     var_cov1 = SplineVariable(name="cov1", spline_specs=spline_specs)
 
     model = GaussianModel(
-        obs="obs",
+        y="obs",
         data=df,
         param_specs={"mu": {"variables": [var_cov0, var_cov1]}}
     )
@@ -38,7 +38,7 @@ def test_scipy_optimizer(seed):
     mat = model.mat[0].to_numpy()
     tr_coef = np.linalg.solve(
         (mat.T*model.weights).dot(mat),
-        (mat.T*model.weights).dot(model.obs)
+        (mat.T*model.weights).dot(model.y)
     )
 
     assert np.allclose(coefs, tr_coef)

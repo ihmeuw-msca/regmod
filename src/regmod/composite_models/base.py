@@ -88,7 +88,7 @@ class BaseModel(NodeModel):
 
     def __init__(self,
                  name: str,
-                 obs: str,
+                 y: str,
                  variables: List[Variable],
                  data: Optional[pd.DataFrame] = None,
                  weights: str = "weights",
@@ -103,7 +103,7 @@ class BaseModel(NodeModel):
         data = deepcopy(data)
         variables = list(deepcopy(variables))
 
-        self.obs = obs
+        self.y = y
         self.mtype = mtype
         self.data = data
         self.weights = weights
@@ -149,7 +149,7 @@ class BaseModel(NodeModel):
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
             self.model = model_constructor(
-                self.obs,
+                self.y,
                 data=self.data,
                 weights=self.weights,
                 param_specs=self.param_specs

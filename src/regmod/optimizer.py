@@ -147,7 +147,7 @@ def original_trimming(optimize: Callable) -> Callable:
             raise ValueError("inlier_pct has to be between 0 and 1.")
         coefs = optimize(model, x0, options)
         if inlier_pct < 1.0:
-            num_inliers = int(inlier_pct*model.obs.size)
+            num_inliers = int(inlier_pct*model.y.size)
             counter = 0
             success = False
             while (counter < trim_steps) and (not success):
