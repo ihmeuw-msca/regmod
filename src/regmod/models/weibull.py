@@ -15,8 +15,8 @@ class WeibullModel(Model):
     param_names = ("b", "k")
     default_param_specs = {"b": {"inv_link": "exp"}, "k": {"inv_link": "exp"}}
 
-    def attach_df(self, df: pd.DataFrame, require_y: bool = True):
-        super().attach_df(df, require_y=require_y)
+    def _attach(self, df: pd.DataFrame, require_y: bool = True):
+        super()._attach(df, require_y=require_y)
         if require_y and not all(self._data["y"] > 0):
             raise ValueError(
                 "Weibull model requires observations to be positive."

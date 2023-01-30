@@ -70,7 +70,7 @@ class Model:
         self.trim_weights = None
         self._data = {}
         if self.df is not None:
-            self.attach_df(self.df, require_y=True)
+            self._attach(self.df, require_y=True)
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
@@ -82,7 +82,7 @@ class Model:
         self._opt_coefs = None
         self._opt_vcov = None
 
-    def attach_df(self, df: pd.DataFrame, require_y: bool = True):
+    def _attach(self, df: pd.DataFrame, require_y: bool = True):
         self.df = df
         for param in self.params:
             param.check_data(df)

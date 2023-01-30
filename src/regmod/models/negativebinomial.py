@@ -18,8 +18,8 @@ class NegativeBinomialModel(Model):
     default_param_specs = {"n": {"inv_link": "exp"},
                            "p": {"inv_link": "expit"}}
 
-    def attach_df(self, df: pd.DataFrame, require_y: bool = True):
-        super().attach_df(df)
+    def _attach(self, df: pd.DataFrame, require_y: bool = True):
+        super()._attach(df)
         if require_y and not np.all(self._data["y"] >= 0):
             raise ValueError(
                 "Negative-Binomial model requires observations to be non-negative."
