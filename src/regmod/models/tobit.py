@@ -104,7 +104,7 @@ class TobitModel(Model):
         self._data["linear_gmat"] = jnp.asarray(self._data["linear_gmat"])
 
         # Data structures for objective
-        self.offset = [
+        self._data["offset"] = [
             jnp.asarray(df[param.offset])
             if param.offset is not None else jnp.zeros(df.shape[0])
             for param in self.params
@@ -128,7 +128,7 @@ class TobitModel(Model):
         """
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        return _objective(coef_list, link_list, self._data["mat"], self.offset,
+        return _objective(coef_list, link_list, self._data["mat"], self._data["offset"],
                           self._data["y"], self._data["weights"], self._data["gvec"],
                           self._data["linear_gvec"], self._data["linear_gmat"])
 
@@ -148,7 +148,7 @@ class TobitModel(Model):
         """
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        temp = _gradient(coef_list, link_list, self._data["mat"], self.offset,
+        temp = _gradient(coef_list, link_list, self._data["mat"], self._data["offset"],
                          self._data["y"], self._data["weights"], self._data["gvec"],
                          self._data["linear_gvec"], self._data["linear_gmat"])
         return jnp.concatenate(temp)
@@ -169,7 +169,7 @@ class TobitModel(Model):
         """
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        temp = _hessian(coef_list, link_list, self._data["mat"], self.offset,
+        temp = _hessian(coef_list, link_list, self._data["mat"], self._data["offset"],
                         self._data["y"], self._data["weights"], self._data["gvec"],
                         self._data["linear_gvec"], self._data["linear_gmat"])
         hess = jnp.concatenate([

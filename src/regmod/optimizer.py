@@ -58,7 +58,7 @@ def msca_optimize(model: "Model",
     x0 = np.zeros(model.size) if x0 is None else x0
     options = options or {}
 
-    if model.cmat.size == 0:
+    if model._data["cmat"].size == 0:
         solver = NTSolver(
             model.objective,
             model.gradient,
@@ -69,8 +69,8 @@ def msca_optimize(model: "Model",
             model.objective,
             model.gradient,
             model.hessian,
-            model.cmat,
-            model.cvec
+            model._data["cmat"],
+            model._data["cvec"]
         )
     result = solver.minimize(x0=x0, **options)
     model.opt_result = result

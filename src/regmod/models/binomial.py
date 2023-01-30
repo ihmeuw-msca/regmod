@@ -24,7 +24,9 @@ class BinomialModel(Model):
             raise ValueError(
                 "Binomial model requires observations to be between zero and one."
             )
-        self._data["mat"][0], self.cmat, self.cvec = model_post_init(
+        (self._data["mat"][0],
+         self._data["cmat"],
+         self._data["cvec"]) = model_post_init(
             self._data["mat"][0],
             self._data["uvec"],
             self._data["linear_umat"],

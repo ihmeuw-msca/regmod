@@ -20,7 +20,9 @@ class GaussianModel(Model):
 
     def attach_df(self, df: pd.DataFrame, require_y: bool = True):
         super().attach_df(df, require_y=require_y)
-        self._data["mat"][0], self.cmat, self.cvec = model_post_init(
+        (self._data["mat"][0],
+         self._data["cmat"],
+         self._data["cvec"]) = model_post_init(
             self._data["mat"][0],
             self._data["uvec"],
             self._data["linear_umat"],
