@@ -88,13 +88,21 @@ class Model:
             param.check_data(df)
 
         self._data.update({
-            "mat": self.get_mat(),
-            "uvec": self.get_uvec(),
-            "gvec": self.get_gvec(),
-            "linear_uvec": self.get_linear_uvec(),
-            "linear_gvec": self.get_linear_gvec(),
-            "linear_umat": self.get_linear_umat(),
-            "linear_gmat": self.get_linear_gmat(),
+            "mat": [param.get_mat(self.df) for param in self.params],
+            "uvec": np.hstack([param.get_uvec() for param in self.params]),
+            "gvec": np.hstack([param.get_gvec() for param in self.params]),
+            "linear_uvec": np.hstack(
+                [param.get_linear_uvec() for param in self.params]
+            ),
+            "linear_gvec": np.hstack(
+                [param.get_linear_gvec() for param in self.params]
+            ),
+            "linear_umat": block_diag(
+                *[param.get_linear_umat() for param in self.params]
+            ),
+            "linear_gmat": block_diag(
+                *[param.get_linear_gmat() for param in self.params]
+            ),
         })
         if require_y:
             self._data["y"] = df[self.y].to_numpy()
@@ -151,76 +159,6 @@ class Model:
         vcov = inv_hessian.dot(jacobian2)
         vcov = inv_hessian.dot(vcov.T)
         return vcov
-
-    def get_mat(self) -> List[ndarray]:
-        """Get the design matrices.
-
-        Returns
-        -------
-        List[ndarray]
-            The design matrices.
-        """
-        return [param.get_mat(self.df) for param in self.params]
-
-    def get_uvec(self) -> ndarray:
-        """Get the direct Uniform prior array.
-
-        Returns
-        -------
-        ndarray
-            The direct Uniform prior array.
-        """
-        return np.hstack([param.get_uvec() for param in self.params])
-
-    def get_gvec(self) -> ndarray:
-        """Get the direct Gaussian prior array.
-
-        Returns
-        -------
-        ndarray
-            The direct Gaussian prior array.
-        """
-        return np.hstack([param.get_gvec() for param in self.params])
-
-    def get_linear_uvec(self) -> ndarray:
-        """Get the linear Uniform prior array.
-
-        Returns
-        -------
-        ndarray
-            The linear Uniform prior array.
-        """
-        return np.hstack([param.get_linear_uvec() for param in self.params])
-
-    def get_linear_gvec(self) -> ndarray:
-        """Get the linear Gaussian prior array.
-
-        Returns
-        -------
-        ndarray
-            The linear Gaussian prior array.
-        """
-        return np.hstack([param.get_linear_gvec() for param in self.params])
-
-    def get_linear_umat(self) -> ndarray:
-        """Get the linear Uniform prior design matrix.
-
-        Returns
-        -------
-        ndarray
-            The linear Uniform prior design matrix.
-        """
-        return block_diag(*[param.get_linear_umat() for param in self.params])
-
-    def get_linear_gmat(self) -> ndarray:
-        """Get the linear Gaussian prior design matrix.
-
-        Returns
-        -------
-        ndarray
-            The linear Gaussian prior design matrix.
-        """
-        return block_diag(*[param.get_linear_gmat() for param in self.params])
 
     def split_coefs(self, coefs: ndarray) -> List[ndarray]:
         """Split coefficients into pieces for each parameter.
