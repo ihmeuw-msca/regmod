@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import NegativeBinomialModel
 from regmod.prior import (GaussianPrior, SplineGaussianPrior,
@@ -24,9 +23,7 @@ def data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -37,9 +34,7 @@ def wrong_data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -84,8 +79,12 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return NegativeBinomialModel(data, param_specs={"n": {"variables": [var_cov0]},
-                                                    "p": {"variables": [var_cov1]}})
+    return NegativeBinomialModel(
+        y="obs",
+        df=data,
+        param_specs={"n": {"variables": [var_cov0]},
+                     "p": {"variables": [var_cov1]}}
+    )
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -148,8 +147,12 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        NegativeBinomialModel(wrong_data, param_specs={"n": {"variables": [var_cov0]},
-                                                       "p": {"variables": [var_cov1]}})
+        NegativeBinomialModel(
+            y="obs",
+            df=wrong_data,
+            param_specs={"n": {"variables": [var_cov0]},
+                         "p": {"variables": [var_cov1]}}
+        )
 
 
 def test_get_ui(model):
@@ -166,13 +169,9 @@ def test_model_no_variables():
         "obs": np.random.rand(num_obs)*10,
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
-    )
     model = NegativeBinomialModel(
-        data,
+        y="obs",
+        df=df,
         param_specs={"n": {"offset": "offset"}, "p": {"offset": "offset"}}
     )
     coefs = np.array([])
@@ -191,13 +190,9 @@ def test_model_one_variable():
         "obs": np.random.rand(num_obs)*10,
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
-    )
     model = NegativeBinomialModel(
-        data,
+        y="obs",
+        df=df,
         param_specs={
             "n": {"offset": "offset"},
             "p": {"variables": [Variable("intercept")]},

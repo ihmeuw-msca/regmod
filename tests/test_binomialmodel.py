@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import BinomialModel
 from regmod.prior import (GaussianPrior, SplineGaussianPrior,
@@ -27,10 +26,7 @@ def data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                col_weights="sample_size",
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -41,9 +37,7 @@ def wrong_data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -88,7 +82,11 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return BinomialModel(data, param_specs={"p": {"variables": [var_cov0, var_cov1]}})
+    return BinomialModel(
+        y="obs",
+        df=data,
+        param_specs={"p": {"variables": [var_cov0, var_cov1]}}
+    )
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -151,11 +149,15 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        BinomialModel(wrong_data, param_specs={"p": {"variables": [var_cov0, var_cov1]}})
+        BinomialModel(
+            y="obs",
+            df=wrong_data,
+            param_specs={"p": {"variables": [var_cov0, var_cov1]}}
+        )
 
 
 def test_get_ui(model):
-    model.obs_sample_sizes = np.array([100]*5)
+    model.y_sample_sizes = np.array([100]*5)
     params = [np.full(5, 0.5)]
     bounds = [0.025, 0.975]
     ui = model.get_ui(params, bounds)
@@ -172,13 +174,11 @@ def test_model_no_variables():
         "sample_size": sample_size,
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        col_weights="sample_size",
+    model = BinomialModel(
+        y="obs",
         df=df,
+        param_specs={"p": {"offset": "offset"}}
     )
-    model = BinomialModel(data, param_specs={"p": {"offset": "offset"}})
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)

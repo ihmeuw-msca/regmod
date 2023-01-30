@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 from typing import Optional, Union
 
 import numpy as np
+import pandas as pd
 from scipy.linalg import block_diag
 
-from regmod.data import Data
 from regmod.function import SmoothFunction, fun_dict
 from regmod.prior import LinearGaussianPrior, LinearUniformPrior
 from regmod.variable import SplineVariable, Variable
@@ -69,33 +69,35 @@ class Parameter:
         """Size of the parameter."""
         return sum([var.size for var in self.variables])
 
-    def check_data(self, data: Data):
+    def check_data(self, df: pd.DataFrame):
         """Attach data to all variables.
 
         Parameters
         ----------
-        data : Data
-            Data object.
+        df
+            Data frame that contains all covariates.
+
         """
         for var in self.variables:
-            var.check_data(data)
+            var.check_data(df)
 
-    def get_mat(self, data: Data) -> np.ndarray:
+    def get_mat(self, df: pd.DataFrame) -> np.ndarray:
         """Get the design matrix.
 
         Parameters
         ----------
-        data : Data
-            Data object.
+        df
+            Data frame contains all covariates.
 
         Returns
         -------
         np.ndarray
             The design matrix.
+
         """
         if len(self.variables) == 0:
-            return np.empty(shape=(data.df.shape[0], 0))
-        return np.hstack([var.get_mat(data) for var in self.variables])
+            return np.empty(shape=(df.shape[0], 0))
+        return np.hstack([var.get_mat(df) for var in self.variables])
 
     def get_uvec(self) -> np.ndarray:
         """Get the direct Uniform prior.
@@ -197,7 +199,7 @@ class Parameter:
 
     def get_lin_param(self,
                       coefs: np.ndarray,
-                      data: Data,
+                      df: pd.DataFrame,
                       mat: np.ndarray = None,
                       return_mat: bool = False) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
         """Get the parameter before apply the link function.
@@ -206,8 +208,8 @@ class Parameter:
         ----------
         coefs : np.ndarray
             Coefficients for the design matrix.
-        data : Data
-            Data object.
+        df
+            Data frame that contains all the covariates.
         mat : np.ndarray, optional
             Alternative design matrix, by default None.
         return_mat : bool, optional
@@ -218,21 +220,22 @@ class Parameter:
         Union[np.ndarray, tuple[np.ndarray, np.ndarray]]
             Linear parameter vector, or when `return_mat=True` also returns the
             design matrix.
+
         """
         if len(self.variables) == 0:
-            return data.df[self.offset].to_numpy()
+            return df[self.offset].to_numpy()
         if mat is None:
-            mat = self.get_mat(data)
+            mat = self.get_mat(df)
         lin_param = mat.dot(coefs)
         if self.offset is not None:
-            lin_param += data.df[self.offset].to_numpy()
+            lin_param += df[self.offset].to_numpy()
         if return_mat:
             return lin_param, mat
         return lin_param
 
     def get_param(self,
                   coefs: np.ndarray,
-                  data: Data,
+                  df: pd.DataFrame,
                   mat: np.ndarray = None) -> np.ndarray:
         """Get the parameter.
 
@@ -240,8 +243,8 @@ class Parameter:
         ----------
         coefs : np.ndarray
             Coefficients for the design matrix.
-        data : Data
-            Data object.
+        df
+            Data frame that contains all the covariates.
         mat : np.ndarray, optional
             Alternative design matrix, by default None.
 
@@ -250,12 +253,12 @@ class Parameter:
         np.ndarray
             Returns the parameter.
         """
-        lin_param = self.get_lin_param(coefs, data, mat)
+        lin_param = self.get_lin_param(coefs, df, mat)
         return self.inv_link.fun(lin_param)
 
     def get_dparam(self,
                    coefs: np.ndarray,
-                   data: Data,
+                   df: pd.DataFrame,
                    mat: np.ndarray = None) -> np.ndarray:
         """Get the derivative of the parameter.
 
@@ -263,8 +266,8 @@ class Parameter:
         ----------
         coefs : np.ndarray
             Coefficients for the design matrix.
-        data : Data
-            Data object.
+        df
+            Data frame that contains all the covariates.
         mat : np.ndarray, optional
             Alternative design matrix, by default None.
 
@@ -274,13 +277,13 @@ class Parameter:
             Returns the derivative of the parameter.
         """
         if len(self.variables) == 0:
-            return np.empty((data.df.shape[0], 0))
-        lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
+            return np.empty((df.shape[0], 0))
+        lin_param, mat = self.get_lin_param(coefs, df, mat, return_mat=True)
         return self.inv_link.dfun(lin_param)[:, None]*mat
 
     def get_d2param(self,
                     coefs: np.ndarray,
-                    data: Data,
+                    df: pd.DataFrame,
                     mat: np.ndarray = None) -> np.ndarray:
         """Get the second order derivative of the parameter.
 
@@ -288,8 +291,8 @@ class Parameter:
         ----------
         coefs : np.ndarray
             Coefficients for the design matrix.
-        data : Data
-            Data object.
+        df
+            Data frame that contains all the covariates.
         mat : np.ndarray, optional
             Alternative design matrix, by default None.
 
@@ -299,6 +302,6 @@ class Parameter:
             Returns the second order derivative of the parameter.
         """
         if len(self.variables) == 0:
-            return np.empty((data.df.shape[0], 0, 0))
-        lin_param, mat = self.get_lin_param(coefs, data, mat, return_mat=True)
+            return np.empty((df.shape[0], 0, 0))
+        lin_param, mat = self.get_lin_param(coefs, df, mat, return_mat=True)
         return self.inv_link.d2fun(lin_param)[:, None, None]*(mat[..., None]*mat[:, None, :])

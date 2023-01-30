@@ -91,9 +91,9 @@ def set_trim_weights(model: "Model", index: NDArray, mask: float):
     mask : float
         Value of the weights to set.
     """
-    weights = np.ones(model.data.num_obs)
+    weights = np.ones(model.df.num_obs)
     weights[index] = mask
-    model.data.trim_weights = weights
+    model.trim_weights = weights
 
 
 def trimming(optimize: Callable) -> Callable:
@@ -147,24 +147,24 @@ def original_trimming(optimize: Callable) -> Callable:
             raise ValueError("inlier_pct has to be between 0 and 1.")
         coefs = optimize(model, x0, options)
         if inlier_pct < 1.0:
-            num_inliers = int(inlier_pct*model.data.obs.size)
+            num_inliers = int(inlier_pct*model.y.size)
             counter = 0
             success = False
             while (counter < trim_steps) and (not success):
                 counter += 1
                 nll_terms = model.get_nll_terms(coefs)
-                model.data.trim_weights = proj_capped_simplex(
-                    model.data.trim_weights - step_size*nll_terms,
+                model.trim_weights = proj_capped_simplex(
+                    model.trim_weights - step_size*nll_terms,
                     num_inliers
                 )
                 coefs = optimize(model, x0, options)
                 success = all(
-                    np.isclose(model.data.trim_weights, 0.0) |
-                    np.isclose(model.data.trim_weights, 1.0)
+                    np.isclose(model.trim_weights, 0.0) |
+                    np.isclose(model.trim_weights, 1.0)
                 )
             if not success:
-                sort_indices = np.argsort(model.data.trim_weights)
-                model.data.trim_weights[sort_indices[-num_inliers:]] = 1.0
-                model.data.trim_weights[sort_indices[:-num_inliers]] = 0.0
+                sort_indices = np.argsort(model.trim_weights)
+                model.trim_weights[sort_indices[-num_inliers:]] = 1.0
+                model.trim_weights[sort_indices[:-num_inliers]] = 0.0
         return coefs
     return optimize_with_trimming

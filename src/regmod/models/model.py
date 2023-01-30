@@ -10,7 +10,6 @@ from numpy import ndarray
 from scipy.linalg import block_diag
 from scipy.sparse import csc_matrix
 
-from regmod.data import Data
 from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices
@@ -21,8 +20,12 @@ class Model:
 
     Parameters
     ----------
-    data : Data
-        Data object.
+    obs
+        Column name for the observation
+    weights
+        Column name for the weight of each observation
+    data
+        Data frame that contains all information
     params : Optional[List[Parameter]], optional
         A list of parameters. Default to None.
     param_specs : Optional[Dict[str, Dict]], optional
@@ -35,100 +38,15 @@ class Model:
     ValueError
         Raised when data object is empty.
 
-    Attributes
-    ----------
-    data : Data
-        Data object.
-    params : List[Parameter]
-        A list of parameters.
-    sizes : List[int]
-        A list of sizes for each parameter.
-    indices : List[slice]
-        A list of indices for each parameter vector.
-    size : int
-        Sum of sizes from all parameters.
-    num_params : int
-        Number of parameters.
-    mat : np.ndarray
-        Design matrix of the problem.
-    uvec : np.ndarray
-        Direct Uniform prior array.
-    gvec : np.ndarray
-        Direct Gaussian prior array.
-    linear_umat : np.ndarray
-        Linear Uniform prior design matrix.
-    linear_gmat : np.ndarray
-        Linear Gaussian prior design matrix.
-    linear_uvec : np.ndarray
-        Linear Uniform prior array.
-    linear_gvec : np.ndarray
-        Linear Gaussian prior array.
-    opt_result : scipy.optimize.OptimizeResult
-        Optmization result. Initialized as None.
-    opt_coefs : np.ndarray
-        Optimal coefficients.
-    opt_vcov : np.ndarray
-        Optimal variance covariance matrix.
-
-    Methods
-    -------
-    get_mat()
-        Get the design matrices.
-    get_uvec()
-        Get the direct Uniform prior array.
-    get_gvec()
-        Get the direct Gaussian prior array.
-    get_linear_uvec()
-        Get the linear Uniform prior array.
-    get_linear_gvec()
-        Get the linear Gaussian prior array.
-    get_linear_umat()
-        Get the linear Uniform prior design matrix.
-    get_linear_gmat()
-        Get the linear Gaussian prior design matrix.
-    split_coefs(coefs)
-        Split coefficients into pieces for each parameter.
-    get_params(coefs)
-        Get the parameters.
-    get_dparams(coefs)
-        Get the derivative of the parameters.
-    get_d2params(coefs)
-        Get the second order derivative of the parameters.
-    nll(params)
-        Negative log likelihood.
-    dnll(params)
-        Derivative of negative the log likelihood.
-    d2nll(params)
-        Second order derivative of the negative log likelihood.
-    get_ui(params, bounds)
-        Get uncertainty interval, used for the trimming algorithm.
-    detect_outliers(coefs, bounds)
-        Detect outliers.
-    objective_from_gprior(coefs)
-        Objective function from the Gaussian priors.
-    gradient_from_gprior(coefs)
-        Gradient function from the Gaussian priors.
-    hessian_from_gprior()
-        Hessian function from the Gaussian priors.
-    objective(coefs)
-        Objective function.
-    gradient(coefs)
-        Gradient function.
-    hessian(coefs)
-        Hessian function.
-    jacobian2(coefs)
-        Jacobian function.
-    fit(optimizer, **optimizer_options)
-        Fit function.
-    predict(df)
-        Predict the parameters.
     """
 
     param_names: Tuple[str] = None
     default_param_specs: Dict[str, Dict] = None
 
     def __init__(self,
-                 data: Data,
+                 y: str,
+                 weights: str = "weights",
+                 df: Optional[pd.DataFrame] = None,
                  params: Optional[List[Parameter]] = None,
                  param_specs: Optional[Dict[str, Dict]] = None):
         if params is None and param_specs is None:
@@ -146,10 +64,14 @@ class Model:
                                      **{**self.default_param_specs[param_name],
                                         **param_specs[param_name]})
                            for param_name in self.param_names]
-
-        self.data = data
-        if not self.data.is_empty():
-            self.attach_df(self.data.df)
+        self._y = y
+        self._weights = weights
+        self.df = df
+        self.y = None
+        self.weights = None
+        self.trim_weights = None
+        if self.df is not None:
+            self.attach_df(self.df)
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
@@ -162,9 +84,9 @@ class Model:
         self._opt_vcov = None
 
     def attach_df(self, df: pd.DataFrame):
-        self.data.attach_df(df)
+        self.df = df
         for param in self.params:
-            param.check_data(self.data)
+            param.check_data(df)
 
         self.mat = self.get_mat()
         self.use_hessian = not any(isinstance(m, csc_matrix) for m in self.mat)
@@ -174,6 +96,12 @@ class Model:
         self.linear_gvec = self.get_linear_gvec()
         self.linear_umat = self.get_linear_umat()
         self.linear_gmat = self.get_linear_gmat()
+        self.trim_weights = np.ones(df.shape[0])
+        self.y = self.df[self._y].to_numpy()
+        if self._weights not in self.df:
+            self.weights = np.ones(self.df.shape[0])
+        else:
+            self.weights = self.df[self._weights].to_numpy()
 
     @property
     def opt_coefs(self) -> Union[None, ndarray]:
@@ -225,7 +153,7 @@ class Model:
         List[ndarray]
             The design matrices.
         """
-        return [param.get_mat(self.data) for param in self.params]
+        return [param.get_mat(self.df) for param in self.params]
 
     def get_uvec(self) -> ndarray:
         """Get the direct Uniform prior array.
@@ -317,7 +245,7 @@ class Model:
             The parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_param(coefs[i], self.data, mat=self.mat[i])
+        return [param.get_param(coefs[i], self.df, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
     def get_dparams(self, coefs: ndarray) -> List[ndarray]:
@@ -334,7 +262,7 @@ class Model:
             The derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_dparam(coefs[i], self.data, mat=self.mat[i])
+        return [param.get_dparam(coefs[i], self.df, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
     def get_d2params(self, coefs: ndarray) -> List[ndarray]:
@@ -351,7 +279,7 @@ class Model:
             The second order derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_d2param(coefs[i], self.data, mat=self.mat[i])
+        return [param.get_d2param(coefs[i], self.df, mat=self.mat[i])
                 for i, param in enumerate(self.params)]
 
     def nll(self, params: List[ndarray]) -> ndarray:
@@ -438,7 +366,8 @@ class Model:
         """
         params = self.get_params(coefs)
         ui = self.get_ui(params, bounds)
-        return (self.data.obs < ui[0]) | (self.data.obs > ui[1])
+        obs = self.df[self.y].to_numpy()
+        return (obs < ui[0]) | (obs > ui[1])
 
     def objective_from_gprior(self, coefs: ndarray) -> float:
         """Objective function from the Gaussian priors.
@@ -492,7 +421,7 @@ class Model:
     def get_nll_terms(self, coefs: ndarray) -> ndarray:
         params = self.get_params(coefs)
         nll_terms = self.nll(params)
-        nll_terms = self.data.weights*nll_terms
+        nll_terms = self.weights*nll_terms
         return nll_terms
 
     def objective(self, coefs: ndarray) -> float:
@@ -509,7 +438,7 @@ class Model:
             Objective value.
         """
         nll_terms = self.get_nll_terms(coefs)
-        return self.data.trim_weights.dot(nll_terms) + \
+        return self.trim_weights.dot(nll_terms) + \
             self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: ndarray) -> ndarray:
@@ -528,7 +457,7 @@ class Model:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         return np.hstack([
             dparams[i].T.dot(weights*grad_params[i])
             for i in range(self.num_params)
@@ -552,7 +481,7 @@ class Model:
         d2params = self.get_d2params(coefs)
         grad_params = self.dnll(params)
         hess_params = self.d2nll(params)
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         hess = [
             [(dparams[i].T*(weights*hess_params[i][j])).dot(dparams[j])
              for j in range(self.num_params)]
@@ -578,7 +507,7 @@ class Model:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         jacobian = np.vstack([
             dparams[i].T*(weights*grad_params[i])
             for i in range(self.num_params)
@@ -618,20 +547,17 @@ class Model:
             Data frame with predicted parameters.
         """
         if df is None:
-            df = self.data.df.copy()
-        else:
-            df = df.copy()
-        data = self.data.copy()
-        data.attach_df(df)
+            df = self.df
+        df = df.copy()
 
         coefs = self.split_coefs(self.opt_coefs)
         for i, param_name in enumerate(self.param_names):
-            df[param_name] = self.params[i].get_param(coefs[i], data)
+            df[param_name] = self.params[i].get_param(coefs[i], df)
 
         return df
 
     def __repr__(self) -> str:
         return (f"{type(self).__name__}("
-                f"bnum_obs={self.data.num_obs}, "
+                f"bnum_y={self.df.shape[0]}, "
                 f"num_params={self.num_params}, "
                 f"size={self.size})")

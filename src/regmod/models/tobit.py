@@ -11,7 +11,6 @@ from jax.scipy.stats.norm import logcdf, logpdf
 from numpy.typing import ArrayLike
 from pandas import DataFrame
 
-from regmod.data import Data
 from regmod.function import SmoothFunction
 
 from .model import Model
@@ -49,7 +48,7 @@ class TobitModel(Model):
         "sigma": {"inv_link": 'exp'}
     }
 
-    def __init__(self, data: Data, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """Initialize tobit model.
 
         Parameters
@@ -68,9 +67,7 @@ class TobitModel(Model):
         defaults used instead.
 
         """
-        if not jnp.all(data.obs >= 0):
-            raise ValueError("Tobit model requires non-negative observations.")
-        super().__init__(data, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # Use JAX inv_link functions
         for param in self.params:
@@ -93,6 +90,9 @@ class TobitModel(Model):
 
         """
         super().attach_df(df)
+        if not jnp.all(self.y >= 0):
+            raise ValueError("Tobit model requires non-negative observations.")
+
         self.mat = [jnp.asarray(mat) for mat in self.mat]
         self.uvec = jnp.asarray(self.uvec)
         self.gvec = jnp.asarray(self.gvec)
@@ -107,7 +107,8 @@ class TobitModel(Model):
             if param.offset is not None else jnp.zeros(df.shape[0])
             for param in self.params
         ]
-        self.weights = jnp.asarray(self.data.trim_weights*self.data.weights)
+        self.y = jnp.asarray(self.y)
+        self.weights = jnp.asarray(self.trim_weights*self.weights)
 
     def objective(self, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
@@ -126,7 +127,7 @@ class TobitModel(Model):
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
         return _objective(coef_list, link_list, self.mat, self.offset,
-                          self.data.obs, self.weights, self.gvec,
+                          self.y, self.weights, self.gvec,
                           self.linear_gvec, self.linear_gmat)
 
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
@@ -146,7 +147,7 @@ class TobitModel(Model):
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
         temp = _gradient(coef_list, link_list, self.mat, self.offset,
-                         self.data.obs, self.weights, self.gvec,
+                         self.y, self.weights, self.gvec,
                          self.linear_gvec, self.linear_gmat)
         return jnp.concatenate(temp)
 
@@ -167,7 +168,7 @@ class TobitModel(Model):
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
         temp = _hessian(coef_list, link_list, self.mat, self.offset,
-                        self.data.obs, self.weights, self.gvec,
+                        self.y, self.weights, self.gvec,
                         self.linear_gvec, self.linear_gmat)
         hess = jnp.concatenate([
             jnp.concatenate(temp[0], axis=1),
@@ -189,7 +190,7 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        return _nll(self.data.obs, params)
+        return _nll(self.y, params)
 
     def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
@@ -205,7 +206,7 @@ class TobitModel(Model):
             Derivatives of negative log likelihood.
 
         """
-        return _dnll(self.data.obs, params)
+        return _dnll(self.y, params)
 
     def get_vcov(self, coefs: ArrayLike) -> DeviceArray:
         """Get variance-covariance matrix.

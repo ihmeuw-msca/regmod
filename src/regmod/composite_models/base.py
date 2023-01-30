@@ -8,8 +8,8 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+
 from regmod.composite_models.interface import NodeModel
-from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import BinomialModel, GaussianModel, PoissonModel
 from regmod.prior import GaussianPrior
@@ -88,8 +88,10 @@ class BaseModel(NodeModel):
 
     def __init__(self,
                  name: str,
-                 data: Data,
+                 y: str,
                  variables: List[Variable],
+                 df: Optional[pd.DataFrame] = None,
+                 weights: str = "weights",
                  mtype: str = "gaussian",
                  prior_mask: Optional[Dict] = None,
                  **param_specs):
@@ -101,8 +103,10 @@ class BaseModel(NodeModel):
         data = deepcopy(data)
         variables = list(deepcopy(variables))
 
+        self.y = y
         self.mtype = mtype
-        self.data = data
+        self.df = df
+        self.weights = weights
         self.variables = {v.name: v for v in variables}
         self.param_specs = {"variables": variables,
                             "use_offset": True,
@@ -127,22 +131,29 @@ class BaseModel(NodeModel):
         """
         df = df.copy() if copy else df
         if self.col_value in df:
-            df[self.data.col_offset] = link_funs[self.mtype](df[self.col_value])
+            df["offset"] = link_funs[self.mtype](df[self.col_value])
         return df
 
-    def get_data(self) -> DataFrame:
-        return self.data.df.copy()
+    def get_data(self) -> Optional[DataFrame]:
+        if self.df is not None:
+            return self.df.copy()
+        return None
 
     def set_data(self, df: DataFrame):
         if df.shape[0] == 0:
             raise ValueError("Attempt to use empty dataframe.")
-        self.data.attach_df(self.add_offset(df, copy=True))
+        self.df.attach_df(self.add_offset(df, copy=True))
 
     def fit(self, **fit_options):
         logger.info(f"fit_node;start;{self.level};{self.name}")
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
-            self.model = model_constructor(self.data, self.param_specs)
+            self.model = model_constructor(
+                self.y,
+                df=self.df,
+                weights=self.weights,
+                param_specs=self.param_specs
+            )
         self.model.fit(**fit_options)
         message = f"fit_node;finish;{self.level};{self.name};"
         # message += f"{self.model.opt_result.success};"
@@ -153,7 +164,7 @@ class BaseModel(NodeModel):
         df = self.get_data() if df is None else df.copy()
         df = self.add_offset(df)
 
-        pred_data = self.model.data.copy()
+        pred_data = self.model.df.copy()
         pred_data.attach_df(df)
 
         df[self.col_value] = self.model.params[0].get_param(
@@ -165,7 +176,7 @@ class BaseModel(NodeModel):
         df = self.get_data() if df is None else df.copy()
         df = self.add_offset(df)
 
-        pred_data = self.model.data.copy()
+        pred_data = self.model.df.copy()
         pred_data.attach_df(df)
 
         coefs_draws = np.random.multivariate_normal(self.model.opt_coefs,
@@ -189,7 +200,7 @@ class BaseModel(NodeModel):
             if name in self.prior_mask:
                 prior.sd *= self.prior_mask[name]
             self.variables[name].add_priors(prior)
-        self.model = model_constructors[self.mtype](self.data, self.param_specs)
+        self.model = model_constructors[self.mtype](self.df, self.param_specs)
 
     def set_prior_mask(self, masks: Dict):
         for name, mask in masks.items():

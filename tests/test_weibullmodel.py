@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from scipy.stats import expon
 
-from regmod.data import Data
 from regmod.function import fun_dict
 from regmod.models import WeibullModel
 from regmod.prior import (GaussianPrior, SplineGaussianPrior,
@@ -25,9 +24,7 @@ def data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -38,9 +35,7 @@ def wrong_data():
         "cov0": np.random.randn(num_obs),
         "cov1": np.random.randn(num_obs)
     })
-    return Data(col_obs="obs",
-                col_covs=["cov0", "cov1"],
-                df=df)
+    return df
 
 
 @pytest.fixture
@@ -85,8 +80,12 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return WeibullModel(data, param_specs={"b": {"variables": [var_cov0]},
-                                           "k": {"variables": [var_cov1]}})
+    return WeibullModel(
+        y="obs",
+        df=data,
+        param_specs={"b": {"variables": [var_cov0]},
+                     "k": {"variables": [var_cov1]}}
+    )
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -149,7 +148,12 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        WeibullModel(wrong_data, param_specs={"lam": {"variables": [var_cov0, var_cov1]}})
+        WeibullModel(
+            y="obs",
+            df=wrong_data,
+            param_specs={"b": {"variables": [var_cov0]},
+                         "k": {"variables": [var_cov1]}}
+        )
 
 
 def test_get_ui(model):
@@ -167,13 +171,9 @@ def test_model_no_variables():
         "obs": np.random.exponential(size=num_obs),
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
-    )
     model = WeibullModel(
-        data,
+        y="obs",
+        df=df,
         param_specs={"b": {"offset": "offset"}, "k": {"offset": "offset"}}
     )
     coefs = np.array([])
@@ -192,13 +192,9 @@ def test_model_one_variable():
         "obs": np.random.exponential(size=num_obs),
         "offset": np.ones(num_obs),
     })
-    data = Data(
-        col_obs="obs",
-        col_offset="offset",
-        df=df,
-    )
     model = WeibullModel(
-        data,
+        y="obs",
+        df=df,
         param_specs={
             "b": {"offset": "offset"},
             "k": {"variables": [Variable("intercept")]},

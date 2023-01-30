@@ -4,9 +4,9 @@ Pogit Model
 from typing import List, Tuple
 
 import numpy as np
+import pandas as pd
 from numpy import ndarray
 from scipy.stats import poisson
-from regmod.data import Data
 
 from .model import Model
 
@@ -16,23 +16,23 @@ class PogitModel(Model):
     default_param_specs = {"p": {"inv_link": "expit"},
                            "lam": {"inv_link": "exp"}}
 
-    def __init__(self, data: Data, **kwargs):
-        if not all(data.obs >= 0):
+    def attach_df(self, df: pd.DataFrame):
+        super().attach_df(df)
+        if not all(self.y >= 0):
             raise ValueError("Pogit model requires observations to be non-negagive.")
-        super().__init__(data, **kwargs)
 
     def nll(self, params: List[ndarray]) -> ndarray:
         mean = params[0]*params[1]
-        return mean - self.data.obs*np.log(mean)
+        return mean - self.y*np.log(mean)
 
     def dnll(self, params: List[ndarray]) -> List[ndarray]:
-        return [params[1] - self.data.obs/params[0],
-                params[0] - self.data.obs/params[1]]
+        return [params[1] - self.y/params[0],
+                params[0] - self.y/params[1]]
 
     def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
-        ones = np.ones(self.data.num_obs)
-        return [[self.data.obs/params[0]**2, ones],
-                [ones, self.data.obs/params[1]**2]]
+        ones = np.ones(self.df.shape[0])
+        return [[self.y/params[0]**2, ones],
+                [ones, self.y/params[1]**2]]
 
     def get_ui(self, params: List[ndarray], bounds: Tuple[float, float]) -> ndarray:
         mean = params[0]*params[1]

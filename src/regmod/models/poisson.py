@@ -1,14 +1,13 @@
 """
 Poisson Model
 """
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple
 
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 from scipy.stats import poisson
 
-from regmod.data import Data
 from regmod.optimizer import msca_optimize
 
 from .model import Model
@@ -19,13 +18,10 @@ class PoissonModel(Model):
     param_names = ("lam",)
     default_param_specs = {"lam": {"inv_link": "exp"}}
 
-    def __init__(self, data: Data, **kwargs):
-        if not all(data.obs >= 0):
-            raise ValueError("Poisson model requires observations to be non-negagive.")
-        super().__init__(data, **kwargs)
-
     def attach_df(self, df: pd.DataFrame):
         super().attach_df(df)
+        if not all(self.y >= 0):
+            raise ValueError("Poisson model requires observations to be non-negagive.")
         self.mat[0], self.cmat, self.cvec = model_post_init(
             self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
         )
@@ -43,13 +39,13 @@ class PoissonModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         obj_param = weights * (
-            param - self.data.obs * np.log(param)
+            param - self.y * np.log(param)
         )
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
@@ -69,14 +65,14 @@ class PoissonModel(Model):
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         grad_param = weights * (
-            1 - self.data.obs / param
+            1 - self.y / param
         ) * dparam
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
@@ -97,16 +93,16 @@ class PoissonModel(Model):
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = self.data.weights*self.data.trim_weights
+        weights = self.weights*self.trim_weights
         hess_param = weights * (
-            self.data.obs / param**2 * dparam**2 +
-            (1 - self.data.obs / param) * d2param
+            self.y / param**2 * dparam**2 +
+            (1 - self.y / param) * d2param
         )
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -130,12 +126,12 @@ class PoissonModel(Model):
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.data, mat=self.mat[0]
+            coefs, self.df, mat=self.mat[0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = self.data.weights*self.data.trim_weights
-        grad_param = weights * (1.0 - self.data.obs/param) * dparam
+        weights = self.weights*self.trim_weights
+        grad_param = weights * (1.0 - self.y/param) * dparam
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
         jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
@@ -157,13 +153,13 @@ class PoissonModel(Model):
         )
 
     def nll(self, params: List[NDArray]) -> NDArray:
-        return params[0] - self.data.obs*np.log(params[0])
+        return params[0] - self.y*np.log(params[0])
 
     def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [1.0 - self.data.obs/params[0]]
+        return [1.0 - self.y/params[0]]
 
     def d2nll(self, params: List[NDArray]) -> List[List[NDArray]]:
-        return [[self.data.obs/params[0]**2]]
+        return [[self.y/params[0]**2]]
 
     def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         mean = params[0]
