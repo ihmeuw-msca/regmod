@@ -45,7 +45,7 @@ class Model:
 
     def __init__(self,
                  y: str,
-                 weights: str = "weights",
+                 weights: Optional[str] = None,
                  df: Optional[pd.DataFrame] = None,
                  params: Optional[List[Parameter]] = None,
                  param_specs: Optional[Dict[str, Dict]] = None):
@@ -106,9 +106,9 @@ class Model:
         })
         if require_y:
             self._data["y"] = df[self.y].to_numpy()
-        self._data["weights"] = np.asarray(df.get(
-            self.weights, default=np.ones(df.shape[0])
-        ))
+        self._data["weights"] = np.ones(len(df))
+        if self.weights is not None:
+            self._data["weights"] = df[self.weights].to_numpy()
 
         self.use_hessian = not any(
             isinstance(m, csc_matrix) for m in self._data["mat"]
