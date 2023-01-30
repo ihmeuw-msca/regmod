@@ -31,12 +31,12 @@ def scipy_optimize(model: "Model",
         Optimal solution.
     """
     x0 = np.zeros(model.size) if x0 is None else x0
-    bounds = model.uvec.T
+    bounds = model._data["uvec"].T
     constraints = [LinearConstraint(
-        model.linear_umat,
-        model.linear_uvec[0],
-        model.linear_uvec[1]
-    )] if model.linear_uvec.size > 0 else []
+        model._data["linear_umat"],
+        model._data["linear_uvec"][0],
+        model._data["linear_uvec"][1]
+    )] if model._data["linear_uvec"].size > 0 else []
 
     result = minimize(model.objective, x0,
                       method="trust-constr",

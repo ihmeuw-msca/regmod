@@ -91,21 +91,21 @@ def test_model_size(model, var_cov0, var_cov1):
 
 
 def test_uvec(model):
-    assert model.uvec.shape == (2, model.size)
+    assert model._data["uvec"].shape == (2, model.size)
 
 
 def test_gvec(model):
-    assert model.gvec.shape == (2, model.size)
+    assert model._data["gvec"].shape == (2, model.size)
 
 
 def test_linear_uprior(model):
-    assert model.linear_uvec.shape[1] == model.linear_umat.shape[0]
-    assert model.linear_umat.shape[1] == model.size
+    assert model._data["linear_uvec"].shape[1] == model._data["linear_umat"].shape[0]
+    assert model._data["linear_umat"].shape[1] == model.size
 
 
 def test_linear_gprior(model):
-    assert model.linear_gvec.shape[1] == model.linear_gmat.shape[0]
-    assert model.linear_gmat.shape[1] == model.size
+    assert model._data["linear_gvec"].shape[1] == model._data["linear_gmat"].shape[0]
+    assert model._data["linear_gmat"].shape[1] == model.size
 
 
 def test_model_objective(model):

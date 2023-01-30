@@ -86,21 +86,21 @@ def test_model_size(model, var_cov0, var_cov1):
 
 
 def test_uvec(model):
-    assert model.uvec.shape == (2, model.size)
+    assert model._data["uvec"].shape == (2, model.size)
 
 
 def test_gvec(model):
-    assert model.gvec.shape == (2, model.size)
+    assert model._data["gvec"].shape == (2, model.size)
 
 
 def test_linear_uprior(model):
-    assert model.linear_uvec.shape[1] == model.linear_umat.shape[0]
-    assert model.linear_umat.shape[1] == model.size
+    assert model._data["linear_uvec"].shape[1] == model._data["linear_umat"].shape[0]
+    assert model._data["linear_umat"].shape[1] == model.size
 
 
 def test_linear_gprior(model):
-    assert model.linear_gvec.shape[1] == model.linear_gmat.shape[0]
-    assert model.linear_gmat.shape[1] == model.size
+    assert model._data["linear_gvec"].shape[1] == model._data["linear_gmat"].shape[0]
+    assert model._data["linear_gmat"].shape[1] == model.size
 
 
 def test_model_objective(model):
@@ -151,9 +151,9 @@ def test_model_jacobian2(model):
     beta = np.zeros(model.size)
     jacobian2 = model.jacobian2(beta).to_numpy()
 
-    mat = model.mat[0].to_numpy()
+    mat = model._data["mat"][0].to_numpy()
     param = model.get_params(beta)[0]
-    residual = (model.y - param)*np.sqrt(model.weights)
+    residual = (model._data["y"] - param)*np.sqrt(model._data["weights"])
     jacobian = mat.T*residual
     true_jacobian2 = jacobian.dot(jacobian.T) + model.hessian_from_gprior()
 

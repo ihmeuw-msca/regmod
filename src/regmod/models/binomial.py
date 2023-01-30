@@ -18,13 +18,17 @@ class BinomialModel(Model):
     param_names = ("p",)
     default_param_specs = {"p": {"inv_link": "expit"}}
 
-    def attach_df(self, df: pd.DataFrame):
-        super().attach_df(df)
-        if not np.all((self.y >= 0) & (self.y <= 1)):
-            raise ValueError("Binomial model requires observations to be "
-                             "between zero and one.")
-        self.mat[0], self.cmat, self.cvec = model_post_init(
-            self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
+    def attach_df(self, df: pd.DataFrame, require_y: bool = True):
+        super().attach_df(df, require_y=require_y)
+        if require_y and not np.all((self._data["y"] >= 0) & (self._data["y"] <= 1)):
+            raise ValueError(
+                "Binomial model requires observations to be between zero and one."
+            )
+        self._data["mat"][0], self.cmat, self.cvec = model_post_init(
+            self._data["mat"][0],
+            self._data["uvec"],
+            self._data["linear_umat"],
+            self._data["linear_uvec"]
         )
 
     def objective(self, coefs: NDArray) -> float:
@@ -40,14 +44,14 @@ class BinomialModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self.df, mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
 
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         obj_param = -weights * (
-            self.y * np.log(param) +
-            (1 - self.y) * np.log(1 - param)
+            self._data["y"] * np.log(param) +
+            (1 - self._data["y"]) * np.log(1 - param)
         )
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
@@ -64,17 +68,17 @@ class BinomialModel(Model):
         NDArray
             Gradient vector.
         """
-        mat = self.mat[0]
+        mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self.df, mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         grad_param = weights * (
-            (param - self.y) / (param*(1 - param)) * dparam
+            (param - self._data["y"]) / (param*(1 - param)) * dparam
         )
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
@@ -92,19 +96,19 @@ class BinomialModel(Model):
         NDArray
             Hessian matrix.
         """
-        mat = self.mat[0]
+        mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self.df, mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         hess_param = weights * (
-            (self.y / param**2 + (1 - self.y) / (1 - param)**2) * dparam**2 +
-            (param - self.y) / (param*(1 - param)) * d2param
+            (self._data["y"] / param**2 + (1 - self._data["y"]) / (1 - param)**2) * dparam**2 +
+            (param - self._data["y"]) / (param*(1 - param)) * d2param
         )
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -125,16 +129,16 @@ class BinomialModel(Model):
         NDArray
             Jacobian matrix.
         """
-        mat = self.mat[0]
+        mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self.df, mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         grad_param = weights * (
-            (param - self.y) / (param*(1 - param)) * dparam
+            (param - self._data["y"]) / (param*(1 - param)) * dparam
         )
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
@@ -157,13 +161,13 @@ class BinomialModel(Model):
         )
 
     def nll(self, params: List[NDArray]) -> NDArray:
-        return -(self.y*np.log(params[0]) + (1 - self.y)*np.log(1.0 - params[0]))
+        return -(self._data["y"]*np.log(params[0]) + (1 - self._data["y"])*np.log(1.0 - params[0]))
 
     def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [-(self.y/params[0] - (1 - self.y)/(1.0 - params[0]))]
+        return [-(self._data["y"]/params[0] - (1 - self._data["y"])/(1.0 - params[0]))]
 
     def d2nll(self, params: List[NDArray]) -> List[List[NDArray]]:
-        return [[self.y/params[0]**2 + (1 - self.y)/(1.0 - params[0])**2]]
+        return [[self._data["y"]/params[0]**2 + (1 - self._data["y"])/(1.0 - params[0])**2]]
 
     def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         p = params[0]
