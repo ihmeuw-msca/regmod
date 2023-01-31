@@ -45,7 +45,7 @@ class Model:
 
     def __init__(self,
                  y: str,
-                 weights: str = "weights",
+                 weights: Optional[str] = None,
                  df: Optional[pd.DataFrame] = None,
                  params: Optional[List[Parameter]] = None,
                  param_specs: Optional[Dict[str, Dict]] = None):
@@ -64,14 +64,13 @@ class Model:
                                      **{**self.default_param_specs[param_name],
                                         **param_specs[param_name]})
                            for param_name in self.param_names]
-        self._y = y
-        self._weights = weights
+        self.y = y
+        self.weights = weights
         self.df = df
-        self.y = None
-        self.weights = None
         self.trim_weights = None
+        self._data = {}
         if self.df is not None:
-            self.attach_df(self.df)
+            self._attach(self.df, require_y=True)
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
@@ -83,25 +82,43 @@ class Model:
         self._opt_coefs = None
         self._opt_vcov = None
 
-    def attach_df(self, df: pd.DataFrame):
+    def _attach(self, df: pd.DataFrame, require_y: bool = True):
         self.df = df
         for param in self.params:
             param.check_data(df)
 
-        self.mat = self.get_mat()
-        self.use_hessian = not any(isinstance(m, csc_matrix) for m in self.mat)
-        self.uvec = self.get_uvec()
-        self.gvec = self.get_gvec()
-        self.linear_uvec = self.get_linear_uvec()
-        self.linear_gvec = self.get_linear_gvec()
-        self.linear_umat = self.get_linear_umat()
-        self.linear_gmat = self.get_linear_gmat()
+        self._data.update({
+            "mat": [param.get_mat(df) for param in self.params],
+            "offset": [param.get_offset(df) for param in self.params],
+            "uvec": np.hstack([param.get_uvec() for param in self.params]),
+            "gvec": np.hstack([param.get_gvec() for param in self.params]),
+            "linear_uvec": np.hstack(
+                [param.get_linear_uvec() for param in self.params]
+            ),
+            "linear_gvec": np.hstack(
+                [param.get_linear_gvec() for param in self.params]
+            ),
+            "linear_umat": block_diag(
+                *[param.get_linear_umat() for param in self.params]
+            ),
+            "linear_gmat": block_diag(
+                *[param.get_linear_gmat() for param in self.params]
+            ),
+        })
+
+        if require_y:
+            self._data["y"] = df[self.y].to_numpy()
+        self._data["weights"] = np.ones(len(df))
+        if self.weights is not None:
+            self._data["weights"] = df[self.weights].to_numpy()
+
+        self.use_hessian = not any(
+            isinstance(m, csc_matrix) for m in self._data["mat"]
+        )
         self.trim_weights = np.ones(df.shape[0])
-        self.y = self.df[self._y].to_numpy()
-        if self._weights not in self.df:
-            self.weights = np.ones(self.df.shape[0])
-        else:
-            self.weights = self.df[self._weights].to_numpy()
+
+    def _clear(self) -> None:
+        self._data.clear()
 
     @property
     def opt_coefs(self) -> Union[None, ndarray]:
@@ -145,76 +162,6 @@ class Model:
         vcov = inv_hessian.dot(vcov.T)
         return vcov
 
-    def get_mat(self) -> List[ndarray]:
-        """Get the design matrices.
-
-        Returns
-        -------
-        List[ndarray]
-            The design matrices.
-        """
-        return [param.get_mat(self.df) for param in self.params]
-
-    def get_uvec(self) -> ndarray:
-        """Get the direct Uniform prior array.
-
-        Returns
-        -------
-        ndarray
-            The direct Uniform prior array.
-        """
-        return np.hstack([param.get_uvec() for param in self.params])
-
-    def get_gvec(self) -> ndarray:
-        """Get the direct Gaussian prior array.
-
-        Returns
-        -------
-        ndarray
-            The direct Gaussian prior array.
-        """
-        return np.hstack([param.get_gvec() for param in self.params])
-
-    def get_linear_uvec(self) -> ndarray:
-        """Get the linear Uniform prior array.
-
-        Returns
-        -------
-        ndarray
-            The linear Uniform prior array.
-        """
-        return np.hstack([param.get_linear_uvec() for param in self.params])
-
-    def get_linear_gvec(self) -> ndarray:
-        """Get the linear Gaussian prior array.
-
-        Returns
-        -------
-        ndarray
-            The linear Gaussian prior array.
-        """
-        return np.hstack([param.get_linear_gvec() for param in self.params])
-
-    def get_linear_umat(self) -> ndarray:
-        """Get the linear Uniform prior design matrix.
-
-        Returns
-        -------
-        ndarray
-            The linear Uniform prior design matrix.
-        """
-        return block_diag(*[param.get_linear_umat() for param in self.params])
-
-    def get_linear_gmat(self) -> ndarray:
-        """Get the linear Gaussian prior design matrix.
-
-        Returns
-        -------
-        ndarray
-            The linear Gaussian prior design matrix.
-        """
-        return block_diag(*[param.get_linear_gmat() for param in self.params])
-
     def split_coefs(self, coefs: ndarray) -> List[ndarray]:
         """Split coefficients into pieces for each parameter.
 
@@ -245,8 +192,12 @@ class Model:
             The parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_param(coefs[i], self.df, mat=self.mat[i])
-                for i, param in enumerate(self.params)]
+        return [
+            param.get_param(
+                coefs[i], self._data["offset"][i], mat=self._data["mat"][i]
+            )
+            for i, param in enumerate(self.params)
+        ]
 
     def get_dparams(self, coefs: ndarray) -> List[ndarray]:
         """Get the derivative of the parameters.
@@ -262,8 +213,12 @@ class Model:
             The derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_dparam(coefs[i], self.df, mat=self.mat[i])
-                for i, param in enumerate(self.params)]
+        return [
+            param.get_dparam(
+                coefs[i], self._data["offset"][i], mat=self._data["mat"][i]
+            )
+            for i, param in enumerate(self.params)
+        ]
 
     def get_d2params(self, coefs: ndarray) -> List[ndarray]:
         """Get the second order derivative of the parameters.
@@ -279,8 +234,12 @@ class Model:
             The second order derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_d2param(coefs[i], self.df, mat=self.mat[i])
-                for i, param in enumerate(self.params)]
+        return [
+            param.get_d2param(
+                coefs[i], self._data["offset"][i], mat=self._data["mat"][i]
+            )
+            for i, param in enumerate(self.params)
+        ]
 
     def nll(self, params: List[ndarray]) -> ndarray:
         """Negative log likelihood.
@@ -366,7 +325,7 @@ class Model:
         """
         params = self.get_params(coefs)
         ui = self.get_ui(params, bounds)
-        obs = self.df[self.y].to_numpy()
+        obs = self._data["y"]
         return (obs < ui[0]) | (obs > ui[1])
 
     def objective_from_gprior(self, coefs: ndarray) -> float:
@@ -382,9 +341,10 @@ class Model:
         float
             Objective function value.
         """
-        val = 0.5*np.sum((coefs - self.gvec[0])**2/self.gvec[1]**2)
-        if self.linear_gvec.size > 0:
-            val += 0.5*np.sum((self.linear_gmat.dot(coefs) - self.linear_gvec[0])**2/self.linear_gvec[1]**2)
+        val = 0.5*np.sum((coefs - self._data["gvec"][0])**2/self._data["gvec"][1]**2)
+        if self._data["linear_gvec"].size > 0:
+            val += 0.5*np.sum((self._data["linear_gmat"].dot(coefs) -
+                              self._data["linear_gvec"][0])**2/self._data["linear_gvec"][1]**2)
         return val
 
     def gradient_from_gprior(self, coefs: ndarray) -> ndarray:
@@ -400,9 +360,10 @@ class Model:
         ndarray
             Graident vector.
         """
-        grad = (coefs - self.gvec[0])/self.gvec[1]**2
-        if self.linear_gvec.size > 0:
-            grad += (self.linear_gmat.T/self.linear_gvec[1]**2).dot(self.linear_gmat.dot(coefs) - self.linear_gvec[0])
+        grad = (coefs - self._data["gvec"][0])/self._data["gvec"][1]**2
+        if self._data["linear_gvec"].size > 0:
+            grad += (self._data["linear_gmat"].T/self._data["linear_gvec"][1] **
+                     2).dot(self._data["linear_gmat"].dot(coefs) - self._data["linear_gvec"][0])
         return grad
 
     def hessian_from_gprior(self) -> ndarray:
@@ -413,15 +374,15 @@ class Model:
         ndarray
             Hessian matrix.
         """
-        hess = np.diag(1.0/self.gvec[1]**2)
-        if self.linear_gvec.size > 0:
-            hess += (self.linear_gmat.T/self.linear_gvec[1]**2).dot(self.linear_gmat)
+        hess = np.diag(1.0/self._data["gvec"][1]**2)
+        if self._data["linear_gvec"].size > 0:
+            hess += (self._data["linear_gmat"].T/self._data["linear_gvec"][1]**2).dot(self._data["linear_gmat"])
         return hess
 
     def get_nll_terms(self, coefs: ndarray) -> ndarray:
         params = self.get_params(coefs)
         nll_terms = self.nll(params)
-        nll_terms = self.weights*nll_terms
+        nll_terms = self._data["weights"]*nll_terms
         return nll_terms
 
     def objective(self, coefs: ndarray) -> float:
@@ -457,7 +418,7 @@ class Model:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         return np.hstack([
             dparams[i].T.dot(weights*grad_params[i])
             for i in range(self.num_params)
@@ -481,7 +442,7 @@ class Model:
         d2params = self.get_d2params(coefs)
         grad_params = self.dnll(params)
         hess_params = self.d2nll(params)
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         hess = [
             [(dparams[i].T*(weights*hess_params[i][j])).dot(dparams[j])
              for j in range(self.num_params)]
@@ -507,7 +468,7 @@ class Model:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         jacobian = np.vstack([
             dparams[i].T*(weights*grad_params[i])
             for i in range(self.num_params)
@@ -532,7 +493,7 @@ class Model:
             return
         optimizer(self, **optimizer_options)
 
-    def predict(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    def predict(self, df: pd.DataFrame) -> pd.DataFrame:
         """Predict the parameters.
 
         Parameters
@@ -546,18 +507,14 @@ class Model:
         pd.DataFrame
             Data frame with predicted parameters.
         """
-        if df is None:
-            df = self.df
         df = df.copy()
+        self._attach(df, require_y=False)
 
         coefs = self.split_coefs(self.opt_coefs)
         for i, param_name in enumerate(self.param_names):
-            df[param_name] = self.params[i].get_param(coefs[i], df)
+            df[param_name] = self.params[i].get_param(
+                coefs[i], self._data["offset"][i], self._data["mat"][i]
+            )
+        self._clear()
 
         return df
-
-    def __repr__(self) -> str:
-        return (f"{type(self).__name__}("
-                f"bnum_y={self.df.shape[0]}, "
-                f"num_params={self.num_params}, "
-                f"size={self.size})")

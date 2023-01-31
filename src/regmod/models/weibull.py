@@ -15,24 +15,26 @@ class WeibullModel(Model):
     param_names = ("b", "k")
     default_param_specs = {"b": {"inv_link": "exp"}, "k": {"inv_link": "exp"}}
 
-    def attach_df(self, df: pd.DataFrame):
-        super().attach_df(df)
-        if not all(self.y > 0):
-            raise ValueError("Weibull model requires observations to be positive.")
+    def _attach(self, df: pd.DataFrame, require_y: bool = True):
+        super()._attach(df, require_y=require_y)
+        if require_y and not all(self._data["y"] > 0):
+            raise ValueError(
+                "Weibull model requires observations to be positive."
+            )
 
     def nll(self, params: List[ndarray]) -> ndarray:
-        t = self.y
+        t = self._data["y"]
         ln_t = np.log(t)
         return params[0]*(t**params[1]) - (params[1] - 1)*ln_t - np.log(params[0]) - np.log(params[1])
 
     def dnll(self, params: List[ndarray]) -> List[ndarray]:
-        t = self.y
+        t = self._data["y"]
         ln_t = np.log(t)
         return [t**params[1] - 1/params[0],
                 ln_t*params[0]*(t**params[1]) - ln_t - 1/params[1]]
 
     def d2nll(self, params: List[ndarray]) -> List[List[ndarray]]:
-        t = self.y
+        t = self._data["y"]
         ln_t = np.log(t)
         return [[1/params[0]**2, ln_t*(t**params[1])],
                 [ln_t*(t**params[1]), 1/params[1]**2 + params[0]*(ln_t**2)*(t**params[1])]]

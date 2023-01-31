@@ -18,10 +18,15 @@ class GaussianModel(Model):
     param_names = ("mu",)
     default_param_specs = {"mu": {"inv_link": "identity"}}
 
-    def attach_df(self, df: pd.DataFrame):
-        super().attach_df(df)
-        self.mat[0], self.cmat, self.cvec = model_post_init(
-            self.mat[0], self.uvec, self.linear_umat, self.linear_uvec
+    def _attach(self, df: pd.DataFrame, require_y: bool = True):
+        super()._attach(df, require_y=require_y)
+        (self._data["mat"][0],
+         self._data["cmat"],
+         self._data["cvec"]) = model_post_init(
+            self._data["mat"][0],
+            self._data["uvec"],
+            self._data["linear_umat"],
+            self._data["linear_uvec"]
         )
 
     def objective(self, coefs: NDArray) -> float:
@@ -37,13 +42,13 @@ class GaussianModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
 
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         obj_param = weights * 0.5 * (
-            param - self.y
+            param - self._data["y"]
         )**2
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
@@ -60,17 +65,17 @@ class GaussianModel(Model):
         NDArray
             Gradient vector.
         """
-        mat = self.mat[0]
+        mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         grad_param = weights * (
-            param - self.y
+            param - self._data["y"]
         ) * dparam
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
@@ -88,18 +93,18 @@ class GaussianModel(Model):
         NDArray
             Hessian matrix.
         """
-        mat = self.mat[0]
+        mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = self.weights*self.trim_weights
+        weights = self._data["weights"]*self.trim_weights
         hess_param = weights * (
-            dparam**2 + (param - self.y)*d2param
+            dparam**2 + (param - self._data["y"])*d2param
         )
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -120,15 +125,15 @@ class GaussianModel(Model):
         NDArray
             Jacobian matrix.
         """
-        mat = self.mat[0]
+        mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = self.weights*self.trim_weights
-        grad_param = weights * (param - self.y) * dparam
+        weights = self._data["weights"]*self.trim_weights
+        grad_param = weights * (param - self._data["y"]) * dparam
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
         jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
@@ -150,16 +155,16 @@ class GaussianModel(Model):
         )
 
     def nll(self, params: List[NDArray]) -> NDArray:
-        return 0.5*(params[0] - self.y)**2
+        return 0.5*(params[0] - self._data["y"])**2
 
     def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [params[0] - self.y]
+        return [params[0] - self._data["y"]]
 
     def d2nll(self, params: List[NDArray]) -> List[NDArray]:
-        return [[np.ones(self.df.shape[0])]]
+        return [[np.ones(self._data["offset"][0].shape[0])]]
 
     def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         mean = params[0]
-        sd = 1.0/np.sqrt(self.weights)
+        sd = 1.0/np.sqrt(self._data["weights"])
         return [norm.ppf(bounds[0], loc=mean, scale=sd),
                 norm.ppf(bounds[1], loc=mean, scale=sd)]

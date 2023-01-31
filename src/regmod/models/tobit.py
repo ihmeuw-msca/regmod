@@ -80,7 +80,7 @@ class TobitModel(Model):
                 msg = f"No JAX implementation of {link_name} inv_link."
                 raise ValueError(msg)
 
-    def attach_df(self, df: DataFrame) -> None:
+    def _attach(self, df: DataFrame, require_y: bool = True) -> None:
         """Extract training data from data frame.
 
         Parameters
@@ -89,26 +89,28 @@ class TobitModel(Model):
             Training data.
 
         """
-        super().attach_df(df)
-        if not jnp.all(self.y >= 0):
-            raise ValueError("Tobit model requires non-negative observations.")
+        super()._attach(df, require_y=require_y)
+        if require_y and not jnp.all(self._data["y"] >= 0):
+            raise ValueError(
+                "Tobit model requires non-negative observations."
+            )
 
-        self.mat = [jnp.asarray(mat) for mat in self.mat]
-        self.uvec = jnp.asarray(self.uvec)
-        self.gvec = jnp.asarray(self.gvec)
-        self.linear_uvec = jnp.asarray(self.linear_uvec)
-        self.linear_gvec = jnp.asarray(self.linear_gvec)
-        self.linear_umat = jnp.asarray(self.linear_umat)
-        self.linear_gmat = jnp.asarray(self.linear_gmat)
+        self._data["mat"] = [jnp.asarray(mat) for mat in self._data["mat"]]
+        self._data["uvec"] = jnp.asarray(self._data["uvec"])
+        self._data["gvec"] = jnp.asarray(self._data["gvec"])
+        self._data["linear_uvec"] = jnp.asarray(self._data["linear_uvec"])
+        self._data["linear_gvec"] = jnp.asarray(self._data["linear_gvec"])
+        self._data["linear_umat"] = jnp.asarray(self._data["linear_umat"])
+        self._data["linear_gmat"] = jnp.asarray(self._data["linear_gmat"])
 
         # Data structures for objective
-        self.offset = [
+        self._data["offset"] = [
             jnp.asarray(df[param.offset])
             if param.offset is not None else jnp.zeros(df.shape[0])
             for param in self.params
         ]
-        self.y = jnp.asarray(self.y)
-        self.weights = jnp.asarray(self.trim_weights*self.weights)
+        self._data["y"] = jnp.asarray(self._data["y"])
+        self._data["weights"] = jnp.asarray(self.trim_weights*self._data["weights"])
 
     def objective(self, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
@@ -126,9 +128,9 @@ class TobitModel(Model):
         """
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        return _objective(coef_list, link_list, self.mat, self.offset,
-                          self.y, self.weights, self.gvec,
-                          self.linear_gvec, self.linear_gmat)
+        return _objective(coef_list, link_list, self._data["mat"], self._data["offset"],
+                          self._data["y"], self._data["weights"], self._data["gvec"],
+                          self._data["linear_gvec"], self._data["linear_gmat"])
 
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
@@ -146,9 +148,9 @@ class TobitModel(Model):
         """
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        temp = _gradient(coef_list, link_list, self.mat, self.offset,
-                         self.y, self.weights, self.gvec,
-                         self.linear_gvec, self.linear_gmat)
+        temp = _gradient(coef_list, link_list, self._data["mat"], self._data["offset"],
+                         self._data["y"], self._data["weights"], self._data["gvec"],
+                         self._data["linear_gvec"], self._data["linear_gmat"])
         return jnp.concatenate(temp)
 
     def hessian(self, coefs: ArrayLike) -> DeviceArray:
@@ -167,9 +169,9 @@ class TobitModel(Model):
         """
         coef_list = [coefs[index] for index in self.indices]
         link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        temp = _hessian(coef_list, link_list, self.mat, self.offset,
-                        self.y, self.weights, self.gvec,
-                        self.linear_gvec, self.linear_gmat)
+        temp = _hessian(coef_list, link_list, self._data["mat"], self._data["offset"],
+                        self._data["y"], self._data["weights"], self._data["gvec"],
+                        self._data["linear_gvec"], self._data["linear_gmat"])
         hess = jnp.concatenate([
             jnp.concatenate(temp[0], axis=1),
             jnp.concatenate(temp[1], axis=1)
@@ -190,7 +192,7 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        return _nll(self.y, params)
+        return _nll(self._data["y"], params)
 
     def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
@@ -206,7 +208,7 @@ class TobitModel(Model):
             Derivatives of negative log likelihood.
 
         """
-        return _dnll(self.y, params)
+        return _dnll(self._data["y"], params)
 
     def get_vcov(self, coefs: ArrayLike) -> DeviceArray:
         """Get variance-covariance matrix.
@@ -232,7 +234,7 @@ class TobitModel(Model):
         inv_H = jnp.linalg.inv(H)
         return inv_H.dot(J.dot(inv_H.T))
 
-    def predict(self, df: Optional[DataFrame] = None) -> DataFrame:
+    def predict(self, df: DataFrame = None) -> DataFrame:
         """Predict mu, sigma, and censored mu.
 
         Parameters
@@ -254,7 +256,7 @@ class TobitModel(Model):
 
 @jit
 def _objective(coef_list: List[ArrayLike], link_list: List[bool],
-               mat: List[ArrayLike], offset: ArrayLike, y: ArrayLike,
+               mat: List[ArrayLike], offset: List[ArrayLike], y: ArrayLike,
                weights: ArrayLike, gvec: ArrayLike, linear_gvec: ArrayLike,
                linear_gmat: ArrayLike) -> float:
     """Get negative log likelihood wrt coefficients.

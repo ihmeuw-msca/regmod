@@ -103,10 +103,10 @@ class BaseModel(NodeModel):
         data = deepcopy(data)
         variables = list(deepcopy(variables))
 
-        self.y = y
+        self._data["y"] = y
         self.mtype = mtype
         self.df = df
-        self.weights = weights
+        self._data["weights"] = weights
         self.variables = {v.name: v for v in variables}
         self.param_specs = {"variables": variables,
                             "use_offset": True,
@@ -149,9 +149,9 @@ class BaseModel(NodeModel):
         if self.model is None:
             model_constructor = model_constructors[self.mtype]
             self.model = model_constructor(
-                self.y,
+                self._data["y"],
                 df=self.df,
-                weights=self.weights,
+                weights=self._data["weights"],
                 param_specs=self.param_specs
             )
         self.model.fit(**fit_options)
