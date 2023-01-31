@@ -1,7 +1,7 @@
 """
 Poisson Model
 """
-from typing import Callable, List, Tuple
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -161,16 +161,16 @@ class PoissonModel(Model):
             **optimizer_options
         )
 
-    def nll(self, params: List[NDArray]) -> NDArray:
+    def nll(self, params: list[NDArray]) -> NDArray:
         return params[0] - self._data["y"]*np.log(params[0])
 
-    def dnll(self, params: List[NDArray]) -> List[NDArray]:
+    def dnll(self, params: list[NDArray]) -> list[NDArray]:
         return [1.0 - self._data["y"]/params[0]]
 
-    def d2nll(self, params: List[NDArray]) -> List[List[NDArray]]:
+    def d2nll(self, params: list[NDArray]) -> list[list[NDArray]]:
         return [[self._data["y"]/params[0]**2]]
 
-    def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
+    def get_ui(self, params: list[NDArray], bounds: tuple[float, float]) -> NDArray:
         mean = params[0]
         return [poisson.ppf(bounds[0], mu=mean),
                 poisson.ppf(bounds[1], mu=mean)]

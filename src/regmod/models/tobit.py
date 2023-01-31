@@ -2,8 +2,6 @@
 Tobit Model
 """
 # pylint: disable=C0103
-from typing import List, Optional
-
 import jax.numpy as jnp
 from jax import grad, hessian, jit, lax
 from jax.numpy import DeviceArray
@@ -179,7 +177,7 @@ class TobitModel(Model):
         ], axis=0)
         return hess
 
-    def nll(self, params: List[ArrayLike]) -> DeviceArray:
+    def nll(self, params: list[ArrayLike]) -> DeviceArray:
         """Get terms of negative log likelihood wrt parameters.
 
         Parameters
@@ -195,7 +193,7 @@ class TobitModel(Model):
         """
         return _nll(self._data["y"], params)
 
-    def dnll(self, params: List[ArrayLike]) -> List[DeviceArray]:
+    def dnll(self, params: list[ArrayLike]) -> list[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
 
         Parameters
@@ -256,8 +254,8 @@ class TobitModel(Model):
 
 
 @jit
-def _objective(coef_list: List[ArrayLike], link_list: List[bool],
-               mat: List[ArrayLike], offset: List[ArrayLike], y: ArrayLike,
+def _objective(coef_list: list[ArrayLike], link_list: list[bool],
+               mat: list[ArrayLike], offset: list[ArrayLike], y: ArrayLike,
                weights: ArrayLike, gvec: ArrayLike, linear_gvec: ArrayLike,
                linear_gmat: ArrayLike) -> float:
     """Get negative log likelihood wrt coefficients.
@@ -318,7 +316,7 @@ def _objective(coef_list: List[ArrayLike], link_list: List[bool],
 
 
 @jit
-def _nll(y: ArrayLike, params: List[ArrayLike]) -> DeviceArray:
+def _nll(y: ArrayLike, params: list[ArrayLike]) -> DeviceArray:
     """Get terms of negative log likelihood wrt parameters.
 
     Parameters
