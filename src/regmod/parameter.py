@@ -99,6 +99,11 @@ class Parameter:
             return np.empty(shape=(df.shape[0], 0))
         return np.hstack([var.get_mat(df) for var in self.variables])
 
+    def get_offset(self, df: pd.DataFrame) -> np.ndarray:
+        if self.offset is None:
+            return np.zeros(len(df))
+        return df[self.offset].to_numpy()
+
     def get_uvec(self) -> np.ndarray:
         """Get the direct Uniform prior.
 
@@ -199,9 +204,8 @@ class Parameter:
 
     def get_lin_param(self,
                       coefs: np.ndarray,
-                      df: pd.DataFrame,
-                      mat: np.ndarray = None,
-                      return_mat: bool = False) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
+                      offset: np.ndarray,
+                      mat: np.ndarray) -> np.ndarray:
         """Get the parameter before apply the link function.
 
         Parameters
@@ -212,31 +216,21 @@ class Parameter:
             Data frame that contains all the covariates.
         mat : np.ndarray, optional
             Alternative design matrix, by default None.
-        return_mat : bool, optional
-            If `True`, return the created design matrix, by default False.
 
         Returns
         -------
-        Union[np.ndarray, tuple[np.ndarray, np.ndarray]]
-            Linear parameter vector, or when `return_mat=True` also returns the
-            design matrix.
+        np.ndarray
+            Linear parameter vector
 
         """
         if len(self.variables) == 0:
-            return df[self.offset].to_numpy()
-        if mat is None:
-            mat = self.get_mat(df)
-        lin_param = mat.dot(coefs)
-        if self.offset is not None:
-            lin_param += df[self.offset].to_numpy()
-        if return_mat:
-            return lin_param, mat
-        return lin_param
+            return offset
+        return offset + mat.dot(coefs)
 
     def get_param(self,
                   coefs: np.ndarray,
-                  df: pd.DataFrame,
-                  mat: np.ndarray = None) -> np.ndarray:
+                  offset: np.ndarray,
+                  mat: np.ndarray) -> np.ndarray:
         """Get the parameter.
 
         Parameters
@@ -253,13 +247,13 @@ class Parameter:
         np.ndarray
             Returns the parameter.
         """
-        lin_param = self.get_lin_param(coefs, df, mat)
+        lin_param = self.get_lin_param(coefs, offset, mat)
         return self.inv_link.fun(lin_param)
 
     def get_dparam(self,
                    coefs: np.ndarray,
-                   df: pd.DataFrame,
-                   mat: np.ndarray = None) -> np.ndarray:
+                   offset: np.ndarray,
+                   mat: np.ndarray) -> np.ndarray:
         """Get the derivative of the parameter.
 
         Parameters
@@ -277,14 +271,14 @@ class Parameter:
             Returns the derivative of the parameter.
         """
         if len(self.variables) == 0:
-            return np.empty((df.shape[0], 0))
-        lin_param, mat = self.get_lin_param(coefs, df, mat, return_mat=True)
+            return np.empty((len(mat), 0))
+        lin_param = self.get_lin_param(coefs, offset, mat)
         return self.inv_link.dfun(lin_param)[:, None]*mat
 
     def get_d2param(self,
                     coefs: np.ndarray,
-                    df: pd.DataFrame,
-                    mat: np.ndarray = None) -> np.ndarray:
+                    offset: np.ndarray,
+                    mat: np.ndarray) -> np.ndarray:
         """Get the second order derivative of the parameter.
 
         Parameters
@@ -302,6 +296,6 @@ class Parameter:
             Returns the second order derivative of the parameter.
         """
         if len(self.variables) == 0:
-            return np.empty((df.shape[0], 0, 0))
-        lin_param, mat = self.get_lin_param(coefs, df, mat, return_mat=True)
+            return np.empty((len(mat), 0, 0))
+        lin_param = self.get_lin_param(coefs, offset, mat)
         return self.inv_link.d2fun(lin_param)[:, None, None]*(mat[..., None]*mat[:, None, :])

@@ -138,8 +138,9 @@ def test_get_lin_param(param, df):
     param.check_data(df)
     coefs = np.ones(param.size)
     mat = param.get_mat(df)
-    lin_param1 = param.get_lin_param(coefs, df)
-    lin_param2 = param.get_lin_param(coefs, df, mat=mat)
+    offset = param.get_offset(df)
+    lin_param1 = param.get_lin_param(coefs, offset, mat)
+    lin_param2 = param.get_lin_param(coefs, offset, mat)
     assert np.allclose(lin_param1, lin_param2)
 
 
@@ -147,8 +148,9 @@ def test_get_param(param, df):
     param.check_data(df)
     coefs = np.ones(param.size)
     mat = param.get_mat(df)
-    param1 = param.get_param(coefs, df)
-    param2 = param.get_param(coefs, df, mat=mat)
+    offset = param.get_offset(df)
+    param1 = param.get_param(coefs, offset, mat)
+    param2 = param.get_param(coefs, offset, mat)
     assert np.allclose(param1, param2)
 
 
@@ -156,8 +158,9 @@ def test_get_dparam(param, df):
     param.check_data(df)
     coefs = np.ones(param.size)
     mat = param.get_mat(df)
-    dparam1 = param.get_dparam(coefs, df)
-    dparam2 = param.get_dparam(coefs, df, mat=mat)
+    offset = param.get_offset(df)
+    dparam1 = param.get_dparam(coefs, offset, mat)
+    dparam2 = param.get_dparam(coefs, offset, mat)
     assert np.allclose(dparam1, dparam2)
 
 
@@ -165,8 +168,9 @@ def test_get_d2param(param, df):
     param.check_data(df)
     coefs = np.ones(param.size)
     mat = param.get_mat(df)
-    d2param1 = param.get_d2param(coefs, df)
-    d2param2 = param.get_d2param(coefs, df, mat=mat)
+    offset = param.get_offset(df)
+    d2param1 = param.get_d2param(coefs, offset, mat)
+    d2param2 = param.get_d2param(coefs, offset, mat)
     assert np.allclose(d2param1, d2param2)
 
 
@@ -189,8 +193,12 @@ def test_offset(var_cov0, var_cov1, linear_gprior, linear_uprior, df):
         linear_upriors=[linear_uprior]
     )
     coefs = np.ones(param0.size)
-    lin_param0 = param0.get_lin_param(coefs, df)
-    lin_param1 = param1.get_lin_param(coefs, df)
+    mat0 = param0.get_mat(df)
+    mat1 = param1.get_mat(df)
+    offset0 = param0.get_offset(df)
+    offset1 = param1.get_offset(df)
+    lin_param0 = param0.get_lin_param(coefs, offset0, mat0)
+    lin_param1 = param1.get_lin_param(coefs, offset1, mat1)
 
     assert np.allclose(lin_param1 - lin_param0, 1)
 
@@ -203,9 +211,11 @@ def test_empty_variable_list(df):
     )
 
     coefs = np.empty(shape=(0,))
-    p = param.get_param(coefs, df)
-    dp = param.get_dparam(coefs, df)
-    d2p = param.get_d2param(coefs, df)
+    mat = param.get_mat(df)
+    offset = param.get_offset(df)
+    p = param.get_param(coefs, offset, mat)
+    dp = param.get_dparam(coefs, offset, mat)
+    d2p = param.get_d2param(coefs, offset, mat)
 
     assert np.allclose(p, np.exp(1.0))
     assert np.allclose(dp, 0)

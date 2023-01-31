@@ -76,7 +76,8 @@ def test_vcov_output(model):
 def test_pred_values(model):
     """Predicted mu_censored >= 0 and sigma > 0."""
     model.fit()
-    df_pred = model.predict()
+    df = model.df
+    df_pred = model.predict(df)
     assert np.all(df_pred["mu_censored"] >= 0)
     assert np.all(df_pred["sigma"] > 0)
 

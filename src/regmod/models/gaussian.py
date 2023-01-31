@@ -42,7 +42,7 @@ class GaussianModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
 
@@ -68,7 +68,7 @@ class GaussianModel(Model):
         mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -96,7 +96,7 @@ class GaussianModel(Model):
         mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -128,7 +128,7 @@ class GaussianModel(Model):
         mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -161,7 +161,7 @@ class GaussianModel(Model):
         return [params[0] - self._data["y"]]
 
     def d2nll(self, params: List[NDArray]) -> List[NDArray]:
-        return [[np.ones(self.df.shape[0])]]
+        return [[np.ones(self._data["offset"][0].shape[0])]]
 
     def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
         mean = params[0]

@@ -234,7 +234,7 @@ class TobitModel(Model):
         inv_H = jnp.linalg.inv(H)
         return inv_H.dot(J.dot(inv_H.T))
 
-    def predict(self, df: Optional[DataFrame] = None) -> DataFrame:
+    def predict(self, df: DataFrame = None) -> DataFrame:
         """Predict mu, sigma, and censored mu.
 
         Parameters
@@ -256,7 +256,7 @@ class TobitModel(Model):
 
 @jit
 def _objective(coef_list: List[ArrayLike], link_list: List[bool],
-               mat: List[ArrayLike], offset: ArrayLike, y: ArrayLike,
+               mat: List[ArrayLike], offset: List[ArrayLike], y: ArrayLike,
                weights: ArrayLike, gvec: ArrayLike, linear_gvec: ArrayLike,
                linear_gmat: ArrayLike) -> float:
     """Get negative log likelihood wrt coefficients.

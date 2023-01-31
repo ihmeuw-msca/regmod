@@ -46,7 +46,7 @@ class PoissonModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
 
@@ -72,7 +72,7 @@ class PoissonModel(Model):
         mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -100,7 +100,7 @@ class PoissonModel(Model):
         mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -133,7 +133,7 @@ class PoissonModel(Model):
         mat = self._data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self._data["mat"][0]
+            coefs, self._data["offset"][0], mat=self._data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)

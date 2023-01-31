@@ -88,7 +88,8 @@ class Model:
             param.check_data(df)
 
         self._data.update({
-            "mat": [param.get_mat(self.df) for param in self.params],
+            "mat": [param.get_mat(df) for param in self.params],
+            "offset": [param.get_offset(df) for param in self.params],
             "uvec": np.hstack([param.get_uvec() for param in self.params]),
             "gvec": np.hstack([param.get_gvec() for param in self.params]),
             "linear_uvec": np.hstack(
@@ -104,6 +105,7 @@ class Model:
                 *[param.get_linear_gmat() for param in self.params]
             ),
         })
+
         if require_y:
             self._data["y"] = df[self.y].to_numpy()
         self._data["weights"] = np.ones(len(df))
@@ -190,8 +192,12 @@ class Model:
             The parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_param(coefs[i], self.df, mat=self._data["mat"][i])
-                for i, param in enumerate(self.params)]
+        return [
+            param.get_param(
+                coefs[i], self._data["offset"][i], mat=self._data["mat"][i]
+            )
+            for i, param in enumerate(self.params)
+        ]
 
     def get_dparams(self, coefs: ndarray) -> List[ndarray]:
         """Get the derivative of the parameters.
@@ -207,8 +213,12 @@ class Model:
             The derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_dparam(coefs[i], self.df, mat=self._data["mat"][i])
-                for i, param in enumerate(self.params)]
+        return [
+            param.get_dparam(
+                coefs[i], self._data["offset"][i], mat=self._data["mat"][i]
+            )
+            for i, param in enumerate(self.params)
+        ]
 
     def get_d2params(self, coefs: ndarray) -> List[ndarray]:
         """Get the second order derivative of the parameters.
@@ -224,8 +234,12 @@ class Model:
             The second order derivative of the parameters.
         """
         coefs = self.split_coefs(coefs)
-        return [param.get_d2param(coefs[i], self.df, mat=self._data["mat"][i])
-                for i, param in enumerate(self.params)]
+        return [
+            param.get_d2param(
+                coefs[i], self._data["offset"][i], mat=self._data["mat"][i]
+            )
+            for i, param in enumerate(self.params)
+        ]
 
     def nll(self, params: List[ndarray]) -> ndarray:
         """Negative log likelihood.
@@ -479,7 +493,7 @@ class Model:
             return
         optimizer(self, **optimizer_options)
 
-    def predict(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    def predict(self, df: pd.DataFrame) -> pd.DataFrame:
         """Predict the parameters.
 
         Parameters
@@ -493,18 +507,14 @@ class Model:
         pd.DataFrame
             Data frame with predicted parameters.
         """
-        if df is None:
-            df = self.df
         df = df.copy()
+        self._attach(df, require_y=False)
 
         coefs = self.split_coefs(self.opt_coefs)
         for i, param_name in enumerate(self.param_names):
-            df[param_name] = self.params[i].get_param(coefs[i], df)
+            df[param_name] = self.params[i].get_param(
+                coefs[i], self._data["offset"][i], self._data["mat"][i]
+            )
+        self._clear()
 
         return df
-
-    def __repr__(self) -> str:
-        return (f"{type(self).__name__}("
-                f"bnum_y={self.df.shape[0]}, "
-                f"num_params={self.num_params}, "
-                f"size={self.size})")
