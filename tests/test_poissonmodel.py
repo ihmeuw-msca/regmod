@@ -79,11 +79,12 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return PoissonModel(
+    model = PoissonModel(
         y="obs",
-        df=data,
         param_specs={"lam": {"variables": [var_cov0, var_cov1]}}
     )
+    model._attach(data)
+    return model
 
 
 def test_model_size(model, var_cov0, var_cov1):
@@ -146,11 +147,11 @@ def test_model_hessian(model, inv_link):
 
 def test_wrong_data(wrong_data, var_cov0, var_cov1):
     with pytest.raises(ValueError):
-        PoissonModel(
+        model = PoissonModel(
             y="obs",
-            df=wrong_data,
             param_specs={"lam": {"variables": [var_cov0, var_cov1]}}
         )
+        model._attach(wrong_data)
 
 
 def test_get_ui(model):
@@ -169,14 +170,14 @@ def test_model_no_variables():
     })
     model = PoissonModel(
         y="obs",
-        df=df,
         param_specs={"lam": {"offset": "offset"}}
     )
+    model._attach(df)
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)
     assert grad.size == 0
     assert hessian.size == 0
 
-    model.fit()
+    model.fit(df)
     assert model.opt_result == "no parameter to fit"

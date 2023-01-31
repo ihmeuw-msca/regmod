@@ -29,9 +29,9 @@ def test_scipy_optimizer(seed):
 
     model = GaussianModel(
         y="obs",
-        df=df,
         param_specs={"mu": {"variables": [var_cov0, var_cov1]}}
     )
+    model._attach(df)
 
     coefs = scipy_optimize(model)
 

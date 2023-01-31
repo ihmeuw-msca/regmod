@@ -145,6 +145,7 @@ class PoissonModel(Model):
         return jacobian2
 
     def fit(self,
+            df: pd.DataFrame,
             optimizer: Callable = msca_optimize,
             **optimizer_options):
         """Fit function.
@@ -155,6 +156,7 @@ class PoissonModel(Model):
             Model solver, by default scipy_optimize.
         """
         super().fit(
+            df,
             optimizer=optimizer,
             **optimizer_options
         )

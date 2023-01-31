@@ -109,7 +109,8 @@ class TobitModel(Model):
             if param.offset is not None else jnp.zeros(df.shape[0])
             for param in self.params
         ]
-        self._data["y"] = jnp.asarray(self._data["y"])
+        if "y" in self._data:
+            self._data["y"] = jnp.asarray(self._data["y"])
         self._data["weights"] = jnp.asarray(self.trim_weights*self._data["weights"])
 
     def objective(self, coefs: ArrayLike) -> float:

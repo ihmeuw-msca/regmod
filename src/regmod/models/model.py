@@ -46,7 +46,6 @@ class Model:
     def __init__(self,
                  y: str,
                  weights: Optional[str] = None,
-                 df: Optional[pd.DataFrame] = None,
                  params: Optional[List[Parameter]] = None,
                  param_specs: Optional[Dict[str, Dict]] = None):
         if params is None and param_specs is None:
@@ -66,11 +65,8 @@ class Model:
                            for param_name in self.param_names]
         self.y = y
         self.weights = weights
-        self.df = df
         self.trim_weights = None
         self._data = {}
-        if self.df is not None:
-            self._attach(self.df, require_y=True)
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
@@ -83,7 +79,6 @@ class Model:
         self._opt_vcov = None
 
     def _attach(self, df: pd.DataFrame, require_y: bool = True):
-        self.df = df
         for param in self.params:
             param.check_data(df)
 
@@ -477,6 +472,7 @@ class Model:
         return jacobian2
 
     def fit(self,
+            df: pd.DataFrame,
             optimizer: Callable = scipy_optimize,
             **optimizer_options):
         """Fit function.
@@ -486,12 +482,14 @@ class Model:
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
+        self._attach(df)
         if self.size == 0:
             self.opt_coefs = np.empty((0,))
             self.opt_vcov = np.empty((0, 0))
             self.opt_result = "no parameter to fit"
             return
         optimizer(self, **optimizer_options)
+        self._clear()
 
     def predict(self, df: pd.DataFrame) -> pd.DataFrame:
         """Predict the parameters.
@@ -507,8 +505,8 @@ class Model:
         pd.DataFrame
             Data frame with predicted parameters.
         """
-        df = df.copy()
         self._attach(df, require_y=False)
+        df = df.copy()
 
         coefs = self.split_coefs(self.opt_coefs)
         for i, param_name in enumerate(self.param_names):

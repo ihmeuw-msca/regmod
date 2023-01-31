@@ -140,6 +140,7 @@ class GaussianModel(Model):
         return jacobian2
 
     def fit(self,
+            df: pd.DataFrame,
             optimizer: Callable = msca_optimize,
             **optimizer_options):
         """Fit function.
@@ -150,6 +151,7 @@ class GaussianModel(Model):
             Model solver, by default scipy_optimize.
         """
         super().fit(
+            df,
             optimizer=optimizer,
             **optimizer_options
         )
