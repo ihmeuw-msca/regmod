@@ -28,18 +28,19 @@ def param_specs():
 
 @pytest.fixture
 def model(df, param_specs):
-    return TobitModel(
+    model = TobitModel(
         y="z",
-        df=df,
         param_specs=param_specs
     )
+    model._attach(df)
+    return model
 
 
-def test_jax_inv_link(df, param_specs):
+def test_jax_inv_link(param_specs):
     """User-supplied inv_link functions replaced with JAX versions."""
     param_specs["mu"]["inv_link"] = "identity"
     param_specs["sigma"]["inv_link"] = "exp"
-    model = TobitModel(y="z", df=df, param_specs=param_specs)
+    model = TobitModel(y="z", param_specs=param_specs)
     assert model.params[0].inv_link.name == "identity_jax"
     assert model.params[1].inv_link.name == "exp_jax"
 
@@ -47,17 +48,18 @@ def test_jax_inv_link(df, param_specs):
 def test_neg_obs(df, param_specs):
     """ValueError if data contains negative observations."""
     with pytest.raises(ValueError, match="requires non-negative observations"):
-        TobitModel(
+        model = TobitModel(
             y="y",
-            df=df,
             param_specs=param_specs
         )
+        model._attach(df)
 
 
-def test_vcov_output(model):
+def test_vcov_output(df, model):
     """New get_vcov method matches old version."""
-    model.fit()
+    model.fit(df)
     coefs = model.opt_coefs
+    model._attach(df)
 
     # Old version
     H = model.hessian(coefs)
@@ -73,10 +75,9 @@ def test_vcov_output(model):
     assert np.allclose(vcov_old, vcov_new)
 
 
-def test_pred_values(model):
+def test_pred_values(df, model):
     """Predicted mu_censored >= 0 and sigma > 0."""
-    model.fit()
-    df = model.df
+    model.fit(df)
     df_pred = model.predict(df)
     assert np.all(df_pred["mu_censored"] >= 0)
     assert np.all(df_pred["sigma"] > 0)
@@ -90,16 +91,16 @@ def test_model_no_variables():
     })
     model = TobitModel(
         y="obs",
-        df=df,
         param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
     )
+    model._attach(df)
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)
     assert grad.size == 0
     assert hessian.size == 0
 
-    model.fit()
+    model.fit(df)
     assert model.opt_result == "no parameter to fit"
 
 
@@ -111,11 +112,10 @@ def test_model_one_variable():
     })
     model = TobitModel(
         y="obs",
-        df=df,
         param_specs={
             "sigma": {"offset": "offset"},
             "mu": {"variables": [Variable("intercept")]},
         }
     )
-    model.fit()
+    model.fit(df)
     assert model.opt_coefs.size == 1

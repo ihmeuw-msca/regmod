@@ -68,11 +68,12 @@ def var_cov1(spline_gprior, spline_uprior, spline_specs):
 
 @pytest.fixture
 def model(data, var_cov0, var_cov1):
-    return GaussianModel(
+    model = GaussianModel(
         y="obs",
-        df=data,
         param_specs={"mu": {"variables": [var_cov0, var_cov1]}}
     )
+    model._attach(data)
+    return model
 
 
 def test_model_result(model):
@@ -168,14 +169,14 @@ def test_model_no_variables():
     })
     model = GaussianModel(
         y="obs",
-        df=df,
         param_specs={"mu": {"offset": "offset"}}
     )
+    model._attach(df)
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)
     assert grad.size == 0
     assert hessian.size == 0
 
-    model.fit()
+    model.fit(df)
     assert model.opt_result == "no parameter to fit"

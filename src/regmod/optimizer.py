@@ -1,7 +1,7 @@
 """
 Optimizer module
 """
-from typing import Callable, Dict, Optional
+from typing import Callable, Optional
 
 import numpy as np
 from msca.optim.prox import proj_capped_simplex
@@ -12,7 +12,7 @@ from scipy.optimize import LinearConstraint, minimize
 
 def scipy_optimize(model: "Model",
                    x0: Optional[NDArray] = None,
-                   options: Optional[Dict] = None) -> NDArray:
+                   options: Optional[dict] = None) -> NDArray:
     """Scipy trust-region optimizer.
 
     Parameters
@@ -22,7 +22,7 @@ def scipy_optimize(model: "Model",
     x0 : NDArray, optional
         Initial guess for the variable, by default None. If `None` use zero
         vector as the initial guess.
-    options : Dict, optional
+    options : dict, optional
         Scipy solver options, by default None.
 
     Returns
@@ -54,7 +54,7 @@ def scipy_optimize(model: "Model",
 
 def msca_optimize(model: "Model",
                   x0: Optional[NDArray] = None,
-                  options: Optional[Dict] = None) -> NDArray:
+                  options: Optional[dict] = None) -> NDArray:
     x0 = np.zeros(model.size) if x0 is None else x0
     options = options or {}
 
@@ -111,7 +111,7 @@ def trimming(optimize: Callable) -> Callable:
     """
     def optimize_with_trimming(model: "Model",
                                x0: NDArray = None,
-                               options: Dict = None,
+                               options: dict = None,
                                trim_steps: int = 3,
                                inlier_pct: float = 0.95) -> NDArray:
         if trim_steps < 2:
@@ -136,7 +136,7 @@ def original_trimming(optimize: Callable) -> Callable:
     def optimize_with_trimming(
         model: "Model",
         x0: NDArray = None,
-        options: Optional[Dict] = None,
+        options: Optional[dict] = None,
         trim_steps: int = 10,
         step_size: float = 10.0,
         inlier_pct: float = 0.95

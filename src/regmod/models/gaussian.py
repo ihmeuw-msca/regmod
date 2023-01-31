@@ -1,7 +1,7 @@
 """
 Gaussian Model
 """
-from typing import Callable, List, Tuple
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -140,6 +140,7 @@ class GaussianModel(Model):
         return jacobian2
 
     def fit(self,
+            df: pd.DataFrame,
             optimizer: Callable = msca_optimize,
             **optimizer_options):
         """Fit function.
@@ -150,20 +151,21 @@ class GaussianModel(Model):
             Model solver, by default scipy_optimize.
         """
         super().fit(
+            df,
             optimizer=optimizer,
             **optimizer_options
         )
 
-    def nll(self, params: List[NDArray]) -> NDArray:
+    def nll(self, params: list[NDArray]) -> NDArray:
         return 0.5*(params[0] - self._data["y"])**2
 
-    def dnll(self, params: List[NDArray]) -> List[NDArray]:
+    def dnll(self, params: list[NDArray]) -> list[NDArray]:
         return [params[0] - self._data["y"]]
 
-    def d2nll(self, params: List[NDArray]) -> List[NDArray]:
+    def d2nll(self, params: list[NDArray]) -> list[NDArray]:
         return [[np.ones(self._data["offset"][0].shape[0])]]
 
-    def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
+    def get_ui(self, params: list[NDArray], bounds: tuple[float, float]) -> NDArray:
         mean = params[0]
         sd = 1.0/np.sqrt(self._data["weights"])
         return [norm.ppf(bounds[0], loc=mean, scale=sd),
