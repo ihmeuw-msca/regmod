@@ -1,6 +1,7 @@
 """
 Model module
 """
+from itertools import chain
 from typing import Callable, Optional, Union
 
 import numpy as np
@@ -76,7 +77,22 @@ class Model:
         self._opt_coefs = None
         self._opt_vcov = None
 
+    def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
+        required_cols = set(chain(*[
+            [v.name for v in param.variables] for param in self.params
+        ]))
+        if require_y:
+            required_cols.add(self.y)
+        if "intercept" in required_cols:
+            required_cols.remove("intercept")
+        for col in required_cols:
+            if col not in df:
+                raise KeyError(f"missing column {col}")
+
     def _attach(self, df: pd.DataFrame, require_y: bool = True):
+        self._validate_data(df)
+        self._clear()
+
         for param in self.params:
             param.check_data(df)
 
