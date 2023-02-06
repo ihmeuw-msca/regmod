@@ -93,7 +93,7 @@ class Model:
             if col not in df:
                 raise KeyError(f"missing column {col}")
 
-    def _attach(self, df: pd.DataFrame, require_y: bool = True):
+    def _parse(self, df: pd.DataFrame, require_y: bool = True):
         self._validate_data(df)
         self._clear()
 
@@ -507,7 +507,7 @@ class Model:
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
-        self._attach(df)
+        self._parse(df)
         if self.size == 0:
             self.opt_coefs = np.empty((0,))
             self.opt_vcov = np.empty((0, 0))
@@ -530,7 +530,7 @@ class Model:
         pd.DataFrame
             Data frame with predicted parameters.
         """
-        self._attach(df, require_y=False)
+        self._parse(df, require_y=False)
         df = df.copy()
 
         coefs = self.split_coefs(self.opt_coefs)

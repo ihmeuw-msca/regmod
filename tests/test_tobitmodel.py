@@ -21,18 +21,15 @@ def df():
 def param_specs():
     specs = {
         "mu": {"variables": [Variable("x"), Variable("intercept")]},
-        "sigma": {"variables": [Variable("intercept")]}
+        "sigma": {"variables": [Variable("intercept")]},
     }
     return specs
 
 
 @pytest.fixture
 def model(df, param_specs):
-    model = TobitModel(
-        y="z",
-        param_specs=param_specs
-    )
-    model._attach(df)
+    model = TobitModel(y="z", param_specs=param_specs)
+    model._parse(df)
     return model
 
 
@@ -48,23 +45,20 @@ def test_jax_inv_link(param_specs):
 def test_neg_obs(df, param_specs):
     """ValueError if data contains negative observations."""
     with pytest.raises(ValueError, match="requires non-negative observations"):
-        model = TobitModel(
-            y="y",
-            param_specs=param_specs
-        )
-        model._attach(df)
+        model = TobitModel(y="y", param_specs=param_specs)
+        model._parse(df)
 
 
 def test_vcov_output(df, model):
     """New get_vcov method matches old version."""
     model.fit(df)
     coefs = model.opt_coefs
-    model._attach(df)
+    model._parse(df)
 
     # Old version
     H = model.hessian(coefs)
     eig_vals, eig_vecs = np.linalg.eig(H)
-    inv_H = (eig_vecs/eig_vals).dot(eig_vecs.T)
+    inv_H = (eig_vecs / eig_vals).dot(eig_vecs.T)
     J = model.jacobian2(coefs)
     vcov_old = inv_H.dot(J)
     vcov_old = inv_H.dot(vcov_old.T)
@@ -85,15 +79,16 @@ def test_pred_values(df, model):
 
 def test_model_no_variables():
     num_obs = 5
-    df = pd.DataFrame({
-        "obs": np.random.rand(num_obs)*10,
-        "offset": np.ones(num_obs),
-    })
-    model = TobitModel(
-        y="obs",
-        param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
+    df = pd.DataFrame(
+        {
+            "obs": np.random.rand(num_obs) * 10,
+            "offset": np.ones(num_obs),
+        }
     )
-    model._attach(df)
+    model = TobitModel(
+        y="obs", param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
+    )
+    model._parse(df)
     coefs = np.array([])
     grad = model.gradient(coefs)
     hessian = model.hessian(coefs)
@@ -106,16 +101,18 @@ def test_model_no_variables():
 
 def test_model_one_variable():
     num_obs = 5
-    df = pd.DataFrame({
-        "obs": np.random.rand(num_obs)*10,
-        "offset": np.ones(num_obs),
-    })
+    df = pd.DataFrame(
+        {
+            "obs": np.random.rand(num_obs) * 10,
+            "offset": np.ones(num_obs),
+        }
+    )
     model = TobitModel(
         y="obs",
         param_specs={
             "sigma": {"offset": "offset"},
             "mu": {"variables": [Variable("intercept")]},
-        }
+        },
     )
     model.fit(df)
     assert model.opt_coefs.size == 1

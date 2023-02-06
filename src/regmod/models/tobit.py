@@ -71,7 +71,7 @@ class TobitModel(Model):
                 msg = f"No JAX implementation of {link_name} inv_link."
                 raise ValueError(msg)
 
-    def _attach(self, df: DataFrame, require_y: bool = True) -> None:
+    def _parse(self, df: DataFrame, require_y: bool = True) -> None:
         """Extract training data from data frame.
 
         Parameters
@@ -80,7 +80,7 @@ class TobitModel(Model):
             Training data.
 
         """
-        super()._attach(df, require_y=require_y)
+        super()._parse(df, require_y=require_y)
         if require_y and not jnp.all(self._data["y"] >= 0):
             raise ValueError("Tobit model requires non-negative observations.")
 

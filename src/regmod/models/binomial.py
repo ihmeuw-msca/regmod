@@ -18,8 +18,8 @@ class BinomialModel(Model):
     param_names = ("p",)
     default_param_specs = {"p": {"inv_link": "expit"}}
 
-    def _attach(self, df: pd.DataFrame, require_y: bool = True):
-        super()._attach(df, require_y=require_y)
+    def _parse(self, df: pd.DataFrame, require_y: bool = True):
+        super()._parse(df, require_y=require_y)
         if require_y and not np.all((self._data["y"] >= 0) & (self._data["y"] <= 1)):
             raise ValueError(
                 "Binomial model requires observations to be between zero and one."

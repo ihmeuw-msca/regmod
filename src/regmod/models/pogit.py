@@ -13,8 +13,8 @@ class PogitModel(Model):
     param_names = ("p", "lam")
     default_param_specs = {"p": {"inv_link": "expit"}, "lam": {"inv_link": "exp"}}
 
-    def _attach(self, df: pd.DataFrame, require_y: bool = True):
-        super()._attach(df, require_y=require_y)
+    def _parse(self, df: pd.DataFrame, require_y: bool = True):
+        super()._parse(df, require_y=require_y)
         if require_y and not all(self._data["y"] >= 0):
             raise ValueError("Pogit model requires observations to be non-negagive.")
 

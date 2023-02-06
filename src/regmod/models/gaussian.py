@@ -18,8 +18,8 @@ class GaussianModel(Model):
     param_names = ("mu",)
     default_param_specs = {"mu": {"inv_link": "identity"}}
 
-    def _attach(self, df: pd.DataFrame, require_y: bool = True):
-        super()._attach(df, require_y=require_y)
+    def _parse(self, df: pd.DataFrame, require_y: bool = True):
+        super()._parse(df, require_y=require_y)
         (
             self._data["mat"][0],
             self._data["cmat"],
