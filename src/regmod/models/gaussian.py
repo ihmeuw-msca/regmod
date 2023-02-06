@@ -20,13 +20,15 @@ class GaussianModel(Model):
 
     def _attach(self, df: pd.DataFrame, require_y: bool = True):
         super()._attach(df, require_y=require_y)
-        (self._data["mat"][0],
-         self._data["cmat"],
-         self._data["cvec"]) = model_post_init(
+        (
+            self._data["mat"][0],
+            self._data["cmat"],
+            self._data["cvec"],
+        ) = model_post_init(
             self._data["mat"][0],
             self._data["uvec"],
             self._data["linear_umat"],
-            self._data["linear_uvec"]
+            self._data["linear_uvec"],
         )
 
     def objective(self, coefs: NDArray) -> float:
@@ -46,10 +48,8 @@ class GaussianModel(Model):
         )
         param = inv_link.fun(lin_param)
 
-        weights = self._data["weights"]*self.trim_weights
-        obj_param = weights * 0.5 * (
-            param - self._data["y"]
-        )**2
+        weights = self._data["weights"] * self.trim_weights
+        obj_param = weights * 0.5 * (param - self._data["y"]) ** 2
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: NDArray) -> NDArray:
@@ -73,10 +73,8 @@ class GaussianModel(Model):
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = self._data["weights"]*self.trim_weights
-        grad_param = weights * (
-            param - self._data["y"]
-        ) * dparam
+        weights = self._data["weights"] * self.trim_weights
+        grad_param = weights * (param - self._data["y"]) * dparam
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
 
@@ -102,10 +100,8 @@ class GaussianModel(Model):
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = self._data["weights"]*self.trim_weights
-        hess_param = weights * (
-            dparam**2 + (param - self._data["y"])*d2param
-        )
+        weights = self._data["weights"] * self.trim_weights
+        hess_param = weights * (dparam**2 + (param - self._data["y"]) * d2param)
 
         scaled_mat = mat.scale_rows(hess_param)
         hess_mat = mat.T.dot(scaled_mat)
@@ -132,17 +128,16 @@ class GaussianModel(Model):
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = self._data["weights"]*self.trim_weights
+        weights = self._data["weights"] * self.trim_weights
         grad_param = weights * (param - self._data["y"]) * dparam
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
         jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
         return jacobian2
 
-    def fit(self,
-            df: pd.DataFrame,
-            optimizer: Callable = msca_optimize,
-            **optimizer_options):
+    def fit(
+        self, df: pd.DataFrame, optimizer: Callable = msca_optimize, **optimizer_options
+    ):
         """Fit function.
 
         Parameters
@@ -150,14 +145,10 @@ class GaussianModel(Model):
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
-        super().fit(
-            df,
-            optimizer=optimizer,
-            **optimizer_options
-        )
+        super().fit(df, optimizer=optimizer, **optimizer_options)
 
     def nll(self, params: list[NDArray]) -> NDArray:
-        return 0.5*(params[0] - self._data["y"])**2
+        return 0.5 * (params[0] - self._data["y"]) ** 2
 
     def dnll(self, params: list[NDArray]) -> list[NDArray]:
         return [params[0] - self._data["y"]]
@@ -167,6 +158,8 @@ class GaussianModel(Model):
 
     def get_ui(self, params: list[NDArray], bounds: tuple[float, float]) -> NDArray:
         mean = params[0]
-        sd = 1.0/np.sqrt(self._data["weights"])
-        return [norm.ppf(bounds[0], loc=mean, scale=sd),
-                norm.ppf(bounds[1], loc=mean, scale=sd)]
+        sd = 1.0 / np.sqrt(self._data["weights"])
+        return [
+            norm.ppf(bounds[0], loc=mean, scale=sd),
+            norm.ppf(bounds[1], loc=mean, scale=sd),
+        ]

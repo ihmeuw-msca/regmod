@@ -18,16 +18,12 @@ identity_jax = SmoothFunction(
     fun=jnp.array,
     inv_fun=jnp.array,
     dfun=jnp.ones_like,
-    d2fun=jnp.zeros_like
+    d2fun=jnp.zeros_like,
 )
 
 
 exp_jax = SmoothFunction(
-    name="exp_jax",
-    fun=jnp.exp,
-    inv_fun=jnp.log,
-    dfun=jnp.exp,
-    d2fun=jnp.exp
+    name="exp_jax", fun=jnp.exp, inv_fun=jnp.log, dfun=jnp.exp, d2fun=jnp.exp
 )
 
 
@@ -41,10 +37,7 @@ class TobitModel(Model):
     """
 
     param_names = ("mu", "sigma")
-    default_param_specs = {
-        "mu": {"inv_link": 'identity'},
-        "sigma": {"inv_link": 'exp'}
-    }
+    default_param_specs = {"mu": {"inv_link": "identity"}, "sigma": {"inv_link": "exp"}}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize tobit model.
@@ -70,9 +63,9 @@ class TobitModel(Model):
         # Use JAX inv_link functions
         for param in self.params:
             link_name = param.inv_link.name
-            if link_name == 'identity':
+            if link_name == "identity":
                 param.inv_link = identity_jax
-            elif link_name == 'exp':
+            elif link_name == "exp":
                 param.inv_link = exp_jax
             else:
                 msg = f"No JAX implementation of {link_name} inv_link."
@@ -89,9 +82,7 @@ class TobitModel(Model):
         """
         super()._attach(df, require_y=require_y)
         if require_y and not jnp.all(self._data["y"] >= 0):
-            raise ValueError(
-                "Tobit model requires non-negative observations."
-            )
+            raise ValueError("Tobit model requires non-negative observations.")
 
         self._data["mat"] = [jnp.asarray(mat) for mat in self._data["mat"]]
         self._data["uvec"] = jnp.asarray(self._data["uvec"])
@@ -104,12 +95,13 @@ class TobitModel(Model):
         # Data structures for objective
         self._data["offset"] = [
             jnp.asarray(df[param.offset])
-            if param.offset is not None else jnp.zeros(df.shape[0])
+            if param.offset is not None
+            else jnp.zeros(df.shape[0])
             for param in self.params
         ]
         if "y" in self._data:
             self._data["y"] = jnp.asarray(self._data["y"])
-        self._data["weights"] = jnp.asarray(self.trim_weights*self._data["weights"])
+        self._data["weights"] = jnp.asarray(self.trim_weights * self._data["weights"])
 
     def objective(self, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
@@ -126,10 +118,18 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        return _objective(coef_list, link_list, self._data["mat"], self._data["offset"],
-                          self._data["y"], self._data["weights"], self._data["gvec"],
-                          self._data["linear_gvec"], self._data["linear_gmat"])
+        link_list = [param.inv_link.name == "exp_jax" for param in self.params]
+        return _objective(
+            coef_list,
+            link_list,
+            self._data["mat"],
+            self._data["offset"],
+            self._data["y"],
+            self._data["weights"],
+            self._data["gvec"],
+            self._data["linear_gvec"],
+            self._data["linear_gmat"],
+        )
 
     def gradient(self, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
@@ -146,10 +146,18 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        temp = _gradient(coef_list, link_list, self._data["mat"], self._data["offset"],
-                         self._data["y"], self._data["weights"], self._data["gvec"],
-                         self._data["linear_gvec"], self._data["linear_gmat"])
+        link_list = [param.inv_link.name == "exp_jax" for param in self.params]
+        temp = _gradient(
+            coef_list,
+            link_list,
+            self._data["mat"],
+            self._data["offset"],
+            self._data["y"],
+            self._data["weights"],
+            self._data["gvec"],
+            self._data["linear_gvec"],
+            self._data["linear_gmat"],
+        )
         return jnp.concatenate(temp)
 
     def hessian(self, coefs: ArrayLike) -> DeviceArray:
@@ -167,14 +175,21 @@ class TobitModel(Model):
 
         """
         coef_list = [coefs[index] for index in self.indices]
-        link_list = [param.inv_link.name == 'exp_jax' for param in self.params]
-        temp = _hessian(coef_list, link_list, self._data["mat"], self._data["offset"],
-                        self._data["y"], self._data["weights"], self._data["gvec"],
-                        self._data["linear_gvec"], self._data["linear_gmat"])
-        hess = jnp.concatenate([
-            jnp.concatenate(temp[0], axis=1),
-            jnp.concatenate(temp[1], axis=1)
-        ], axis=0)
+        link_list = [param.inv_link.name == "exp_jax" for param in self.params]
+        temp = _hessian(
+            coef_list,
+            link_list,
+            self._data["mat"],
+            self._data["offset"],
+            self._data["y"],
+            self._data["weights"],
+            self._data["gvec"],
+            self._data["linear_gvec"],
+            self._data["linear_gmat"],
+        )
+        hess = jnp.concatenate(
+            [jnp.concatenate(temp[0], axis=1), jnp.concatenate(temp[1], axis=1)], axis=0
+        )
         return hess
 
     def nll(self, params: list[ArrayLike]) -> DeviceArray:
@@ -254,10 +269,17 @@ class TobitModel(Model):
 
 
 @jit
-def _objective(coef_list: list[ArrayLike], link_list: list[bool],
-               mat: list[ArrayLike], offset: list[ArrayLike], y: ArrayLike,
-               weights: ArrayLike, gvec: ArrayLike, linear_gvec: ArrayLike,
-               linear_gmat: ArrayLike) -> float:
+def _objective(
+    coef_list: list[ArrayLike],
+    link_list: list[bool],
+    mat: list[ArrayLike],
+    offset: list[ArrayLike],
+    y: ArrayLike,
+    weights: ArrayLike,
+    gvec: ArrayLike,
+    linear_gvec: ArrayLike,
+    linear_gmat: ArrayLike,
+) -> float:
     """Get negative log likelihood wrt coefficients.
 
     Parameters
@@ -295,21 +317,22 @@ def _objective(coef_list: list[ArrayLike], link_list: list[bool],
                 link_list[ii],
                 lambda x: jnp.exp(x),
                 lambda x: x,
-                mat[ii].dot(coef_list[ii]) + offset[ii]
+                mat[ii].dot(coef_list[ii]) + offset[ii],
             )
         )
     nll_terms = _nll(y, param_list)
-    obj_param = jnp.sum(weights*nll_terms)
+    obj_param = jnp.sum(weights * nll_terms)
 
     # Get objective from prior
     coefs = jnp.concatenate(coef_list)
-    obj_prior = jnp.sum((coefs - gvec[0])**2/gvec[1]**2)/2
+    obj_prior = jnp.sum((coefs - gvec[0]) ** 2 / gvec[1] ** 2) / 2
     obj_prior = lax.cond(
         linear_gvec.size > 0,
-        lambda x: x + 0.5*jnp.sum((linear_gmat.dot(coefs) -
-                                   linear_gvec[0])**2/linear_gvec[1]**2),
+        lambda x: x
+        + 0.5
+        * jnp.sum((linear_gmat.dot(coefs) - linear_gvec[0]) ** 2 / linear_gvec[1] ** 2),
         lambda x: x,
-        obj_prior
+        obj_prior,
     )
 
     return obj_param + obj_prior
@@ -334,8 +357,8 @@ def _nll(y: ArrayLike, params: list[ArrayLike]) -> DeviceArray:
     """
     mu = params[0]
     sigma = params[1]
-    pos_term = jnp.log(sigma) - logpdf((y - mu)/sigma)
-    npos_term = -logcdf(-mu/sigma)
+    pos_term = jnp.log(sigma) - logpdf((y - mu) / sigma)
+    npos_term = -logcdf(-mu / sigma)
     return jnp.where(y > 0, pos_term, npos_term)
 
 

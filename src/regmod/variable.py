@@ -10,9 +10,17 @@ import numpy as np
 import pandas as pd
 from xspline import XSpline
 
-from regmod.prior import (GaussianPrior, LinearGaussianPrior, LinearPrior,
-                          LinearUniformPrior, Prior, SplineGaussianPrior,
-                          SplinePrior, SplineUniformPrior, UniformPrior)
+from regmod.prior import (
+    GaussianPrior,
+    LinearGaussianPrior,
+    LinearPrior,
+    LinearUniformPrior,
+    Prior,
+    SplineGaussianPrior,
+    SplinePrior,
+    SplineUniformPrior,
+    UniformPrior,
+)
 from regmod.utils import SplineSpecs
 
 
@@ -94,14 +102,12 @@ class Variable:
                 if self.gprior is not None:
                     self.priors.remove(self.gprior)
                 self.gprior = prior
-                assert self.gprior.size == self.size, \
-                    "Gaussian prior size not match."
+                assert self.gprior.size == self.size, "Gaussian prior size not match."
             elif isinstance(prior, UniformPrior):
                 if self.uprior is not None:
                     self.priors.remove(self.uprior)
                 self.uprior = prior
-                assert self.uprior.size == self.size, \
-                    "Uniform prior size not match."
+                assert self.uprior.size == self.size, "Uniform prior size not match."
             else:
                 raise ValueError("Unknown prior type.")
 
@@ -170,17 +176,23 @@ class Variable:
         if isinstance(indices, int):
             indices = [indices]
         else:
-            assert isinstance(indices, Iterable), \
-                "Indies must be int, List[int], or List[bool]."
-        if all([not isinstance(index, bool) and isinstance(index, int)
-                for index in indices]):
+            assert isinstance(
+                indices, Iterable
+            ), "Indies must be int, List[int], or List[bool]."
+        if all(
+            [
+                not isinstance(index, bool) and isinstance(index, int)
+                for index in indices
+            ]
+        ):
             indices = [i in indices for i in range(len(self.priors))]
-        assert all([isinstance(index, bool) for index in indices]), \
-            "Index type not consistent."
-        assert len(indices) == len(self.priors), \
-            "Index size not match with number of priors."
-        self.priors = [self.priors[i] for i, index in enumerate(indices)
-                       if not index]
+        assert all(
+            [isinstance(index, bool) for index in indices]
+        ), "Index type not consistent."
+        assert len(indices) == len(
+            self.priors
+        ), "Index size not match with number of priors."
+        self.priors = [self.priors[i] for i, index in enumerate(indices) if not index]
         self.reset_priors()
         self.process_priors()
 
@@ -344,14 +356,12 @@ class SplineVariable(Variable):
                 if self.gprior is not None:
                     self.priors.remove(self.gprior)
                 self.gprior = prior
-                assert self.gprior.size == self.size, \
-                    "Gaussian prior size not match."
+                assert self.gprior.size == self.size, "Gaussian prior size not match."
             elif isinstance(prior, UniformPrior):
                 if self.uprior is not None:
                     self.priors.remove(self.uprior)
                 self.uprior = prior
-                assert self.uprior.size == self.size, \
-                    "Uniform prior size not match."
+                assert self.uprior.size == self.size, "Uniform prior size not match."
             else:
                 raise ValueError("Unknown prior type.")
 
@@ -400,10 +410,9 @@ class SplineVariable(Variable):
         if not self.linear_upriors:
             uvec = np.empty((2, 0))
         else:
-            uvec = np.hstack([
-                np.vstack([prior.lb, prior.ub])
-                for prior in self.linear_upriors
-            ])
+            uvec = np.hstack(
+                [np.vstack([prior.lb, prior.ub]) for prior in self.linear_upriors]
+            )
         return uvec
 
     def get_linear_gvec(self) -> np.ndarray:
@@ -417,10 +426,9 @@ class SplineVariable(Variable):
         if not self.linear_gpriors:
             gvec = np.empty((2, 0))
         else:
-            gvec = np.hstack([
-                np.vstack([prior.mean, prior.sd])
-                for prior in self.linear_gpriors
-            ])
+            gvec = np.hstack(
+                [np.vstack([prior.mean, prior.sd]) for prior in self.linear_gpriors]
+            )
         return gvec
 
     def get_linear_umat(self, df: Optional[pd.DataFrame] = None) -> np.ndarray:
@@ -445,11 +453,9 @@ class SplineVariable(Variable):
             umat = np.empty((0, self.size))
         else:
             if self.spline is None:
-                assert data is not None, "Must check data to create spline first."
-                self.check_data(data)
-            umat = np.vstack([
-                prior.mat for prior in self.linear_upriors
-            ])
+                assert df is not None, "Must check data to create spline first."
+                self.check_data(df)
+            umat = np.vstack([prior.mat for prior in self.linear_upriors])
         return umat
 
     def get_linear_gmat(self, df: Optional[pd.DataFrame] = None) -> np.ndarray:
@@ -474,9 +480,7 @@ class SplineVariable(Variable):
             gmat = np.empty((0, self.size))
         else:
             if self.spline is None:
-                assert data is not None, "Must check data to create spline first."
-                self.check_data(data)
-            gmat = np.vstack([
-                prior.mat for prior in self.linear_gpriors
-            ])
+                assert df is not None, "Must check data to create spline first."
+                self.check_data(df)
+            gmat = np.vstack([prior.mat for prior in self.linear_gpriors])
         return gmat
