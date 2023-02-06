@@ -169,9 +169,7 @@ class UniformPrior(Prior):
         if self.ub.size != self.size:
             raise ValueError("Upper bound vector size does not match.")
         if any(self.lb > self.ub):
-            ValueError(
-                "Lower bounds must be less than or equal to upper bounds."
-            )
+            ValueError("Lower bounds must be less than or equal to upper bounds.")
 
 
 @dataclass
@@ -199,8 +197,7 @@ class LinearPrior:
         Indicate if the prior is empty.
     """
 
-    mat: np.ndarray = field(default_factory=lambda: np.empty(shape=(0, 1)),
-                            repr=False)
+    mat: np.ndarray = field(default_factory=lambda: np.empty(shape=(0, 1)), repr=False)
     size: int = None
 
     def __post_init__(self):
@@ -270,13 +267,14 @@ class SplinePrior(LinearPrior):
     domain_type: str = field(default="rel", repr=False)
 
     def __post_init__(self):
-        assert self.domain_lb <= self.domain_ub, \
-            "Domain lower bound must be less or equal than upper bound."
-        assert self.domain_type in ["rel", "abs"], \
-            "Domain type must be 'rel' or 'abs'."
+        assert (
+            self.domain_lb <= self.domain_ub
+        ), "Domain lower bound must be less or equal than upper bound."
+        assert self.domain_type in ["rel", "abs"], "Domain type must be 'rel' or 'abs'."
         if self.domain_type == "rel":
-            assert self.domain_lb >= 0.0 and self.domain_ub <= 1.0, \
-                "Using relative domain, bounds must be numbers between 0 and 1."
+            assert (
+                self.domain_lb >= 0.0 and self.domain_ub <= 1.0
+            ), "Using relative domain, bounds must be numbers between 0 and 1."
 
     def attach_spline(self, spline: XSpline):
         """Attach the spline to process the domain.
@@ -289,14 +287,15 @@ class SplinePrior(LinearPrior):
         knots_lb = spline.knots[0]
         knots_ub = spline.knots[-1]
         if self.domain_type == "rel":
-            points_lb = knots_lb + (knots_ub - knots_lb)*self.domain_lb
-            points_ub = knots_lb + (knots_ub - knots_lb)*self.domain_ub
+            points_lb = knots_lb + (knots_ub - knots_lb) * self.domain_lb
+            points_ub = knots_lb + (knots_ub - knots_lb) * self.domain_ub
         else:
             points_lb = self.domain_lb
             points_ub = self.domain_ub
         points = np.linspace(points_lb, points_ub, self.size)
-        self.mat = spline.design_dmat(points, order=self.order,
-                                      l_extra=True, r_extra=True)
+        self.mat = spline.design_dmat(
+            points, order=self.order, l_extra=True, r_extra=True
+        )
         super().__post_init__()
 
 

@@ -42,26 +42,30 @@ class Model:
     param_names: tuple[str] = None
     default_param_specs: dict[str, dict] = None
 
-    def __init__(self,
-                 y: str,
-                 weights: Optional[str] = None,
-                 params: Optional[list[Parameter]] = None,
-                 param_specs: Optional[dict[str, dict]] = None):
+    def __init__(
+        self,
+        y: str,
+        weights: Optional[str] = None,
+        params: Optional[list[Parameter]] = None,
+        param_specs: Optional[dict[str, dict]] = None,
+    ):
         if params is None and param_specs is None:
             raise ValueError("Must provide `params` or `param_specs`")
 
         if params is not None:
-            param_dict = {
-                param.name: param
-                for param in params
-            }
-            self.params = [param_dict[param_name]
-                           for param_name in self.param_names]
+            param_dict = {param.name: param for param in params}
+            self.params = [param_dict[param_name] for param_name in self.param_names]
         else:
-            self.params = [Parameter(param_name,
-                                     **{**self.default_param_specs[param_name],
-                                        **param_specs[param_name]})
-                           for param_name in self.param_names]
+            self.params = [
+                Parameter(
+                    param_name,
+                    **{
+                        **self.default_param_specs[param_name],
+                        **param_specs[param_name],
+                    },
+                )
+                for param_name in self.param_names
+            ]
         self.y = y
         self.weights = weights
         self.trim_weights = None
@@ -78,9 +82,9 @@ class Model:
         self._opt_vcov = None
 
     def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
-        required_cols = set(chain(*[
-            [v.name for v in param.variables] for param in self.params
-        ]))
+        required_cols = set(
+            chain(*[[v.name for v in param.variables] for param in self.params])
+        )
         if require_y:
             required_cols.add(self.y)
         if "intercept" in required_cols:
@@ -96,24 +100,26 @@ class Model:
         for param in self.params:
             param.check_data(df)
 
-        self._data.update({
-            "mat": [param.get_mat(df) for param in self.params],
-            "offset": [param.get_offset(df) for param in self.params],
-            "uvec": np.hstack([param.get_uvec() for param in self.params]),
-            "gvec": np.hstack([param.get_gvec() for param in self.params]),
-            "linear_uvec": np.hstack(
-                [param.get_linear_uvec() for param in self.params]
-            ),
-            "linear_gvec": np.hstack(
-                [param.get_linear_gvec() for param in self.params]
-            ),
-            "linear_umat": block_diag(
-                *[param.get_linear_umat() for param in self.params]
-            ),
-            "linear_gmat": block_diag(
-                *[param.get_linear_gmat() for param in self.params]
-            ),
-        })
+        self._data.update(
+            {
+                "mat": [param.get_mat(df) for param in self.params],
+                "offset": [param.get_offset(df) for param in self.params],
+                "uvec": np.hstack([param.get_uvec() for param in self.params]),
+                "gvec": np.hstack([param.get_gvec() for param in self.params]),
+                "linear_uvec": np.hstack(
+                    [param.get_linear_uvec() for param in self.params]
+                ),
+                "linear_gvec": np.hstack(
+                    [param.get_linear_gvec() for param in self.params]
+                ),
+                "linear_umat": block_diag(
+                    *[param.get_linear_umat() for param in self.params]
+                ),
+                "linear_gmat": block_diag(
+                    *[param.get_linear_gmat() for param in self.params]
+                ),
+            }
+        )
 
         if require_y:
             self._data["y"] = df[self.y].to_numpy()
@@ -121,9 +127,7 @@ class Model:
         if self.weights is not None:
             self._data["weights"] = df[self.weights].to_numpy()
 
-        self.use_hessian = not any(
-            isinstance(m, csc_matrix) for m in self._data["mat"]
-        )
+        self.use_hessian = not any(isinstance(m, csc_matrix) for m in self._data["mat"])
         self.trim_weights = np.ones(df.shape[0])
 
     def _clear(self) -> None:
@@ -155,8 +159,10 @@ class Model:
             hessian = hessian.to_numpy()
         eig_vals, eig_vecs = np.linalg.eig(hessian)
         if np.isclose(eig_vals, 0.0).any():
-            raise ValueError("singular Hessian matrix, please add priors or "
-                             "reduce number of variables")
+            raise ValueError(
+                "singular Hessian matrix, please add priors or "
+                "reduce number of variables"
+            )
         inv_hessian = (eig_vecs / eig_vals).dot(eig_vecs.T)
 
         jacobian2 = self.jacobian2(coefs)
@@ -164,8 +170,10 @@ class Model:
             jacobian2 = jacobian2.to_numpy()
         eig_vals = np.linalg.eigvals(jacobian2)
         if np.isclose(eig_vals, 0.0).any():
-            raise ValueError("singular Jacobian matrix, please add priors or "
-                             "reduce number of variables")
+            raise ValueError(
+                "singular Jacobian matrix, please add priors or "
+                "reduce number of variables"
+            )
 
         vcov = inv_hessian.dot(jacobian2)
         vcov = inv_hessian.dot(vcov.T)
@@ -202,9 +210,7 @@ class Model:
         """
         coefs = self.split_coefs(coefs)
         return [
-            param.get_param(
-                coefs[i], self._data["offset"][i], mat=self._data["mat"][i]
-            )
+            param.get_param(coefs[i], self._data["offset"][i], mat=self._data["mat"][i])
             for i, param in enumerate(self.params)
         ]
 
@@ -296,9 +302,7 @@ class Model:
         """
         raise NotImplementedError()
 
-    def get_ui(self,
-               params: list[NDArray],
-               bounds: tuple[float, float]) -> NDArray:
+    def get_ui(self, params: list[NDArray], bounds: tuple[float, float]) -> NDArray:
         """Get uncertainty interval, used for the trimming algorithm.
 
         Parameters
@@ -315,9 +319,7 @@ class Model:
         """
         raise NotImplementedError()
 
-    def detect_outliers(self,
-                        coefs: NDArray,
-                        bounds: tuple[float, float]) -> NDArray:
+    def detect_outliers(self, coefs: NDArray, bounds: tuple[float, float]) -> NDArray:
         """Detect outliers.
 
         Parameters
@@ -350,10 +352,15 @@ class Model:
         float
             Objective function value.
         """
-        val = 0.5*np.sum((coefs - self._data["gvec"][0])**2/self._data["gvec"][1]**2)
+        val = 0.5 * np.sum(
+            (coefs - self._data["gvec"][0]) ** 2 / self._data["gvec"][1] ** 2
+        )
         if self._data["linear_gvec"].size > 0:
-            val += 0.5*np.sum((self._data["linear_gmat"].dot(coefs) -
-                              self._data["linear_gvec"][0])**2/self._data["linear_gvec"][1]**2)
+            val += 0.5 * np.sum(
+                (self._data["linear_gmat"].dot(coefs) - self._data["linear_gvec"][0])
+                ** 2
+                / self._data["linear_gvec"][1] ** 2
+            )
         return val
 
     def gradient_from_gprior(self, coefs: NDArray) -> NDArray:
@@ -369,10 +376,11 @@ class Model:
         NDArray
             Graident vector.
         """
-        grad = (coefs - self._data["gvec"][0])/self._data["gvec"][1]**2
+        grad = (coefs - self._data["gvec"][0]) / self._data["gvec"][1] ** 2
         if self._data["linear_gvec"].size > 0:
-            grad += (self._data["linear_gmat"].T/self._data["linear_gvec"][1] **
-                     2).dot(self._data["linear_gmat"].dot(coefs) - self._data["linear_gvec"][0])
+            grad += (
+                self._data["linear_gmat"].T / self._data["linear_gvec"][1] ** 2
+            ).dot(self._data["linear_gmat"].dot(coefs) - self._data["linear_gvec"][0])
         return grad
 
     def hessian_from_gprior(self) -> NDArray:
@@ -383,15 +391,17 @@ class Model:
         NDArray
             Hessian matrix.
         """
-        hess = np.diag(1.0/self._data["gvec"][1]**2)
+        hess = np.diag(1.0 / self._data["gvec"][1] ** 2)
         if self._data["linear_gvec"].size > 0:
-            hess += (self._data["linear_gmat"].T/self._data["linear_gvec"][1]**2).dot(self._data["linear_gmat"])
+            hess += (
+                self._data["linear_gmat"].T / self._data["linear_gvec"][1] ** 2
+            ).dot(self._data["linear_gmat"])
         return hess
 
     def get_nll_terms(self, coefs: NDArray) -> NDArray:
         params = self.get_params(coefs)
         nll_terms = self.nll(params)
-        nll_terms = self._data["weights"]*nll_terms
+        nll_terms = self._data["weights"] * nll_terms
         return nll_terms
 
     def objective(self, coefs: NDArray) -> float:
@@ -408,8 +418,7 @@ class Model:
             Objective value.
         """
         nll_terms = self.get_nll_terms(coefs)
-        return self.trim_weights.dot(nll_terms) + \
-            self.objective_from_gprior(coefs)
+        return self.trim_weights.dot(nll_terms) + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: NDArray) -> NDArray:
         """Gradient function.
@@ -427,11 +436,10 @@ class Model:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
-        weights = self._data["weights"]*self.trim_weights
-        return np.hstack([
-            dparams[i].T.dot(weights*grad_params[i])
-            for i in range(self.num_params)
-        ]) + self.gradient_from_gprior(coefs)
+        weights = self._data["weights"] * self.trim_weights
+        return np.hstack(
+            [dparams[i].T.dot(weights * grad_params[i]) for i in range(self.num_params)]
+        ) + self.gradient_from_gprior(coefs)
 
     def hessian(self, coefs: NDArray) -> NDArray:
         """Hessian function.
@@ -451,14 +459,16 @@ class Model:
         d2params = self.get_d2params(coefs)
         grad_params = self.dnll(params)
         hess_params = self.d2nll(params)
-        weights = self._data["weights"]*self.trim_weights
+        weights = self._data["weights"] * self.trim_weights
         hess = [
-            [(dparams[i].T*(weights*hess_params[i][j])).dot(dparams[j])
-             for j in range(self.num_params)]
+            [
+                (dparams[i].T * (weights * hess_params[i][j])).dot(dparams[j])
+                for j in range(self.num_params)
+            ]
             for i in range(self.num_params)
         ]
         for i in range(self.num_params):
-            hess[i][i] += np.tensordot(weights*grad_params[i], d2params[i], axes=1)
+            hess[i][i] += np.tensordot(weights * grad_params[i], d2params[i], axes=1)
         return np.block(hess) + self.hessian_from_gprior()
 
     def jacobian2(self, coefs: NDArray) -> NDArray:
@@ -477,18 +487,19 @@ class Model:
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
         grad_params = self.dnll(params)
-        weights = self._data["weights"]*self.trim_weights
-        jacobian = np.vstack([
-            dparams[i].T*(weights*grad_params[i])
-            for i in range(self.num_params)
-        ])
+        weights = self._data["weights"] * self.trim_weights
+        jacobian = np.vstack(
+            [dparams[i].T * (weights * grad_params[i]) for i in range(self.num_params)]
+        )
         jacobian2 = jacobian.dot(jacobian.T) + self.hessian_from_gprior()
         return jacobian2
 
-    def fit(self,
-            df: pd.DataFrame,
-            optimizer: Callable = scipy_optimize,
-            **optimizer_options):
+    def fit(
+        self,
+        df: pd.DataFrame,
+        optimizer: Callable = scipy_optimize,
+        **optimizer_options,
+    ):
         """Fit function.
 
         Parameters

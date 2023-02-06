@@ -16,28 +16,40 @@ class WeibullModel(Model):
     def _attach(self, df: pd.DataFrame, require_y: bool = True):
         super()._attach(df, require_y=require_y)
         if require_y and not all(self._data["y"] > 0):
-            raise ValueError(
-                "Weibull model requires observations to be positive."
-            )
+            raise ValueError("Weibull model requires observations to be positive.")
 
     def nll(self, params: list[NDArray]) -> NDArray:
         t = self._data["y"]
         ln_t = np.log(t)
-        return params[0]*(t**params[1]) - (params[1] - 1)*ln_t - np.log(params[0]) - np.log(params[1])
+        return (
+            params[0] * (t ** params[1])
+            - (params[1] - 1) * ln_t
+            - np.log(params[0])
+            - np.log(params[1])
+        )
 
     def dnll(self, params: list[NDArray]) -> list[NDArray]:
         t = self._data["y"]
         ln_t = np.log(t)
-        return [t**params[1] - 1/params[0],
-                ln_t*params[0]*(t**params[1]) - ln_t - 1/params[1]]
+        return [
+            t ** params[1] - 1 / params[0],
+            ln_t * params[0] * (t ** params[1]) - ln_t - 1 / params[1],
+        ]
 
     def d2nll(self, params: list[NDArray]) -> list[list[NDArray]]:
         t = self._data["y"]
         ln_t = np.log(t)
-        return [[1/params[0]**2, ln_t*(t**params[1])],
-                [ln_t*(t**params[1]), 1/params[1]**2 + params[0]*(ln_t**2)*(t**params[1])]]
+        return [
+            [1 / params[0] ** 2, ln_t * (t ** params[1])],
+            [
+                ln_t * (t ** params[1]),
+                1 / params[1] ** 2 + params[0] * (ln_t**2) * (t ** params[1]),
+            ],
+        ]
 
     def get_ui(self, params: list[NDArray], bounds: tuple[float, float]) -> NDArray:
-        scale = 1 / params[0]**(1 / params[1])
-        return [weibull_min.ppf(bounds[0], c=params[1], scale=scale),
-                weibull_min.ppf(bounds[1], c=params[1], scale=scale)]
+        scale = 1 / params[0] ** (1 / params[1])
+        return [
+            weibull_min.ppf(bounds[0], c=params[1], scale=scale),
+            weibull_min.ppf(bounds[1], c=params[1], scale=scale),
+        ]
