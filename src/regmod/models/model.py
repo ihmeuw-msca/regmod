@@ -86,11 +86,18 @@ class Model:
         )
         if require_y:
             required_cols.add(self.y)
+            if self.weights is not None:
+                required_cols.add(self.weights)
         if "intercept" in required_cols:
             required_cols.remove("intercept")
         for col in required_cols:
             if col not in df:
                 raise KeyError(f"missing column {col}")
+            if any(df[col].isna()):
+                raise ValueError(f"{col} contains nan")
+        if require_y and self.weights is not None:
+            if not all(df[self.weights] >= 0):
+                raise ValueError(f"weights in {self.weights} should be non-negative")
 
     def _parse(self, df: pd.DataFrame, require_y: bool = True) -> dict:
         self._validate_data(df)
