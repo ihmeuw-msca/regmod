@@ -27,9 +27,8 @@ def param_specs():
 
 
 @pytest.fixture
-def model(df, param_specs):
+def model(param_specs):
     model = TobitModel(y="z", param_specs=param_specs)
-    model._parse(df)
     return model
 
 
@@ -53,18 +52,18 @@ def test_vcov_output(df, model):
     """New get_vcov method matches old version."""
     model.fit(df)
     coefs = model.opt_coefs
-    model._parse(df)
+    data = model._parse(df)
 
     # Old version
-    H = model.hessian(coefs)
+    H = model.hessian(data, coefs)
     eig_vals, eig_vecs = np.linalg.eig(H)
     inv_H = (eig_vecs / eig_vals).dot(eig_vecs.T)
-    J = model.jacobian2(coefs)
+    J = model.jacobian2(data, coefs)
     vcov_old = inv_H.dot(J)
     vcov_old = inv_H.dot(vcov_old.T)
 
     # New version
-    vcov_new = model.get_vcov(coefs)
+    vcov_new = model.get_vcov(data, coefs)
 
     assert np.allclose(vcov_old, vcov_new)
 
@@ -88,10 +87,10 @@ def test_model_no_variables():
     model = TobitModel(
         y="obs", param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
     )
-    model._parse(df)
+    data = model._parse(df)
     coefs = np.array([])
-    grad = model.gradient(coefs)
-    hessian = model.hessian(coefs)
+    grad = model.gradient(data, coefs)
+    hessian = model.hessian(data, coefs)
     assert grad.size == 0
     assert hessian.size == 0
 

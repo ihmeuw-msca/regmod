@@ -13,26 +13,27 @@ class PogitModel(Model):
     param_names = ("p", "lam")
     default_param_specs = {"p": {"inv_link": "expit"}, "lam": {"inv_link": "exp"}}
 
-    def _parse(self, df: pd.DataFrame, require_y: bool = True):
-        super()._parse(df, require_y=require_y)
-        if require_y and not all(self._data["y"] >= 0):
+    def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
+        super()._validate_data(df, require_y)
+
+        if require_y and not all(df[self.y] >= 0):
             raise ValueError("Pogit model requires observations to be non-negagive.")
 
-    def nll(self, params: list[ndarray]) -> ndarray:
+    def nll(self, data: dict, params: list[ndarray]) -> ndarray:
         mean = params[0] * params[1]
-        return mean - self._data["y"] * np.log(mean)
+        return mean - data["y"] * np.log(mean)
 
-    def dnll(self, params: list[ndarray]) -> list[ndarray]:
+    def dnll(self, data: dict, params: list[ndarray]) -> list[ndarray]:
         return [
-            params[1] - self._data["y"] / params[0],
-            params[0] - self._data["y"] / params[1],
+            params[1] - data["y"] / params[0],
+            params[0] - data["y"] / params[1],
         ]
 
-    def d2nll(self, params: list[ndarray]) -> list[list[ndarray]]:
-        ones = np.ones(self._data["y"].size)
+    def d2nll(self, data: dict, params: list[ndarray]) -> list[list[ndarray]]:
+        ones = np.ones(data["y"].size)
         return [
-            [self._data["y"] / params[0] ** 2, ones],
-            [ones, self._data["y"] / params[1] ** 2],
+            [data["y"] / params[0] ** 2, ones],
+            [ones, data["y"] / params[1] ** 2],
         ]
 
     def get_ui(self, params: list[ndarray], bounds: tuple[float, float]) -> ndarray:
