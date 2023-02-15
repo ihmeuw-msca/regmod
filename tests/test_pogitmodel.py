@@ -121,8 +121,8 @@ def test_linear_gprior(df, model):
 
 def test_model_objective(df, model):
     data = model._parse(df)
-    coefs = np.random.randn(model.size)
-    my_obj = model.objective(data, coefs)
+    coef = np.random.randn(model.size)
+    my_obj = model.objective(data, coef)
     assert np.isscalar(my_obj)
 
 
@@ -130,14 +130,14 @@ def test_model_objective(df, model):
 def test_model_gradient(df, model, inv_link):
     data = model._parse(df)
     model.params[0].inv_link = fun_dict[inv_link]
-    coefs = np.random.randn(model.size)
-    coefs_c = coefs + 0j
-    my_grad = model.gradient(data, coefs)
+    coef = np.random.randn(model.size)
+    coef_c = coef + 0j
+    my_grad = model.gradient(data, coef)
     tr_grad = np.zeros(model.size)
     for i in range(model.size):
-        coefs_c[i] += 1e-16j
-        tr_grad[i] = model.objective(data, coefs_c).imag / 1e-16
-        coefs_c[i] -= 1e-16j
+        coef_c[i] += 1e-16j
+        tr_grad[i] = model.objective(data, coef_c).imag / 1e-16
+        coef_c[i] -= 1e-16j
     assert np.allclose(my_grad, tr_grad)
 
 
@@ -145,15 +145,15 @@ def test_model_gradient(df, model, inv_link):
 def test_model_hessian(df, model, inv_link):
     data = model._parse(df)
     model.params[0].inv_link = fun_dict[inv_link]
-    coefs = np.random.randn(model.size)
-    coefs_c = coefs + 0j
-    my_hess = model.hessian(data, coefs)
+    coef = np.random.randn(model.size)
+    coef_c = coef + 0j
+    my_hess = model.hessian(data, coef)
     tr_hess = np.zeros((model.size, model.size))
     for i in range(model.size):
         for j in range(model.size):
-            coefs_c[j] += 1e-16j
-            tr_hess[i][j] = model.gradient(data, coefs_c).imag[i] / 1e-16
-            coefs_c[j] -= 1e-16j
+            coef_c[j] += 1e-16j
+            tr_hess[i][j] = model.gradient(data, coef_c).imag[i] / 1e-16
+            coef_c[j] -= 1e-16j
 
     assert np.allclose(my_hess, tr_hess)
 
@@ -191,14 +191,14 @@ def test_model_no_variables():
         y="obs", param_specs={"p": {"offset": "offset"}, "lam": {"offset": "offset"}}
     )
     data = model._parse(df)
-    coefs = np.array([])
-    grad = model.gradient(data, coefs)
-    hessian = model.hessian(data, coefs)
+    coef = np.array([])
+    grad = model.gradient(data, coef)
+    hessian = model.hessian(data, coef)
     assert grad.size == 0
     assert hessian.size == 0
 
     model.fit(df)
-    assert model.opt_result == "no parameter to fit"
+    assert model.result == "no parameter to fit"
 
 
 def test_model_one_variable():
@@ -217,4 +217,4 @@ def test_model_one_variable():
         },
     )
     model.fit(df)
-    assert model.opt_coefs.size == 1
+    assert model.coef.size == 1

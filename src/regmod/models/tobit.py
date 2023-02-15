@@ -74,12 +74,12 @@ class TobitModel(Model):
                 msg = f"No JAX implementation of {link_name} inv_link."
                 raise ValueError(msg)
 
-    def _validate_data(self, df: DataFrame, require_y: bool = True):
-        super()._validate_data(df, require_y)
-        if require_y and not np.all(df[self.y] >= 0):
+    def _validate_data(self, df: DataFrame, fit: bool = True):
+        super()._validate_data(df, fit)
+        if fit and not np.all(df[self.y] >= 0):
             raise ValueError("Tobit model requires non-negative observations.")
 
-    def _parse(self, df: DataFrame, require_y: bool = True) -> dict:
+    def _parse(self, df: DataFrame, fit: bool = True) -> dict:
         """Extract training data from data frame.
 
         Parameters
@@ -89,14 +89,14 @@ class TobitModel(Model):
 
         """
         self._validate_data(df)
-        return parse_to_jax(df, self.y, self.params, self.weights, for_fit=require_y)
+        return parse_to_jax(df, self.y, self.params, self.weights, fit=fit)
 
-    def objective(self, data: dict, coefs: ArrayLike) -> float:
+    def objective(self, data: dict, coef: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
 
         Parameters
         ----------
-        coefs : array_like
+        coef : array_like
             Model coefficients.
 
         Returns
@@ -105,7 +105,7 @@ class TobitModel(Model):
             Negative log likelihood.
 
         """
-        coef_list = [coefs[index] for index in self.indices]
+        coef_list = [coef[index] for index in self.indices]
         link_list = [param.inv_link.name == "exp_jax" for param in self.params]
         return _objective(
             coef_list,
@@ -119,12 +119,12 @@ class TobitModel(Model):
             data["linear_gmat"],
         )
 
-    def gradient(self, data: dict, coefs: ArrayLike) -> DeviceArray:
+    def gradient(self, data: dict, coef: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
 
         Parameters
         ----------
-        coefs : array_like
+        coef : array_like
             Model coefficients.
 
         Returns
@@ -133,7 +133,7 @@ class TobitModel(Model):
             Gradient of negative log likelihood.
 
         """
-        coef_list = [coefs[index] for index in self.indices]
+        coef_list = [coef[index] for index in self.indices]
         link_list = [param.inv_link.name == "exp_jax" for param in self.params]
         temp = _gradient(
             coef_list,
@@ -148,12 +148,12 @@ class TobitModel(Model):
         )
         return jnp.concatenate(temp)
 
-    def hessian(self, data: dict, coefs: ArrayLike) -> DeviceArray:
+    def hessian(self, data: dict, coef: ArrayLike) -> DeviceArray:
         """Get hessian of negative log likelihood wrt coefficients.
 
         Parameters
         ----------
-        coefs : array_like
+        coef : array_like
             Model coefficients.
 
         Returns
@@ -162,7 +162,7 @@ class TobitModel(Model):
             Hessian of negative log likelihood.
 
         """
-        coef_list = [coefs[index] for index in self.indices]
+        coef_list = [coef[index] for index in self.indices]
         link_list = [param.inv_link.name == "exp_jax" for param in self.params]
         temp = _hessian(
             coef_list,
@@ -212,12 +212,12 @@ class TobitModel(Model):
         """
         return _dnll(data["y"], params)
 
-    def get_vcov(self, data: dict, coefs: ArrayLike) -> DeviceArray:
+    def get_vcov(self, data: dict, coef: ArrayLike) -> DeviceArray:
         """Get variance-covariance matrix.
 
         Parameters
         ----------
-        coefs : array_like
+        coef : array_like
             Model coefficients.
 
         Returns
@@ -231,8 +231,8 @@ class TobitModel(Model):
         unlike other RegMod models.
 
         """
-        H = self.hessian(data, coefs)
-        J = self.jacobian2(data, coefs)
+        H = self.hessian(data, coef)
+        J = self.jacobian2(data, coef)
         inv_H = jnp.linalg.inv(H)
         return inv_H.dot(J.dot(inv_H.T))
 
@@ -272,7 +272,7 @@ def _objective(
 
     Parameters
     ----------
-    coefs : list of array_like
+    coef : list of array_like
         Model coefficients for each parameter.
     link_list : list of bool
         True if inv_link is exp_jax for each parameter.
@@ -312,13 +312,13 @@ def _objective(
     obj_param = jnp.sum(weights * nll_terms)
 
     # Get objective from prior
-    coefs = jnp.concatenate(coef_list)
-    obj_prior = jnp.sum((coefs - gvec[0]) ** 2 / gvec[1] ** 2) / 2
+    coef = jnp.concatenate(coef_list)
+    obj_prior = jnp.sum((coef - gvec[0]) ** 2 / gvec[1] ** 2) / 2
     obj_prior = lax.cond(
         linear_gvec.size > 0,
         lambda x: x
         + 0.5
-        * jnp.sum((linear_gmat.dot(coefs) - linear_gvec[0]) ** 2 / linear_gvec[1] ** 2),
+        * jnp.sum((linear_gmat.dot(coef) - linear_gvec[0]) ** 2 / linear_gvec[1] ** 2),
         lambda x: x,
         obj_prior,
     )

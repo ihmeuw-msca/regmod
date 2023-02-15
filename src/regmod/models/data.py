@@ -21,7 +21,7 @@ def parse_to_numpy(
     y: str,
     params: tuple[Parameter, ...],
     weights: Optional[str] = None,
-    for_fit: bool = True,
+    fit: bool = True,
 ) -> NumpyData:
     for param in params:
         param.check_data(df)
@@ -37,7 +37,7 @@ def parse_to_numpy(
         "linear_gmat": block_diag(*[param.get_linear_gmat() for param in params]),
     }
 
-    if for_fit:
+    if fit:
         data["y"] = df[y].to_numpy()
         data["weights"] = (
             np.ones(len(df)) if weights is None else df[weights].to_numpy()
@@ -52,9 +52,9 @@ def parse_to_jax(
     y: str,
     params: tuple[Parameter, ...],
     weights: Optional[str] = None,
-    for_fit: bool = True,
+    fit: bool = True,
 ) -> JaxData:
-    data = parse_to_numpy(df, y, params, weights, for_fit=for_fit)
+    data = parse_to_numpy(df, y, params, weights, fit=fit)
     for key, value in data.items():
         if isinstance(value, tuple):
             new_value = tuple([jnp.asarray(x) for x in value])
@@ -62,7 +62,7 @@ def parse_to_jax(
             new_value = jnp.asarray(value)
         data[key] = new_value
     # TODO: jax model specific combine weight and trim_weights
-    if for_fit:
+    if fit:
         data["weights"] = data["trim_weights"] * data["weights"]
     return data
 
@@ -72,9 +72,9 @@ def parse_to_msca(
     y: str,
     params: tuple[Parameter, ...],
     weights: Optional[str] = None,
-    for_fit: bool = True,
+    fit: bool = True,
 ) -> MSCAData:
-    data = parse_to_numpy(df, y, params, weights, for_fit=for_fit)
+    data = parse_to_numpy(df, y, params, weights, fit=fit)
     mat, uvec, linear_umat, linear_uvec = (
         data["mat"],
         data["uvec"],

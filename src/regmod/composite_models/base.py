@@ -19,15 +19,9 @@ from regmod.variable import Variable
 logger = logging.getLogger(__name__)
 
 link_funs = {
-    "gaussian": fun_dict[
-        GaussianModel.default_param_specs["mu"]["inv_link"]
-    ].inv_fun,
-    "poisson": fun_dict[
-        PoissonModel.default_param_specs["lam"]["inv_link"]
-    ].inv_fun,
-    "binomial": fun_dict[
-        BinomialModel.default_param_specs["p"]["inv_link"]
-    ].inv_fun,
+    "gaussian": fun_dict[GaussianModel.default_param_specs["mu"]["inv_link"]].inv_fun,
+    "poisson": fun_dict[PoissonModel.default_param_specs["lam"]["inv_link"]].inv_fun,
+    "binomial": fun_dict[BinomialModel.default_param_specs["p"]["inv_link"]].inv_fun,
 }
 
 model_constructors = {
@@ -86,19 +80,22 @@ class BaseModel(NodeModel):
         Overwrite the append function in NodeModel.
     """
 
-    def __init__(self,
-                 name: str,
-                 y: str,
-                 variables: List[Variable],
-                 df: Optional[pd.DataFrame] = None,
-                 weights: str = "weights",
-                 mtype: str = "gaussian",
-                 prior_mask: Optional[Dict] = None,
-                 **param_specs):
-
+    def __init__(
+        self,
+        name: str,
+        y: str,
+        variables: List[Variable],
+        df: Optional[pd.DataFrame] = None,
+        weights: str = "weights",
+        mtype: str = "gaussian",
+        prior_mask: Optional[Dict] = None,
+        **param_specs,
+    ):
         super().__init__(name)
-        if any(mtype not in model_config
-               for model_config in (link_funs, model_constructors)):
+        if any(
+            mtype not in model_config
+            for model_config in (link_funs, model_constructors)
+        ):
             raise ValueError(f"Not supported model type {mtype}")
         data = deepcopy(data)
         variables = list(deepcopy(variables))
@@ -108,9 +105,7 @@ class BaseModel(NodeModel):
         self.df = df
         self._data["weights"] = weights
         self.variables = {v.name: v for v in variables}
-        self.param_specs = {"variables": variables,
-                            "use_offset": True,
-                            **param_specs}
+        self.param_specs = {"variables": variables, "use_offset": True, **param_specs}
         self.model = None
         self.prior_mask = {} if prior_mask is None else prior_mask
 
@@ -152,12 +147,12 @@ class BaseModel(NodeModel):
                 self._data["y"],
                 df=self.df,
                 weights=self._data["weights"],
-                param_specs=self.param_specs
+                param_specs=self.param_specs,
             )
         self.model.fit(**fit_options)
         message = f"fit_node;finish;{self.level};{self.name};"
-        # message += f"{self.model.opt_result.success};"
-        # message += f"{self.model.opt_result.niter}"
+        # message += f"{self.model.result.success};"
+        # message += f"{self.model.result.niter}"
         logger.info(message)
 
     def predict(self, df: DataFrame = None):
@@ -167,9 +162,7 @@ class BaseModel(NodeModel):
         pred_data = self.model.df.copy()
         pred_data.attach_df(df)
 
-        df[self.col_value] = self.model.params[0].get_param(
-            self.model.opt_coefs, pred_data
-        )
+        df[self.col_value] = self.model.params[0].get_param(self.model.coef, pred_data)
         return df
 
     def get_draws(self, df: DataFrame = None, size: int = 1000) -> DataFrame:
@@ -179,17 +172,19 @@ class BaseModel(NodeModel):
         pred_data = self.model.df.copy()
         pred_data.attach_df(df)
 
-        coefs_draws = np.random.multivariate_normal(self.model.opt_coefs,
-                                                    self.model.opt_vcov,
-                                                    size=size)
-        draws = np.vstack([
-            self.model.params[0].get_param(coefs_draw, pred_data)
-            for coefs_draw in coefs_draws
-        ])
+        coef_draws = np.random.multivariate_normal(
+            self.model.coef, self.model.vcov, size=size
+        )
+        draws = np.vstack(
+            [
+                self.model.params[0].get_param(coef_draw, pred_data)
+                for coef_draw in coef_draws
+            ]
+        )
         df_draws = pd.DataFrame(
             draws.T,
             columns=[f"{self.col_value}_{i}" for i in range(size)],
-            index=df.index
+            index=df.index,
         )
 
         return pd.concat([df, df_draws], axis=1)
@@ -210,14 +205,13 @@ class BaseModel(NodeModel):
                 self.prior_mask[name] = mask
 
     def get_posterior(self) -> Dict:
-        if self.model.opt_coefs is None:
+        if self.model.coef is None:
             raise AttributeError("Please fit the model first.")
-        mean = self.model.opt_coefs
+        mean = self.model.coef
         # use minimum standard deviation of the posterior distribution
-        sd = np.maximum(0.1, np.sqrt(np.diag(self.model.opt_vcov)))
+        sd = np.maximum(0.1, np.sqrt(np.diag(self.model.vcov)))
         vnames = [v.name for v in self.param_specs["variables"]]
-        slices = sizes_to_slices([self.variables[name].size
-                                  for name in vnames])
+        slices = sizes_to_slices([self.variables[name].size for name in vnames])
         return {
             name: GaussianPrior(mean=mean[slices[i]], sd=sd[slices[i]])
             for i, name in enumerate(vnames)
@@ -240,8 +234,7 @@ class BaseModel(NodeModel):
             primary children.
         """
         if rank >= 1:
-            raise ValueError(f"{type(self).__name__} can only have primary "
-                             "link.")
+            raise ValueError(f"{type(self).__name__} can only have primary " "link.")
         super().append(node, rank=rank)
 
     def __repr__(self) -> str:

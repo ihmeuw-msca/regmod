@@ -231,13 +231,13 @@ class Parameter:
         return gmat
 
     def get_lin_param(
-        self, coefs: np.ndarray, offset: np.ndarray, mat: np.ndarray
+        self, coef: np.ndarray, offset: np.ndarray, mat: np.ndarray
     ) -> np.ndarray:
         """Get the parameter before apply the link function.
 
         Parameters
         ----------
-        coefs : np.ndarray
+        coef : np.ndarray
             Coefficients for the design matrix.
         df
             Data frame that contains all the covariates.
@@ -252,16 +252,16 @@ class Parameter:
         """
         if len(self.variables) == 0:
             return offset
-        return offset + mat.dot(coefs)
+        return offset + mat.dot(coef)
 
     def get_param(
-        self, coefs: np.ndarray, offset: np.ndarray, mat: np.ndarray
+        self, coef: np.ndarray, offset: np.ndarray, mat: np.ndarray
     ) -> np.ndarray:
         """Get the parameter.
 
         Parameters
         ----------
-        coefs : np.ndarray
+        coef : np.ndarray
             Coefficients for the design matrix.
         df
             Data frame that contains all the covariates.
@@ -273,17 +273,17 @@ class Parameter:
         np.ndarray
             Returns the parameter.
         """
-        lin_param = self.get_lin_param(coefs, offset, mat)
+        lin_param = self.get_lin_param(coef, offset, mat)
         return self.inv_link.fun(lin_param)
 
     def get_dparam(
-        self, coefs: np.ndarray, offset: np.ndarray, mat: np.ndarray
+        self, coef: np.ndarray, offset: np.ndarray, mat: np.ndarray
     ) -> np.ndarray:
         """Get the derivative of the parameter.
 
         Parameters
         ----------
-        coefs : np.ndarray
+        coef : np.ndarray
             Coefficients for the design matrix.
         df
             Data frame that contains all the covariates.
@@ -297,17 +297,17 @@ class Parameter:
         """
         if len(self.variables) == 0:
             return np.empty((len(mat), 0))
-        lin_param = self.get_lin_param(coefs, offset, mat)
+        lin_param = self.get_lin_param(coef, offset, mat)
         return self.inv_link.dfun(lin_param)[:, None] * mat
 
     def get_d2param(
-        self, coefs: np.ndarray, offset: np.ndarray, mat: np.ndarray
+        self, coef: np.ndarray, offset: np.ndarray, mat: np.ndarray
     ) -> np.ndarray:
         """Get the second order derivative of the parameter.
 
         Parameters
         ----------
-        coefs : np.ndarray
+        coef : np.ndarray
             Coefficients for the design matrix.
         df
             Data frame that contains all the covariates.
@@ -321,7 +321,7 @@ class Parameter:
         """
         if len(self.variables) == 0:
             return np.empty((len(mat), 0, 0))
-        lin_param = self.get_lin_param(coefs, offset, mat)
+        lin_param = self.get_lin_param(coef, offset, mat)
         return self.inv_link.d2fun(lin_param)[:, None, None] * (
             mat[..., None] * mat[:, None, :]
         )

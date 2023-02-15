@@ -2,7 +2,7 @@
 Model module
 """
 from itertools import chain
-from typing import Callable, Optional, Union
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -75,15 +75,13 @@ class Model:
         self.num_params = len(self.params)
 
         # optimization result placeholder
-        self.opt_result = None
-        self._opt_coefs = None
-        self._opt_vcov = None
+        self.result, self._coef, self._vcov = None, None, None
 
-    def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
+    def _validate_data(self, df: pd.DataFrame, fit: bool = True):
         required_cols = set(
             chain(*[[v.name for v in param.variables] for param in self.params])
         )
-        if require_y:
+        if fit:
             required_cols.add(self.y)
             if self.weights is not None:
                 required_cols.add(self.weights)
@@ -94,37 +92,37 @@ class Model:
                 raise KeyError(f"missing column {col}")
             if any(df[col].isna()):
                 raise ValueError(f"{col} contains nan")
-        if require_y and self.weights is not None:
+        if fit and self.weights is not None:
             if not all(df[self.weights] >= 0):
                 raise ValueError(f"weights in {self.weights} should be non-negative")
 
-    def _parse(self, df: pd.DataFrame, require_y: bool = True) -> dict:
+    def _parse(self, df: pd.DataFrame, fit: bool = True) -> dict:
         self._validate_data(df)
 
-        return parse_to_numpy(df, self.y, self.params, self.weights, for_fit=require_y)
+        return parse_to_numpy(df, self.y, self.params, self.weights, fit=fit)
 
     @property
-    def opt_coefs(self) -> Union[None, NDArray]:
-        return self._opt_coefs
+    def coef(self) -> Optional[NDArray]:
+        return self._coef
 
-    @opt_coefs.setter
-    def opt_coefs(self, coefs: NDArray):
-        coefs = np.asarray(coefs)
-        if coefs.size != self.size:
+    @coef.setter
+    def coef(self, coef: NDArray):
+        coef = np.asarray(coef)
+        if coef.size != self.size:
             raise ValueError("Coefficients size not match.")
-        self._opt_coefs = coefs
+        self._coef = coef
 
     @property
-    def opt_vcov(self) -> Union[None, NDArray]:
-        return self._opt_vcov
+    def vcov(self) -> Optional[NDArray]:
+        return self._vcov
 
-    @opt_vcov.setter
-    def opt_vcov(self, vcov: NDArray):
+    @vcov.setter
+    def vcov(self, vcov: NDArray):
         vcov = np.asarray(vcov)
-        self._opt_vcov = vcov
+        self._vcov = vcov
 
-    def get_vcov(self, data: dict, coefs: NDArray) -> NDArray:
-        hessian = self.hessian(data, coefs)
+    def get_vcov(self, data: dict, coef: NDArray) -> NDArray:
+        hessian = self.hessian(data, coef)
         if isinstance(hessian, Matrix):
             hessian = hessian.to_numpy()
         eig_vals, eig_vecs = np.linalg.eig(hessian)
@@ -135,7 +133,7 @@ class Model:
             )
         inv_hessian = (eig_vecs / eig_vals).dot(eig_vecs.T)
 
-        jacobian2 = self.jacobian2(data, coefs)
+        jacobian2 = self.jacobian2(data, coef)
         if isinstance(jacobian2, Matrix):
             jacobian2 = jacobian2.to_numpy()
         eig_vals = np.linalg.eigvals(jacobian2)
@@ -149,12 +147,12 @@ class Model:
         vcov = inv_hessian.dot(vcov.T)
         return vcov
 
-    def split_coefs(self, coefs: NDArray) -> list[NDArray]:
+    def split_coef(self, coef: NDArray) -> list[NDArray]:
         """Split coefficients into pieces for each parameter.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             The coefficients array.
 
         Returns
@@ -162,15 +160,15 @@ class Model:
         list[NDArray]
             A list of splitted coefficients for each parameter.
         """
-        assert len(coefs) == self.size
-        return [coefs[index] for index in self.indices]
+        assert len(coef) == self.size
+        return [coef[index] for index in self.indices]
 
-    def get_params(self, data: dict, coefs: NDArray) -> list[NDArray]:
+    def get_params(self, data: dict, coef: NDArray) -> list[NDArray]:
         """Get the parameters.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             The coefficients array.
 
         Returns
@@ -178,18 +176,18 @@ class Model:
         list[NDArray]
             The parameters.
         """
-        coefs = self.split_coefs(coefs)
+        coef = self.split_coef(coef)
         return [
-            param.get_param(coefs[i], data["offset"][i], mat=data["mat"][i])
+            param.get_param(coef[i], data["offset"][i], mat=data["mat"][i])
             for i, param in enumerate(self.params)
         ]
 
-    def get_dparams(self, data: dict, coefs: NDArray) -> list[NDArray]:
+    def get_dparams(self, data: dict, coef: NDArray) -> list[NDArray]:
         """Get the derivative of the parameters.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             The coefficients array.
 
         Returns
@@ -197,18 +195,18 @@ class Model:
         list[NDArray]
             The derivative of the parameters.
         """
-        coefs = self.split_coefs(coefs)
+        coef = self.split_coef(coef)
         return [
-            param.get_dparam(coefs[i], data["offset"][i], mat=data["mat"][i])
+            param.get_dparam(coef[i], data["offset"][i], mat=data["mat"][i])
             for i, param in enumerate(self.params)
         ]
 
-    def get_d2params(self, data: dict, coefs: NDArray) -> list[NDArray]:
+    def get_d2params(self, data: dict, coef: NDArray) -> list[NDArray]:
         """Get the second order derivative of the parameters.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             The coefficients array.
 
         Returns
@@ -216,9 +214,9 @@ class Model:
         list[NDArray]
             The second order derivative of the parameters.
         """
-        coefs = self.split_coefs(coefs)
+        coef = self.split_coef(coef)
         return [
-            param.get_d2param(coefs[i], data["offset"][i], mat=data["mat"][i])
+            param.get_d2param(coef[i], data["offset"][i], mat=data["mat"][i])
             for i, param in enumerate(self.params)
         ]
 
@@ -286,13 +284,13 @@ class Model:
         raise NotImplementedError()
 
     def detect_outliers(
-        self, data: dict, coefs: NDArray, bounds: tuple[float, float]
+        self, data: dict, coef: NDArray, bounds: tuple[float, float]
     ) -> NDArray:
         """Detect outliers.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
         bounds : tuple[float, float]
             Quantile bounds for the inliers.
@@ -302,17 +300,17 @@ class Model:
         NDArray
             A boolean array that indicate if observations are outliers.
         """
-        params = self.get_params(data, coefs)
+        params = self.get_params(data, coef)
         ui = self.get_ui(params, bounds)
         obs = data["y"]
         return (obs < ui[0]) | (obs > ui[1])
 
-    def objective_from_gprior(self, data: dict, coefs: NDArray) -> float:
+    def objective_from_gprior(self, data: dict, coef: NDArray) -> float:
         """Objective function from the Gaussian priors.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -320,20 +318,20 @@ class Model:
         float
             Objective function value.
         """
-        val = 0.5 * np.sum((coefs - data["gvec"][0]) ** 2 / data["gvec"][1] ** 2)
+        val = 0.5 * np.sum((coef - data["gvec"][0]) ** 2 / data["gvec"][1] ** 2)
         if data["linear_gvec"].size > 0:
             val += 0.5 * np.sum(
-                (data["linear_gmat"].dot(coefs) - data["linear_gvec"][0]) ** 2
+                (data["linear_gmat"].dot(coef) - data["linear_gvec"][0]) ** 2
                 / data["linear_gvec"][1] ** 2
             )
         return val
 
-    def gradient_from_gprior(self, data: dict, coefs: NDArray) -> NDArray:
+    def gradient_from_gprior(self, data: dict, coef: NDArray) -> NDArray:
         """Graident function from the Gaussian priors.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -341,10 +339,10 @@ class Model:
         NDArray
             Graident vector.
         """
-        grad = (coefs - data["gvec"][0]) / data["gvec"][1] ** 2
+        grad = (coef - data["gvec"][0]) / data["gvec"][1] ** 2
         if data["linear_gvec"].size > 0:
             grad += (data["linear_gmat"].T / data["linear_gvec"][1] ** 2).dot(
-                data["linear_gmat"].dot(coefs) - data["linear_gvec"][0]
+                data["linear_gmat"].dot(coef) - data["linear_gvec"][0]
             )
         return grad
 
@@ -363,18 +361,18 @@ class Model:
             )
         return hess
 
-    def get_nll_terms(self, data: dict, coefs: NDArray) -> NDArray:
-        params = self.get_params(data, coefs)
+    def get_nll_terms(self, data: dict, coef: NDArray) -> NDArray:
+        params = self.get_params(data, coef)
         nll_terms = self.nll(data, params)
         nll_terms = data["weights"] * nll_terms
         return nll_terms
 
-    def objective(self, data: dict, coefs: NDArray) -> float:
+    def objective(self, data: dict, coef: NDArray) -> float:
         """Objective function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -382,17 +380,17 @@ class Model:
         float
             Objective value.
         """
-        nll_terms = self.get_nll_terms(data, coefs)
+        nll_terms = self.get_nll_terms(data, coef)
         return data["trim_weights"].dot(nll_terms) + self.objective_from_gprior(
-            data, coefs
+            data, coef
         )
 
-    def gradient(self, data: dict, coefs: NDArray) -> NDArray:
+    def gradient(self, data: dict, coef: NDArray) -> NDArray:
         """Gradient function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -400,20 +398,20 @@ class Model:
         NDArray
             Gradient vector.
         """
-        params = self.get_params(data, coefs)
-        dparams = self.get_dparams(data, coefs)
+        params = self.get_params(data, coef)
+        dparams = self.get_dparams(data, coef)
         grad_params = self.dnll(data, params)
         weights = data["weights"] * data["trim_weights"]
         return np.hstack(
             [dparams[i].T.dot(weights * grad_params[i]) for i in range(self.num_params)]
-        ) + self.gradient_from_gprior(data, coefs)
+        ) + self.gradient_from_gprior(data, coef)
 
-    def hessian(self, data: dict, coefs: NDArray) -> NDArray:
+    def hessian(self, data: dict, coef: NDArray) -> NDArray:
         """Hessian function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -421,9 +419,9 @@ class Model:
         NDArray
             Hessian matrix.
         """
-        params = self.get_params(data, coefs)
-        dparams = self.get_dparams(data, coefs)
-        d2params = self.get_d2params(data, coefs)
+        params = self.get_params(data, coef)
+        dparams = self.get_dparams(data, coef)
+        d2params = self.get_d2params(data, coef)
         grad_params = self.dnll(data, params)
         hess_params = self.d2nll(data, params)
         weights = data["weights"] * data["trim_weights"]
@@ -438,12 +436,12 @@ class Model:
             hess[i][i] += np.tensordot(weights * grad_params[i], d2params[i], axes=1)
         return np.block(hess) + self.hessian_from_gprior(data)
 
-    def jacobian2(self, data: dict, coefs: NDArray) -> NDArray:
+    def jacobian2(self, data: dict, coef: NDArray) -> NDArray:
         """Jacobian function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -451,8 +449,8 @@ class Model:
         NDArray
             Jacobian matrix.
         """
-        params = self.get_params(data, coefs)
-        dparams = self.get_dparams(data, coefs)
+        params = self.get_params(data, coef)
+        dparams = self.get_dparams(data, coef)
         grad_params = self.dnll(data, params)
         weights = data["weights"] * data["trim_weights"]
         jacobian = np.vstack(
@@ -476,9 +474,9 @@ class Model:
         """
         data = self._parse(df)
         if self.size == 0:
-            self.opt_coefs = np.empty((0,))
-            self.opt_vcov = np.empty((0, 0))
-            self.opt_result = "no parameter to fit"
+            self.coef = np.empty((0,))
+            self.vcov = np.empty((0, 0))
+            self.result = "no parameter to fit"
             return
         optimizer(self, data, **optimizer_options)
 
@@ -496,13 +494,13 @@ class Model:
         pd.DataFrame
             Data frame with predicted parameters.
         """
-        data = self._parse(df, require_y=False)
+        data = self._parse(df, fit=False)
         df = df.copy()
 
-        coefs = self.split_coefs(self.opt_coefs)
+        coef = self.split_coef(self.coef)
         for i, param_name in enumerate(self.param_names):
             df[param_name] = self.params[i].get_param(
-                coefs[i], data["offset"][i], data["mat"][i]
+                coef[i], data["offset"][i], data["mat"][i]
             )
 
         return df

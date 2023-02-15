@@ -63,9 +63,9 @@ def scipy_optimize(
         options=options,
     )
 
-    model.opt_result = result
-    model.opt_coefs = result.x.copy()
-    model.opt_vcov = model.get_vcov(data, model.opt_coefs)
+    model.result = result
+    model.coef = result.x.copy()
+    model.vcov = model.get_vcov(data, model.coef)
     return result.x
 
 
@@ -93,9 +93,9 @@ def msca_optimize(
             data["cvec"],
         )
     result = solver.minimize(x0=x0, **options)
-    model.opt_result = result
-    model.opt_coefs = result.x.copy()
-    model.opt_vcov = model.get_vcov(data, model.opt_coefs)
+    model.result = result
+    model.coef = result.x.copy()
+    model.vcov = model.get_vcov(data, model.coef)
     return result.x
 
 
@@ -142,17 +142,17 @@ def trimming(optimize: Callable) -> Callable:
             raise ValueError("At least two trimming steps.")
         if inlier_pct < 0.0 or inlier_pct > 1.0:
             raise ValueError("inlier_pct has to be between 0 and 1.")
-        coefs = optimize(model, data, x0, options)
+        coef = optimize(model, data, x0, options)
         if inlier_pct < 1.0:
             bounds = (0.5 - 0.5 * inlier_pct, 0.5 + 0.5 * inlier_pct)
-            index = model.detect_outliers(coefs, bounds)
+            index = model.detect_outliers(coef, bounds)
             if index.sum() > 0:
                 masks = np.append(np.linspace(1.0, 0.0, trim_steps)[1:], 0.0)
                 for mask in masks:
                     set_trim_weights(model, index, mask)
-                    coefs = optimize(model, data, coefs, options)
-                    index = model.detect_outliers(data, coefs, bounds)
-        return coefs
+                    coef = optimize(model, data, coef, options)
+                    index = model.detect_outliers(data, coef, bounds)
+        return coef
 
     return optimize_with_trimming
 
@@ -171,18 +171,18 @@ def original_trimming(optimize: Callable) -> Callable:
             raise ValueError("At least two trimming steps.")
         if inlier_pct < 0.0 or inlier_pct > 1.0:
             raise ValueError("inlier_pct has to be between 0 and 1.")
-        coefs = optimize(model, x0, options)
+        coef = optimize(model, x0, options)
         if inlier_pct < 1.0:
             num_inliers = int(inlier_pct * model.y.size)
             counter = 0
             success = False
             while (counter < trim_steps) and (not success):
                 counter += 1
-                nll_terms = model.get_nll_terms(coefs)
+                nll_terms = model.get_nll_terms(coef)
                 model.trim_weights = proj_capped_simplex(
                     model.trim_weights - step_size * nll_terms, num_inliers
                 )
-                coefs = optimize(model, x0, options)
+                coef = optimize(model, x0, options)
                 success = all(
                     np.isclose(model.trim_weights, 0.0)
                     | np.isclose(model.trim_weights, 1.0)
@@ -191,6 +191,6 @@ def original_trimming(optimize: Callable) -> Callable:
                 sort_indices = np.argsort(model.trim_weights)
                 model.trim_weights[sort_indices[-num_inliers:]] = 1.0
                 model.trim_weights[sort_indices[:-num_inliers]] = 0.0
-        return coefs
+        return coef
 
     return optimize_with_trimming

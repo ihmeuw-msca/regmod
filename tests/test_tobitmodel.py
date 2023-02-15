@@ -51,19 +51,19 @@ def test_neg_obs(df, param_specs):
 def test_vcov_output(df, model):
     """New get_vcov method matches old version."""
     model.fit(df)
-    coefs = model.opt_coefs
+    coef = model.coef
     data = model._parse(df)
 
     # Old version
-    H = model.hessian(data, coefs)
+    H = model.hessian(data, coef)
     eig_vals, eig_vecs = np.linalg.eig(H)
     inv_H = (eig_vecs / eig_vals).dot(eig_vecs.T)
-    J = model.jacobian2(data, coefs)
+    J = model.jacobian2(data, coef)
     vcov_old = inv_H.dot(J)
     vcov_old = inv_H.dot(vcov_old.T)
 
     # New version
-    vcov_new = model.get_vcov(data, coefs)
+    vcov_new = model.get_vcov(data, coef)
 
     assert np.allclose(vcov_old, vcov_new)
 
@@ -88,14 +88,14 @@ def test_model_no_variables():
         y="obs", param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
     )
     data = model._parse(df)
-    coefs = np.array([])
-    grad = model.gradient(data, coefs)
-    hessian = model.hessian(data, coefs)
+    coef = np.array([])
+    grad = model.gradient(data, coef)
+    hessian = model.hessian(data, coef)
     assert grad.size == 0
     assert hessian.size == 0
 
     model.fit(df)
-    assert model.opt_result == "no parameter to fit"
+    assert model.result == "no parameter to fit"
 
 
 def test_model_one_variable():
@@ -114,4 +114,4 @@ def test_model_one_variable():
         },
     )
     model.fit(df)
-    assert model.opt_coefs.size == 1
+    assert model.coef.size == 1

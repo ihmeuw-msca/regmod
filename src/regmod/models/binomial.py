@@ -18,22 +18,22 @@ class BinomialModel(Model):
     param_names = ("p",)
     default_param_specs = {"p": {"inv_link": "expit"}}
 
-    def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
-        super()._validate_data(df, require_y)
-        if require_y and not np.all((df[self.y] >= 0) & (df[self.y] <= 1)):
+    def _validate_data(self, df: pd.DataFrame, fit: bool = True):
+        super()._validate_data(df, fit)
+        if fit and not np.all((df[self.y] >= 0) & (df[self.y] <= 1)):
             raise ValueError(
                 "Binomial model requires observations to be between zero and one."
             )
 
-    def _parse(self, df: pd.DataFrame, require_y: bool = True):
-        self._validate_data(df, require_y=require_y)
-        return parse_to_msca(df, self.y, self.params, self.weights, for_fit=require_y)
+    def _parse(self, df: pd.DataFrame, fit: bool = True):
+        self._validate_data(df, fit=fit)
+        return parse_to_msca(df, self.y, self.params, self.weights, fit=fit)
 
-    def objective(self, data: dict, coefs: NDArray) -> float:
+    def objective(self, data: dict, coef: NDArray) -> float:
         """Objective function.
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
         Returns
         -------
@@ -42,7 +42,7 @@ class BinomialModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
 
@@ -50,14 +50,14 @@ class BinomialModel(Model):
         obj_param = -weights * (
             data["y"] * np.log(param) + (1 - data["y"]) * np.log(1 - param)
         )
-        return obj_param.sum() + self.objective_from_gprior(data, coefs)
+        return obj_param.sum() + self.objective_from_gprior(data, coef)
 
-    def gradient(self, data: dict, coefs: NDArray) -> NDArray:
+    def gradient(self, data: dict, coef: NDArray) -> NDArray:
         """Gradient function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -68,7 +68,7 @@ class BinomialModel(Model):
         mat = data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -76,14 +76,14 @@ class BinomialModel(Model):
         weights = data["weights"] * data["trim_weights"]
         grad_param = weights * ((param - data["y"]) / (param * (1 - param)) * dparam)
 
-        return mat.T.dot(grad_param) + self.gradient_from_gprior(data, coefs)
+        return mat.T.dot(grad_param) + self.gradient_from_gprior(data, coef)
 
-    def hessian(self, data: dict, coefs: NDArray) -> NDArray:
+    def hessian(self, data: dict, coef: NDArray) -> NDArray:
         """Hessian function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -94,7 +94,7 @@ class BinomialModel(Model):
         mat = data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -111,12 +111,12 @@ class BinomialModel(Model):
         hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior(data))
         return hess_mat + hess_mat_gprior
 
-    def jacobian2(self, data: dict, coefs: NDArray) -> NDArray:
+    def jacobian2(self, data: dict, coef: NDArray) -> NDArray:
         """Jacobian function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -127,7 +127,7 @@ class BinomialModel(Model):
         mat = data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)

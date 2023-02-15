@@ -18,15 +18,15 @@ class GaussianModel(Model):
     param_names = ("mu",)
     default_param_specs = {"mu": {"inv_link": "identity"}}
 
-    def _parse(self, df: pd.DataFrame, require_y: bool = True):
+    def _parse(self, df: pd.DataFrame, fit: bool = True):
         self._validate_data(df)
-        return parse_to_msca(df, self.y, self.params, self.weights, for_fit=require_y)
+        return parse_to_msca(df, self.y, self.params, self.weights, fit=fit)
 
-    def objective(self, data: dict, coefs: NDArray) -> float:
+    def objective(self, data: dict, coef: NDArray) -> float:
         """Objective function.
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
         Returns
         -------
@@ -35,20 +35,20 @@ class GaussianModel(Model):
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
 
         weights = data["weights"] * data["trim_weights"]
         obj_param = weights * 0.5 * (param - data["y"]) ** 2
-        return obj_param.sum() + self.objective_from_gprior(data, coefs)
+        return obj_param.sum() + self.objective_from_gprior(data, coef)
 
-    def gradient(self, data: dict, coefs: NDArray) -> NDArray:
+    def gradient(self, data: dict, coef: NDArray) -> NDArray:
         """Gradient function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -59,7 +59,7 @@ class GaussianModel(Model):
         mat = data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -67,14 +67,14 @@ class GaussianModel(Model):
         weights = data["weights"] * data["trim_weights"]
         grad_param = weights * (param - data["y"]) * dparam
 
-        return mat.T.dot(grad_param) + self.gradient_from_gprior(data, coefs)
+        return mat.T.dot(grad_param) + self.gradient_from_gprior(data, coef)
 
-    def hessian(self, data: dict, coefs: NDArray) -> NDArray:
+    def hessian(self, data: dict, coef: NDArray) -> NDArray:
         """Hessian function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -85,7 +85,7 @@ class GaussianModel(Model):
         mat = data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
@@ -99,12 +99,12 @@ class GaussianModel(Model):
         hess_mat_gprior = type(hess_mat)(self.hessian_from_gprior(data))
         return hess_mat + hess_mat_gprior
 
-    def jacobian2(self, data: dict, coefs: NDArray) -> NDArray:
+    def jacobian2(self, data: dict, coef: NDArray) -> NDArray:
         """Jacobian function.
 
         Parameters
         ----------
-        coefs : NDArray
+        coef : NDArray
             Given coefficients.
 
         Returns
@@ -115,7 +115,7 @@ class GaussianModel(Model):
         mat = data["mat"][0]
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(
-            coefs, data["offset"][0], mat=data["mat"][0]
+            coef, data["offset"][0], mat=data["mat"][0]
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)

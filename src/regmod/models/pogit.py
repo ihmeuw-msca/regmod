@@ -13,10 +13,10 @@ class PogitModel(Model):
     param_names = ("p", "lam")
     default_param_specs = {"p": {"inv_link": "expit"}, "lam": {"inv_link": "exp"}}
 
-    def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
-        super()._validate_data(df, require_y)
+    def _validate_data(self, df: pd.DataFrame, fit: bool = True):
+        super()._validate_data(df, fit)
 
-        if require_y and not all(df[self.y] >= 0):
+        if fit and not all(df[self.y] >= 0):
             raise ValueError("Pogit model requires observations to be non-negagive.")
 
     def nll(self, data: dict, params: list[ndarray]) -> ndarray:

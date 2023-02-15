@@ -13,9 +13,9 @@ class WeibullModel(Model):
     param_names = ("b", "k")
     default_param_specs = {"b": {"inv_link": "exp"}, "k": {"inv_link": "exp"}}
 
-    def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
-        super()._validate_data(df, require_y)
-        if require_y and not all(df[self.y] > 0):
+    def _validate_data(self, df: pd.DataFrame, fit: bool = True):
+        super()._validate_data(df, fit)
+        if fit and not all(df[self.y] > 0):
             raise ValueError("Weibull model requires observations to be positive.")
 
     def nll(self, data: dict, params: list[NDArray]) -> NDArray:

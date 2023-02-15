@@ -34,7 +34,7 @@ def test_scipy_optimizer(seed):
     )
     data = model._parse(df)
 
-    coefs = scipy_optimize(model, data)
+    coef = scipy_optimize(model, data)
 
     mat = data["mat"][0].to_numpy()
     tr_coef = np.linalg.solve(
@@ -42,4 +42,4 @@ def test_scipy_optimizer(seed):
         (mat.T * data["weights"]).dot(data["y"]),
     )
 
-    assert np.allclose(coefs, tr_coef)
+    assert np.allclose(coef, tr_coef)
