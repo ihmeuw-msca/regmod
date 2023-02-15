@@ -13,13 +13,13 @@ class WeibullModel(Model):
     param_names = ("b", "k")
     default_param_specs = {"b": {"inv_link": "exp"}, "k": {"inv_link": "exp"}}
 
-    def _attach(self, df: pd.DataFrame, require_y: bool = True):
-        super()._attach(df, require_y=require_y)
-        if require_y and not all(self._data["y"] > 0):
+    def _validate_data(self, df: pd.DataFrame, require_y: bool = True):
+        super()._validate_data(df, require_y)
+        if require_y and not all(df[self.y] > 0):
             raise ValueError("Weibull model requires observations to be positive.")
 
-    def nll(self, params: list[NDArray]) -> NDArray:
-        t = self._data["y"]
+    def nll(self, data: dict, params: list[NDArray]) -> NDArray:
+        t = data["y"]
         ln_t = np.log(t)
         return (
             params[0] * (t ** params[1])
@@ -28,16 +28,16 @@ class WeibullModel(Model):
             - np.log(params[1])
         )
 
-    def dnll(self, params: list[NDArray]) -> list[NDArray]:
-        t = self._data["y"]
+    def dnll(self, data: dict, params: list[NDArray]) -> list[NDArray]:
+        t = data["y"]
         ln_t = np.log(t)
         return [
             t ** params[1] - 1 / params[0],
             ln_t * params[0] * (t ** params[1]) - ln_t - 1 / params[1],
         ]
 
-    def d2nll(self, params: list[NDArray]) -> list[list[NDArray]]:
-        t = self._data["y"]
+    def d2nll(self, data: dict, params: list[NDArray]) -> list[list[NDArray]]:
+        t = data["y"]
         ln_t = np.log(t)
         return [
             [1 / params[0] ** 2, ln_t * (t ** params[1])],

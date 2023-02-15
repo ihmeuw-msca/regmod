@@ -1,8 +1,10 @@
 """
 Tobit Model
 """
-# pylint: disable=C0103
 import jax.numpy as jnp
+
+# pylint: disable=C0103
+import numpy as np
 from jax import grad, hessian, jit, lax
 from jax.numpy import DeviceArray
 from jax.scipy.stats.norm import logcdf, logpdf
@@ -11,6 +13,7 @@ from pandas import DataFrame
 
 from regmod.function import SmoothFunction
 
+from .data import parse_to_jax
 from .model import Model
 
 identity_jax = SmoothFunction(
@@ -71,7 +74,12 @@ class TobitModel(Model):
                 msg = f"No JAX implementation of {link_name} inv_link."
                 raise ValueError(msg)
 
-    def _attach(self, df: DataFrame, require_y: bool = True) -> None:
+    def _validate_data(self, df: DataFrame, require_y: bool = True):
+        super()._validate_data(df, require_y)
+        if require_y and not np.all(df[self.y] >= 0):
+            raise ValueError("Tobit model requires non-negative observations.")
+
+    def _parse(self, df: DataFrame, require_y: bool = True) -> dict:
         """Extract training data from data frame.
 
         Parameters
@@ -80,30 +88,10 @@ class TobitModel(Model):
             Training data.
 
         """
-        super()._attach(df, require_y=require_y)
-        if require_y and not jnp.all(self._data["y"] >= 0):
-            raise ValueError("Tobit model requires non-negative observations.")
+        self._validate_data(df)
+        return parse_to_jax(df, self.y, self.params, self.weights, for_fit=require_y)
 
-        self._data["mat"] = [jnp.asarray(mat) for mat in self._data["mat"]]
-        self._data["uvec"] = jnp.asarray(self._data["uvec"])
-        self._data["gvec"] = jnp.asarray(self._data["gvec"])
-        self._data["linear_uvec"] = jnp.asarray(self._data["linear_uvec"])
-        self._data["linear_gvec"] = jnp.asarray(self._data["linear_gvec"])
-        self._data["linear_umat"] = jnp.asarray(self._data["linear_umat"])
-        self._data["linear_gmat"] = jnp.asarray(self._data["linear_gmat"])
-
-        # Data structures for objective
-        self._data["offset"] = [
-            jnp.asarray(df[param.offset])
-            if param.offset is not None
-            else jnp.zeros(df.shape[0])
-            for param in self.params
-        ]
-        if "y" in self._data:
-            self._data["y"] = jnp.asarray(self._data["y"])
-        self._data["weights"] = jnp.asarray(self.trim_weights * self._data["weights"])
-
-    def objective(self, coefs: ArrayLike) -> float:
+    def objective(self, data: dict, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.
 
         Parameters
@@ -122,16 +110,16 @@ class TobitModel(Model):
         return _objective(
             coef_list,
             link_list,
-            self._data["mat"],
-            self._data["offset"],
-            self._data["y"],
-            self._data["weights"],
-            self._data["gvec"],
-            self._data["linear_gvec"],
-            self._data["linear_gmat"],
+            data["mat"],
+            data["offset"],
+            data["y"],
+            data["weights"],
+            data["gvec"],
+            data["linear_gvec"],
+            data["linear_gmat"],
         )
 
-    def gradient(self, coefs: ArrayLike) -> DeviceArray:
+    def gradient(self, data: dict, coefs: ArrayLike) -> DeviceArray:
         """Get gradient of negative log likelihood wrt coefficients.
 
         Parameters
@@ -150,17 +138,17 @@ class TobitModel(Model):
         temp = _gradient(
             coef_list,
             link_list,
-            self._data["mat"],
-            self._data["offset"],
-            self._data["y"],
-            self._data["weights"],
-            self._data["gvec"],
-            self._data["linear_gvec"],
-            self._data["linear_gmat"],
+            data["mat"],
+            data["offset"],
+            data["y"],
+            data["weights"],
+            data["gvec"],
+            data["linear_gvec"],
+            data["linear_gmat"],
         )
         return jnp.concatenate(temp)
 
-    def hessian(self, coefs: ArrayLike) -> DeviceArray:
+    def hessian(self, data: dict, coefs: ArrayLike) -> DeviceArray:
         """Get hessian of negative log likelihood wrt coefficients.
 
         Parameters
@@ -179,20 +167,20 @@ class TobitModel(Model):
         temp = _hessian(
             coef_list,
             link_list,
-            self._data["mat"],
-            self._data["offset"],
-            self._data["y"],
-            self._data["weights"],
-            self._data["gvec"],
-            self._data["linear_gvec"],
-            self._data["linear_gmat"],
+            data["mat"],
+            data["offset"],
+            data["y"],
+            data["weights"],
+            data["gvec"],
+            data["linear_gvec"],
+            data["linear_gmat"],
         )
         hess = jnp.concatenate(
             [jnp.concatenate(temp[0], axis=1), jnp.concatenate(temp[1], axis=1)], axis=0
         )
         return hess
 
-    def nll(self, params: list[ArrayLike]) -> DeviceArray:
+    def nll(self, data: dict, params: list[ArrayLike]) -> DeviceArray:
         """Get terms of negative log likelihood wrt parameters.
 
         Parameters
@@ -206,9 +194,9 @@ class TobitModel(Model):
             Terms of negative log likelihood.
 
         """
-        return _nll(self._data["y"], params)
+        return _nll(data["y"], params)
 
-    def dnll(self, params: list[ArrayLike]) -> list[DeviceArray]:
+    def dnll(self, data: dict, params: list[ArrayLike]) -> list[DeviceArray]:
         """Get derivative of negative log likelihood wrt parameters.
 
         Parameters
@@ -222,9 +210,9 @@ class TobitModel(Model):
             Derivatives of negative log likelihood.
 
         """
-        return _dnll(self._data["y"], params)
+        return _dnll(data["y"], params)
 
-    def get_vcov(self, coefs: ArrayLike) -> DeviceArray:
+    def get_vcov(self, data: dict, coefs: ArrayLike) -> DeviceArray:
         """Get variance-covariance matrix.
 
         Parameters
@@ -243,8 +231,8 @@ class TobitModel(Model):
         unlike other RegMod models.
 
         """
-        H = self.hessian(coefs)
-        J = self.jacobian2(coefs)
+        H = self.hessian(data, coefs)
+        J = self.jacobian2(data, coefs)
         inv_H = jnp.linalg.inv(H)
         return inv_H.dot(J.dot(inv_H.T))
 

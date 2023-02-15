@@ -1,6 +1,7 @@
 """
 Optimizer module
 """
+from functools import partial
 from typing import Callable, Optional
 
 import numpy as np
@@ -11,7 +12,10 @@ from scipy.optimize import LinearConstraint, minimize
 
 
 def scipy_optimize(
-    model: "Model", x0: Optional[NDArray] = None, options: Optional[dict] = None
+    model: "Model",
+    data: dict,
+    x0: Optional[NDArray] = None,
+    options: Optional[dict] = None,
 ) -> NDArray:
     """Scipy trust-region optimizer.
 
@@ -31,25 +35,29 @@ def scipy_optimize(
         Optimal solution.
     """
     x0 = np.zeros(model.size) if x0 is None else x0
-    bounds = model._data["uvec"].T
+    bounds = data["uvec"].T
     constraints = (
         [
             LinearConstraint(
-                model._data["linear_umat"],
-                model._data["linear_uvec"][0],
-                model._data["linear_uvec"][1],
+                data["linear_umat"],
+                data["linear_uvec"][0],
+                data["linear_uvec"][1],
             )
         ]
-        if model._data["linear_uvec"].size > 0
+        if data["linear_uvec"].size > 0
         else []
     )
 
+    objective = partial(model.objective, data)
+    gradient = partial(model.gradient, data)
+    hessian = partial(model.hessian, data)
+
     result = minimize(
-        model.objective,
+        objective,
         x0,
         method="trust-constr",
-        jac=model.gradient,
-        hess=model.hessian,
+        jac=gradient,
+        hess=hessian,
         constraints=constraints,
         bounds=bounds,
         options=options,
@@ -57,30 +65,37 @@ def scipy_optimize(
 
     model.opt_result = result
     model.opt_coefs = result.x.copy()
-    model.opt_vcov = model.get_vcov(model.opt_coefs)
+    model.opt_vcov = model.get_vcov(data, model.opt_coefs)
     return result.x
 
 
 def msca_optimize(
-    model: "Model", x0: Optional[NDArray] = None, options: Optional[dict] = None
+    model: "Model",
+    data: dict,
+    x0: Optional[NDArray] = None,
+    options: Optional[dict] = None,
 ) -> NDArray:
     x0 = np.zeros(model.size) if x0 is None else x0
     options = options or {}
 
-    if model._data["cmat"].size == 0:
-        solver = NTSolver(model.objective, model.gradient, model.hessian)
+    objective = partial(model.objective, data)
+    gradient = partial(model.gradient, data)
+    hessian = partial(model.hessian, data)
+
+    if data["cmat"].size == 0:
+        solver = NTSolver(objective, gradient, hessian)
     else:
         solver = IPSolver(
-            model.objective,
-            model.gradient,
-            model.hessian,
-            model._data["cmat"],
-            model._data["cvec"],
+            objective,
+            gradient,
+            hessian,
+            data["cmat"],
+            data["cvec"],
         )
     result = solver.minimize(x0=x0, **options)
     model.opt_result = result
     model.opt_coefs = result.x.copy()
-    model.opt_vcov = model.get_vcov(model.opt_coefs)
+    model.opt_vcov = model.get_vcov(data, model.opt_coefs)
     return result.x
 
 
@@ -117,6 +132,7 @@ def trimming(optimize: Callable) -> Callable:
 
     def optimize_with_trimming(
         model: "Model",
+        data: dict,
         x0: NDArray = None,
         options: dict = None,
         trim_steps: int = 3,
@@ -126,7 +142,7 @@ def trimming(optimize: Callable) -> Callable:
             raise ValueError("At least two trimming steps.")
         if inlier_pct < 0.0 or inlier_pct > 1.0:
             raise ValueError("inlier_pct has to be between 0 and 1.")
-        coefs = optimize(model, x0, options)
+        coefs = optimize(model, data, x0, options)
         if inlier_pct < 1.0:
             bounds = (0.5 - 0.5 * inlier_pct, 0.5 + 0.5 * inlier_pct)
             index = model.detect_outliers(coefs, bounds)
@@ -134,8 +150,8 @@ def trimming(optimize: Callable) -> Callable:
                 masks = np.append(np.linspace(1.0, 0.0, trim_steps)[1:], 0.0)
                 for mask in masks:
                     set_trim_weights(model, index, mask)
-                    coefs = optimize(model, coefs, options)
-                    index = model.detect_outliers(coefs, bounds)
+                    coefs = optimize(model, data, coefs, options)
+                    index = model.detect_outliers(data, coefs, bounds)
         return coefs
 
     return optimize_with_trimming
@@ -144,6 +160,7 @@ def trimming(optimize: Callable) -> Callable:
 def original_trimming(optimize: Callable) -> Callable:
     def optimize_with_trimming(
         model: "Model",
+        data: dict,
         x0: NDArray = None,
         options: Optional[dict] = None,
         trim_steps: int = 10,
