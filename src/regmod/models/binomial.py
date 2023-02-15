@@ -10,8 +10,8 @@ from scipy.stats import binom
 
 from regmod.optimizer import msca_optimize
 
+from .data import parse_to_msca
 from .model import Model
-from .utils import model_post_init
 
 
 class BinomialModel(Model):
@@ -26,15 +26,8 @@ class BinomialModel(Model):
             )
 
     def _parse(self, df: pd.DataFrame, require_y: bool = True):
-        data = super()._parse(df, require_y=require_y)
-
-        data["mat"][0], data["cmat"], data["cvec"] = model_post_init(
-            data["mat"][0],
-            data["uvec"],
-            data["linear_umat"],
-            data["linear_uvec"],
-        )
-        return data
+        self._validate_data(df, require_y=require_y)
+        return parse_to_msca(df, self.y, self.params, self.weights, for_fit=require_y)
 
     def objective(self, data: dict, coefs: NDArray) -> float:
         """Objective function.
@@ -53,7 +46,7 @@ class BinomialModel(Model):
         )
         param = inv_link.fun(lin_param)
 
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         obj_param = -weights * (
             data["y"] * np.log(param) + (1 - data["y"]) * np.log(1 - param)
         )
@@ -80,7 +73,7 @@ class BinomialModel(Model):
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         grad_param = weights * ((param - data["y"]) / (param * (1 - param)) * dparam)
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(data, coefs)
@@ -107,7 +100,7 @@ class BinomialModel(Model):
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         hess_param = weights * (
             (data["y"] / param**2 + (1 - data["y"]) / (1 - param) ** 2) * dparam**2
             + (param - data["y"]) / (param * (1 - param)) * d2param
@@ -138,7 +131,7 @@ class BinomialModel(Model):
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         grad_param = weights * ((param - data["y"]) / (param * (1 - param)) * dparam)
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior(data))

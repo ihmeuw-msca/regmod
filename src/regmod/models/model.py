@@ -8,12 +8,12 @@ import numpy as np
 import pandas as pd
 from msca.linalg.matrix import Matrix
 from numpy.typing import NDArray
-from scipy.linalg import block_diag
-from scipy.sparse import csc_matrix
 
 from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices
+
+from .data import parse_to_numpy
 
 
 class Model:
@@ -68,7 +68,6 @@ class Model:
             ]
         self.y = y
         self.weights = weights
-        self.trim_weights = None
 
         self.sizes = [param.size for param in self.params]
         self.indices = sizes_to_slices(self.sizes)
@@ -102,38 +101,7 @@ class Model:
     def _parse(self, df: pd.DataFrame, require_y: bool = True) -> dict:
         self._validate_data(df)
 
-        for param in self.params:
-            param.check_data(df)
-
-        data = {
-            "mat": [param.get_mat(df) for param in self.params],
-            "offset": [param.get_offset(df) for param in self.params],
-            "uvec": np.hstack([param.get_uvec() for param in self.params]),
-            "gvec": np.hstack([param.get_gvec() for param in self.params]),
-            "linear_uvec": np.hstack(
-                [param.get_linear_uvec() for param in self.params]
-            ),
-            "linear_gvec": np.hstack(
-                [param.get_linear_gvec() for param in self.params]
-            ),
-            "linear_umat": block_diag(
-                *[param.get_linear_umat() for param in self.params]
-            ),
-            "linear_gmat": block_diag(
-                *[param.get_linear_gmat() for param in self.params]
-            ),
-        }
-
-        if require_y:
-            data["y"] = df[self.y].to_numpy()
-        data["weights"] = np.ones(len(df))
-        if self.weights is not None:
-            data["weights"] = df[self.weights].to_numpy()
-
-        self.use_hessian = not any(isinstance(m, csc_matrix) for m in data["mat"])
-        self.trim_weights = np.ones(df.shape[0])
-
-        return data
+        return parse_to_numpy(df, self.y, self.params, self.weights, for_fit=require_y)
 
     @property
     def opt_coefs(self) -> Union[None, NDArray]:
@@ -415,7 +383,7 @@ class Model:
             Objective value.
         """
         nll_terms = self.get_nll_terms(data, coefs)
-        return self.trim_weights.dot(nll_terms) + self.objective_from_gprior(
+        return data["trim_weights"].dot(nll_terms) + self.objective_from_gprior(
             data, coefs
         )
 
@@ -435,7 +403,7 @@ class Model:
         params = self.get_params(data, coefs)
         dparams = self.get_dparams(data, coefs)
         grad_params = self.dnll(data, params)
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         return np.hstack(
             [dparams[i].T.dot(weights * grad_params[i]) for i in range(self.num_params)]
         ) + self.gradient_from_gprior(data, coefs)
@@ -458,7 +426,7 @@ class Model:
         d2params = self.get_d2params(data, coefs)
         grad_params = self.dnll(data, params)
         hess_params = self.d2nll(data, params)
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         hess = [
             [
                 (dparams[i].T * (weights * hess_params[i][j])).dot(dparams[j])
@@ -486,7 +454,7 @@ class Model:
         params = self.get_params(data, coefs)
         dparams = self.get_dparams(data, coefs)
         grad_params = self.dnll(data, params)
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         jacobian = np.vstack(
             [dparams[i].T * (weights * grad_params[i]) for i in range(self.num_params)]
         )

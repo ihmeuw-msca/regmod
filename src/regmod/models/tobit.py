@@ -13,6 +13,7 @@ from pandas import DataFrame
 
 from regmod.function import SmoothFunction
 
+from .data import parse_to_jax
 from .model import Model
 
 identity_jax = SmoothFunction(
@@ -87,27 +88,8 @@ class TobitModel(Model):
             Training data.
 
         """
-        data = super()._parse(df, require_y=require_y)
-
-        data["mat"] = [jnp.asarray(mat) for mat in data["mat"]]
-        data["uvec"] = jnp.asarray(data["uvec"])
-        data["gvec"] = jnp.asarray(data["gvec"])
-        data["linear_uvec"] = jnp.asarray(data["linear_uvec"])
-        data["linear_gvec"] = jnp.asarray(data["linear_gvec"])
-        data["linear_umat"] = jnp.asarray(data["linear_umat"])
-        data["linear_gmat"] = jnp.asarray(data["linear_gmat"])
-
-        # Data structures for objective
-        data["offset"] = [
-            jnp.asarray(df[param.offset])
-            if param.offset is not None
-            else jnp.zeros(df.shape[0])
-            for param in self.params
-        ]
-        if "y" in data:
-            data["y"] = jnp.asarray(data["y"])
-        data["weights"] = jnp.asarray(self.trim_weights * data["weights"])
-        return data
+        self._validate_data(df)
+        return parse_to_jax(df, self.y, self.params, self.weights, for_fit=require_y)
 
     def objective(self, data: dict, coefs: ArrayLike) -> float:
         """Get negative log likelihood wrt coefficients.

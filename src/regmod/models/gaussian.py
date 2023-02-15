@@ -10,8 +10,8 @@ from scipy.stats import norm
 
 from regmod.optimizer import msca_optimize
 
+from .data import parse_to_msca
 from .model import Model
-from .utils import model_post_init
 
 
 class GaussianModel(Model):
@@ -19,14 +19,8 @@ class GaussianModel(Model):
     default_param_specs = {"mu": {"inv_link": "identity"}}
 
     def _parse(self, df: pd.DataFrame, require_y: bool = True):
-        data = super()._parse(df, require_y=require_y)
-        data["mat"][0], data["cmat"], data["cvec"] = model_post_init(
-            data["mat"][0],
-            data["uvec"],
-            data["linear_umat"],
-            data["linear_uvec"],
-        )
-        return data
+        self._validate_data(df)
+        return parse_to_msca(df, self.y, self.params, self.weights, for_fit=require_y)
 
     def objective(self, data: dict, coefs: NDArray) -> float:
         """Objective function.
@@ -45,7 +39,7 @@ class GaussianModel(Model):
         )
         param = inv_link.fun(lin_param)
 
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         obj_param = weights * 0.5 * (param - data["y"]) ** 2
         return obj_param.sum() + self.objective_from_gprior(data, coefs)
 
@@ -70,7 +64,7 @@ class GaussianModel(Model):
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         grad_param = weights * (param - data["y"]) * dparam
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(data, coefs)
@@ -97,7 +91,7 @@ class GaussianModel(Model):
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         hess_param = weights * (dparam**2 + (param - data["y"]) * d2param)
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -125,7 +119,7 @@ class GaussianModel(Model):
         )
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = data["weights"] * self.trim_weights
+        weights = data["weights"] * data["trim_weights"]
         grad_param = weights * (param - data["y"]) * dparam
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior(data))
