@@ -16,7 +16,7 @@ dependencies = [
     "numpy",
     "scipy",
     "pandas",
-    "xspline",
+    "xspline==0.0.7",
     "msca",
     "jax[cpu]==0.4.5",
     "jaxlib==0.4.4",
