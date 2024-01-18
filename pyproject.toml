@@ -26,4 +26,4 @@ dependencies = [
 test = ["pytest"]
 
 [project.urls]
-stash = "https://github.com/ihmeuw-msca/regmod"
+github = "https://github.com/ihmeuw-msca/regmod"
