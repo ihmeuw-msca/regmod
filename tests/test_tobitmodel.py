@@ -27,7 +27,7 @@ def data(df):
 def param_specs():
     specs = {
         "mu": {"variables": [Variable("x"), Variable("intercept")]},
-        "sigma": {"variables": [Variable("intercept")]}
+        "sigma": {"variables": [Variable("intercept")]},
     }
     return specs
 
@@ -50,8 +50,7 @@ def test_neg_obs(df, param_specs):
     """ValueError if data contains negative observations."""
     with pytest.raises(ValueError, match="requires non-negative observations"):
         TobitModel(
-            data=Data(col_obs="y", col_covs=["x"], df=df),
-            param_specs=param_specs
+            data=Data(col_obs="y", col_covs=["x"], df=df), param_specs=param_specs
         )
 
 
@@ -62,8 +61,8 @@ def test_vcov_output(model):
 
     # Old version
     H = model.hessian(coefs)
-    eig_vals, eig_vecs = np.linalg.eig(H)
-    inv_H = (eig_vecs/eig_vals).dot(eig_vecs.T)
+    eig_vals, eig_vecs = np.linalg.eigh(H)
+    inv_H = (eig_vecs / eig_vals).dot(eig_vecs.T)
     J = model.jacobian2(coefs)
     vcov_old = inv_H.dot(J)
     vcov_old = inv_H.dot(vcov_old.T)
@@ -84,18 +83,19 @@ def test_pred_values(model):
 
 def test_model_no_variables():
     num_obs = 5
-    df = pd.DataFrame({
-        "obs": np.random.rand(num_obs)*10,
-        "offset": np.ones(num_obs),
-    })
+    df = pd.DataFrame(
+        {
+            "obs": np.random.rand(num_obs) * 10,
+            "offset": np.ones(num_obs),
+        }
+    )
     data = Data(
         col_obs="obs",
         col_offset="offset",
         df=df,
     )
     model = TobitModel(
-        data,
-        param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
+        data, param_specs={"mu": {"offset": "offset"}, "sigma": {"offset": "offset"}}
     )
     coefs = np.array([])
     grad = model.gradient(coefs)
@@ -109,10 +109,12 @@ def test_model_no_variables():
 
 def test_model_one_variable():
     num_obs = 5
-    df = pd.DataFrame({
-        "obs": np.random.rand(num_obs)*10,
-        "offset": np.ones(num_obs),
-    })
+    df = pd.DataFrame(
+        {
+            "obs": np.random.rand(num_obs) * 10,
+            "offset": np.ones(num_obs),
+        }
+    )
     data = Data(
         col_obs="obs",
         col_offset="offset",
@@ -123,7 +125,7 @@ def test_model_one_variable():
         param_specs={
             "sigma": {"offset": "offset"},
             "mu": {"variables": [Variable("intercept")]},
-        }
+        },
     )
     model.fit()
     assert model.opt_coefs.size == 1
