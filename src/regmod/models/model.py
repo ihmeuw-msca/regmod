@@ -127,7 +127,8 @@ class Model:
         hessian = self.hessian(coefs)
         if isinstance(hessian, Matrix):
             hessian = hessian.to_numpy()
-        eig_vals, eig_vecs = np.linalg.eig(hessian)
+        #We probably don't want to be eigendecomposing
+        eig_vals, eig_vecs = np.linalg.eigh(hessian)
         if np.isclose(eig_vals, 0.0).any():
             raise ValueError("singular Hessian matrix, please add priors or "
                              "reduce number of variables")
@@ -136,7 +137,7 @@ class Model:
         jacobian2 = self.jacobian2(coefs)
         if isinstance(jacobian2, Matrix):
             jacobian2 = jacobian2.to_numpy()
-        eig_vals = np.linalg.eigvals(jacobian2)
+        eig_vals = np.linalg.eigvalsh(jacobian2)
         if np.isclose(eig_vals, 0.0).any():
             raise ValueError("singular Jacobian matrix, please add priors or "
                              "reduce number of variables")
