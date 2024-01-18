@@ -18,8 +18,8 @@ dependencies = [
     "pandas",
     "xspline",
     "msca",
-    "jaxlib",
-    "jax[cpu]",
+    "jax[cpu]==0.4.5",
+    "jaxlib==0.4.4",
 ]
 
 [project.optional-dependencies]
