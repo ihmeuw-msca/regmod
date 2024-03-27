@@ -27,6 +27,7 @@ class SmoothFunction:
         Derivative of the function.
     d2fun : Callable
         Second derivative of the function.
+
     """
 
     name: str

@@ -72,6 +72,7 @@ class Variable:
     Notes
     -----
     In the future, this class will be combined with the SplineVariable.
+
     """
 
     name: str
@@ -93,6 +94,7 @@ class Variable:
             Raised if direct Uniform prior size not match.
         ValueError
             Raised when any prior in the list is not an instance of Prior.
+
         """
         for prior in self.priors:
             if isinstance(prior, LinearPrior):
@@ -171,6 +173,7 @@ class Variable:
         AssertionError
             Raised when `indices` is list of booleans but with different length
             compare to `self.priors`.
+
         """
         if isinstance(indices, int):
             indices = [indices]
@@ -221,6 +224,7 @@ class Variable:
         -------
         NDArray
             Direct Gaussian prior vector.
+
         """
         if self.gprior is None:
             gvec = np.repeat([[0.0], [np.inf]], self.size, axis=1)
@@ -235,6 +239,7 @@ class Variable:
         -------
         NDArray
             Direct Uniform prior vector.
+
         """
         if self.uprior is None:
             uvec = np.repeat([[-np.inf], [np.inf]], self.size, axis=1)
@@ -249,6 +254,7 @@ class Variable:
         -------
         Variable
             Current instance.
+
         """
         return deepcopy(self)
 
@@ -303,6 +309,7 @@ class SplineVariable(Variable):
         Get linear Gaussian prior design matrix.
     get_linear_umat(data)
         Get linear Uniform prior design matrix.
+
     """
 
     spline: XSpline = field(default=None, repr=False)
@@ -345,6 +352,7 @@ class SplineVariable(Variable):
             Raised if direct Uniform prior size not match.
         ValueError
             Raised when any prior in the list is not an instance of Prior.
+
         """
         for prior in self.priors:
             if isinstance(prior, (SplineGaussianPrior, LinearGaussianPrior)):
@@ -405,6 +413,7 @@ class SplineVariable(Variable):
         -------
         NDArray
             Linear uniform prior vector.
+
         """
         if not self.linear_upriors:
             uvec = np.empty((2, 0))
@@ -421,6 +430,7 @@ class SplineVariable(Variable):
         -------
         NDArray
             Linear Gaussian prior vector.
+
         """
         if not self.linear_gpriors:
             gvec = np.empty((2, 0))
@@ -447,6 +457,7 @@ class SplineVariable(Variable):
         -------
         NDArray:
             Linear Uniform prior design matrix.
+
         """
         if not self.linear_upriors:
             umat = np.empty((0, self.size))
@@ -474,6 +485,7 @@ class SplineVariable(Variable):
         -------
         NDArray:
             Linear Gaussian prior design matrix.
+
         """
         if not self.linear_gpriors:
             gmat = np.empty((0, self.size))

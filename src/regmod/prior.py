@@ -17,7 +17,7 @@ class Prior:
 
     Parameters
     ----------
-    size : Optional[int], optional
+    size : int, optional
         Size of variable. Default is `None`. When it is `None`, size is inferred
         from the vector information of the prior.
 
@@ -35,6 +35,7 @@ class Prior:
     -----
     We should figure out a better structure for linear and spline prior, so that
     the extensions will be easier.
+
     """
 
     size: int = None
@@ -53,6 +54,7 @@ class Prior:
         ------
         ValueError
             Raised when size is not positive or integer.
+
         """
         if self.size is None:
             sizes = [len(vec) for vec in vecs if isinstance(vec, Iterable)]
@@ -96,6 +98,7 @@ class GaussianPrior(Prior):
         Raised when size of the standard deviation vector doesn't match.
     ValueError
         Raised when any value in standard deviation vector is non-positive.
+
     """
 
     mean: NDArray = field(default=0.0, repr=False)
@@ -150,6 +153,7 @@ class UniformPrior(Prior):
         Raised when size of the upper bound vector doesn't match.
     ValueError
         Raised if lower bound is greater than upper bound.
+
     """
 
     lb: NDArray = field(default=-np.inf, repr=False)
@@ -194,6 +198,7 @@ class LinearPrior:
     -------
     is_empty()
         Indicate if the prior is empty.
+
     """
 
     mat: NDArray = field(default_factory=lambda: np.empty(shape=(0, 1)), repr=False)
@@ -257,6 +262,7 @@ class SplinePrior(LinearPrior):
     -------
     attach_spline(spline)
         Attach the spline to process the domain.
+
     """
 
     size: int = 100
@@ -282,6 +288,7 @@ class SplinePrior(LinearPrior):
         ----------
         spline : XSpline
             Spline used to create the linear mapping for the prior.
+
         """
         knots_lb = spline.knots[0]
         knots_ub = spline.knots[-1]

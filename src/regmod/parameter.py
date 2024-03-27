@@ -114,6 +114,7 @@ class Parameter:
         -------
         NDArray
             Uniform prior information array.
+
         """
         if len(self.variables) == 0:
             return np.empty(shape=(2, 0))
@@ -126,6 +127,7 @@ class Parameter:
         -------
         NDArray
             Gaussian prior information array.
+
         """
         if len(self.variables) == 0:
             return np.empty(shape=(2, 0))
@@ -138,6 +140,7 @@ class Parameter:
         -------
         NDArray
             Uniform prior information array.
+
         """
         if len(self.variables) == 0:
             return np.empty(shape=(2, 0))
@@ -165,6 +168,7 @@ class Parameter:
         -------
         NDArray
             Gaussian prior information array.
+
         """
         if len(self.variables) == 0:
             return np.empty(shape=(2, 0))
@@ -192,6 +196,7 @@ class Parameter:
         -------
         NDArray
             Uniform prior design matrix.
+
         """
         if len(self.variables) == 0:
             return np.empty(shape=(0, 0))
@@ -216,6 +221,7 @@ class Parameter:
         -------
         NDArray
             Gaussian prior design matrix.
+
         """
         if len(self.variables) == 0:
             return np.empty(shape=(0, 0))
@@ -255,7 +261,7 @@ class Parameter:
 
         Returns
         -------
-        Union[NDArray, tuple[NDArray, NDArray]]
+        NDArray | tuple[NDArray, NDArray]
             Linear parameter vector, or when `return_mat=True` also returns the
             design matrix.
 
@@ -287,6 +293,7 @@ class Parameter:
         -------
         NDArray
             Returns the parameter.
+
         """
         lin_param = self.get_lin_param(coefs, df, mat)
         return self.inv_link.fun(lin_param)
@@ -307,6 +314,7 @@ class Parameter:
         -------
         NDArray
             Returns the derivative of the parameter.
+
         """
         if len(self.variables) == 0:
             return np.empty((df.shape[0], 0))
@@ -331,6 +339,7 @@ class Parameter:
         -------
         NDArray
             Returns the second order derivative of the parameter.
+
         """
         if len(self.variables) == 0:
             return np.empty((df.shape[0], 0, 0))

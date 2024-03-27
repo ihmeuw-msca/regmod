@@ -34,6 +34,7 @@ class PoissonModel(Model):
         -------
         float
             Objective value.
+
         """
         inv_link = self.params[0].inv_link
         lin_param = self.params[0].get_lin_param(coefs, self.df, mat=self.mat[0])
@@ -55,6 +56,7 @@ class PoissonModel(Model):
         -------
         NDArray
             Gradient vector.
+
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
@@ -79,6 +81,7 @@ class PoissonModel(Model):
         -------
         NDArray
             Hessian matrix.
+
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
@@ -109,6 +112,7 @@ class PoissonModel(Model):
         -------
         NDArray
             Jacobian matrix.
+
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
@@ -129,6 +133,7 @@ class PoissonModel(Model):
         ----------
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
+
         """
         super().fit(optimizer=optimizer, **optimizer_options)
 

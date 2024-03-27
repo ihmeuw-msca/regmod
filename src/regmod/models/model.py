@@ -158,6 +158,7 @@ class Model:
         -------
         list[NDArray]
             The design matrices.
+
         """
         return [param.get_mat(self.df) for param in self.params]
 
@@ -168,6 +169,7 @@ class Model:
         -------
         NDArray
             The direct Uniform prior array.
+
         """
         return np.hstack([param.get_uvec() for param in self.params])
 
@@ -178,6 +180,7 @@ class Model:
         -------
         NDArray
             The direct Gaussian prior array.
+
         """
         return np.hstack([param.get_gvec() for param in self.params])
 
@@ -188,6 +191,7 @@ class Model:
         -------
         NDArray
             The linear Uniform prior array.
+
         """
         return np.hstack([param.get_linear_uvec() for param in self.params])
 
@@ -198,6 +202,7 @@ class Model:
         -------
         NDArray
             The linear Gaussian prior array.
+
         """
         return np.hstack([param.get_linear_gvec() for param in self.params])
 
@@ -208,6 +213,7 @@ class Model:
         -------
         NDArray
             The linear Uniform prior design matrix.
+
         """
         return block_diag(*[param.get_linear_umat() for param in self.params])
 
@@ -218,6 +224,7 @@ class Model:
         -------
         NDArray
             The linear Gaussian prior design matrix.
+
         """
         return block_diag(*[param.get_linear_gmat() for param in self.params])
 
@@ -233,6 +240,7 @@ class Model:
         -------
         list[NDArray]
             A list of splitted coefficients for each parameter.
+
         """
         assert len(coefs) == self.size
         return [coefs[index] for index in self.indices]
@@ -249,6 +257,7 @@ class Model:
         -------
         list[NDArray]
             The parameters.
+
         """
         coefs = self.split_coefs(coefs)
         return [
@@ -268,6 +277,7 @@ class Model:
         -------
         list[NDArray]
             The derivative of the parameters.
+
         """
         coefs = self.split_coefs(coefs)
         return [
@@ -287,6 +297,7 @@ class Model:
         -------
         list[NDArray]
             The second order derivative of the parameters.
+
         """
         coefs = self.split_coefs(coefs)
         return [
@@ -306,6 +317,7 @@ class Model:
         -------
         NDArray
             An array of negative log likelihood for each observation.
+
         """
         raise NotImplementedError()
 
@@ -321,6 +333,7 @@ class Model:
         -------
         list[NDArray]
             A list of derivatives for each parameter and each observation.
+
         """
         raise NotImplementedError()
 
@@ -337,6 +350,7 @@ class Model:
         list[list[NDArray]]
             A list of list of second order derivatives for each parameter and
             each observation.
+
         """
         raise NotImplementedError()
 
@@ -354,6 +368,7 @@ class Model:
         -------
         NDArray
             An array with uncertainty interval for each observation.
+
         """
         raise NotImplementedError()
 
@@ -371,6 +386,7 @@ class Model:
         -------
         NDArray
             A boolean array that indicate if observations are outliers.
+
         """
         params = self.get_params(coefs)
         ui = self.get_ui(params, bounds)
@@ -389,6 +405,7 @@ class Model:
         -------
         float
             Objective function value.
+
         """
         val = 0.5 * np.sum((coefs - self.gvec[0]) ** 2 / self.gvec[1] ** 2)
         if self.linear_gvec.size > 0:
@@ -410,6 +427,7 @@ class Model:
         -------
         NDArray
             Graident vector.
+
         """
         grad = (coefs - self.gvec[0]) / self.gvec[1] ** 2
         if self.linear_gvec.size > 0:
@@ -425,6 +443,7 @@ class Model:
         -------
         NDArray
             Hessian matrix.
+
         """
         hess = np.diag(1.0 / self.gvec[1] ** 2)
         if self.linear_gvec.size > 0:
@@ -451,6 +470,7 @@ class Model:
         -------
         float
             Objective value.
+
         """
         nll_terms = self.get_nll_terms(coefs)
         return self.trim_weights.dot(nll_terms) + self.objective_from_gprior(coefs)
@@ -467,6 +487,7 @@ class Model:
         -------
         NDArray
             Gradient vector.
+
         """
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
@@ -488,6 +509,7 @@ class Model:
         -------
         NDArray
             Hessian matrix.
+
         """
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
@@ -518,6 +540,7 @@ class Model:
         -------
         NDArray
             Jacobian matrix.
+
         """
         params = self.get_params(coefs)
         dparams = self.get_dparams(coefs)
@@ -536,6 +559,7 @@ class Model:
         ----------
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
+
         """
         if self.size == 0:
             self.opt_coefs = np.empty((0,))
@@ -557,6 +581,7 @@ class Model:
         -------
         DataFrame
             Data frame with predicted parameters.
+
         """
         if df is None:
             df = self.df

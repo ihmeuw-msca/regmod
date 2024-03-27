@@ -37,6 +37,7 @@ def default_vec_factory(
     Notes
     -----
     This function should be replaced in the next version.
+
     """
 
     if vec is None or np.isscalar(vec):
@@ -67,6 +68,7 @@ def check_size(vec: NDArray, size: int, vec_name: str = "vec") -> None:
     Notes
     -----
     This function should be replaced in the next version.
+
     """
     assert len(vec) == size, f"{vec_name} must length {size}."
 
@@ -105,6 +107,7 @@ class SplineSpecs:
     -------
     create_spline(vec)
         Create the spline from given vector as the data.
+
     """
 
     knots: NDArray
@@ -147,6 +150,7 @@ class SplineSpecs:
         -------
         XSpline
             Spline object.
+
         """
         if self.knots_type == "abs":
             knots = self.knots
@@ -199,6 +203,7 @@ def sizes_to_slices(sizes: list[int]) -> list[slice]:
     [0, 1, 2, 3, 4, 5]
     >>> [x[s] for s in slices]
     [[0], [1, 2], [3, 4, 5]]
+
     """
     sizes = np.asarray(sizes).astype(int)
     if any(sizes < 0):
