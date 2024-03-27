@@ -28,6 +28,7 @@ def scipy_optimize(
     -------
     NDArray
         Optimal solution.
+
     """
     x0 = np.zeros(model.size) if x0 is None else x0
     bounds = model.uvec.T
@@ -88,6 +89,7 @@ def set_trim_weights(model: "Model", index: NDArray, mask: float):
         Index where the weights need to be set.
     mask : float
         Value of the weights to set.
+
     """
     weights = np.ones(model.data.num_obs)
     weights[index] = mask
@@ -106,6 +108,7 @@ def trimming(optimize: Callable) -> Callable:
     -------
     Callable
         Trimming optimization solver.
+
     """
 
     def optimize_with_trimming(
