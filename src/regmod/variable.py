@@ -1,19 +1,27 @@
 """
 Variable module
 """
-from collections.abc import Iterable
+
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import List, Union
 
 import numpy as np
 from xspline import XSpline
 
 from regmod.data import Data
-from regmod.prior import (GaussianPrior, LinearGaussianPrior, LinearPrior,
-                          LinearUniformPrior, Prior, SplineGaussianPrior,
-                          SplinePrior, SplineUniformPrior, UniformPrior)
+from regmod.prior import (
+    GaussianPrior,
+    LinearGaussianPrior,
+    LinearPrior,
+    LinearUniformPrior,
+    Prior,
+    SplineGaussianPrior,
+    SplinePrior,
+    SplineUniformPrior,
+    UniformPrior,
+)
 from regmod.utils import SplineSpecs
+from regmod._typing import Iterable, NDArray
 
 
 @dataclass
@@ -26,7 +34,7 @@ class Variable:
     ----------
     name : str
         Name of the variable corresponding to the column name in the data frame.
-    priors : List[Prior], optional
+    priors : list[Prior], optional
         A list of priors for the variable. Default is an empty list.
 
     Attributes
@@ -34,7 +42,7 @@ class Variable:
     size
     name : str
         Name of the variable corresponding to the column name in the data frame.
-    priors : List[Prior]
+    priors : list[Prior]
         A list of priors for the variable.
     gprior : GaussianPrior
         Direct Gaussian prior in `priors`.
@@ -68,7 +76,7 @@ class Variable:
     """
 
     name: str
-    priors: List[Prior] = field(default_factory=list, repr=False)
+    priors: list[Prior] = field(default_factory=list, repr=False)
     gprior: GaussianPrior = field(default=None, init=False, repr=False)
     uprior: UniformPrior = field(default=None, init=False, repr=False)
 
@@ -94,14 +102,12 @@ class Variable:
                 if self.gprior is not None:
                     self.priors.remove(self.gprior)
                 self.gprior = prior
-                assert self.gprior.size == self.size, \
-                    "Gaussian prior size not match."
+                assert self.gprior.size == self.size, "Gaussian prior size not match."
             elif isinstance(prior, UniformPrior):
                 if self.uprior is not None:
                     self.priors.remove(self.uprior)
                 self.uprior = prior
-                assert self.uprior.size == self.size, \
-                    "Uniform prior size not match."
+                assert self.uprior.size == self.size, "Uniform prior size not match."
             else:
                 raise ValueError("Unknown prior type.")
 
@@ -131,12 +137,12 @@ class Variable:
         self.gprior = None
         self.uprior = None
 
-    def add_priors(self, priors: Union[Prior, List[Prior]]) -> None:
+    def add_priors(self, priors: Prior | list[Prior]) -> None:
         """Add priors.
 
         Parameters
         ----------
-        priors : Union[Prior, List[Prior]]
+        priors : Union[Prior, list[Prior]]
             Priors to be added.
         """
         if not isinstance(priors, list):
@@ -144,12 +150,12 @@ class Variable:
         self.priors.extend(priors)
         self.process_priors()
 
-    def rm_priors(self, indices: Union[int, List[int], List[bool]]) -> None:
+    def rm_priors(self, indices: int | list[int] | list[bool]) -> None:
         """Remove priors.
 
         Parameters
         ----------
-        indices : Union[int, List[int], List[bool]]
+        indices : Union[int, list[int], list[bool]]
             Indicies of the priors that need to be removed. Indicies come in the
             forms of integer, list of integers or list of booleans. When it is
             integer or list of integers, it requires the integer is within the
@@ -169,21 +175,27 @@ class Variable:
         if isinstance(indices, int):
             indices = [indices]
         else:
-            assert isinstance(indices, Iterable), \
-                "Indies must be int, List[int], or List[bool]."
-        if all([not isinstance(index, bool) and isinstance(index, int)
-                for index in indices]):
+            assert isinstance(
+                indices, Iterable
+            ), "Indies must be int, list[int], or list[bool]."
+        if all(
+            [
+                not isinstance(index, bool) and isinstance(index, int)
+                for index in indices
+            ]
+        ):
             indices = [i in indices for i in range(len(self.priors))]
-        assert all([isinstance(index, bool) for index in indices]), \
-            "Index type not consistent."
-        assert len(indices) == len(self.priors), \
-            "Index size not match with number of priors."
-        self.priors = [self.priors[i] for i, index in enumerate(indices)
-                       if not index]
+        assert all(
+            [isinstance(index, bool) for index in indices]
+        ), "Index type not consistent."
+        assert len(indices) == len(
+            self.priors
+        ), "Index size not match with number of priors."
+        self.priors = [self.priors[i] for i, index in enumerate(indices) if not index]
         self.reset_priors()
         self.process_priors()
 
-    def get_mat(self, data: Data) -> np.ndarray:
+    def get_mat(self, data: Data) -> NDArray:
         """Get design matrix.
 
         Parameters
@@ -193,18 +205,18 @@ class Variable:
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Design matrix.
         """
         self.check_data(data)
         return data.get_covs(self.name)
 
-    def get_gvec(self) -> np.ndarray:
+    def get_gvec(self) -> NDArray:
         """Get direct Gaussian prior vector.
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Direct Gaussian prior vector.
         """
         if self.gprior is None:
@@ -213,12 +225,12 @@ class Variable:
             gvec = np.vstack([self.gprior.mean, self.gprior.sd])
         return gvec
 
-    def get_uvec(self) -> np.ndarray:
+    def get_uvec(self) -> NDArray:
         """Get direct Uniform prior vector.
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Direct Uniform prior vector.
         """
         if self.uprior is None:
@@ -250,10 +262,10 @@ class SplineVariable(Variable):
     spline_specs : SplineSpecs, optional
         Spline settings used to create spline object. Recommend to use only when
         use `knots_type={'rel_domain', 'rel_freq'}. Default to be `None`.
-    linear_gpriors : List[LinearPrior], optional
+    linear_gpriors : list[LinearPrior], optional
         A list of linear Gaussian priors usually for shape priors of the spline.
         Default to be an empty list.
-    linear_upriors : List[LinearPrior], optional
+    linear_upriors : list[LinearPrior], optional
         A list of linear Uniform priors usually for shape priors of the spline.
         spline. Default to be an empty list.
 
@@ -263,9 +275,9 @@ class SplineVariable(Variable):
         Spline object that in charge of creating design matrix.
     spline_specs : SplineSpecs
         Spline settings used to create spline object.
-    linear_gpriors : List[LinearPrior]
+    linear_gpriors : list[LinearPrior]
         A list of linear Gaussian priors usually for shape priors of the spline.
-    linear_upriors : List[LinearPrior]
+    linear_upriors : list[LinearPrior]
         A list of linear Uniform priors usually for shape priors of the spline.
 
     Methods
@@ -292,8 +304,8 @@ class SplineVariable(Variable):
 
     spline: XSpline = field(default=None, repr=False)
     spline_specs: SplineSpecs = field(default=None, repr=False)
-    linear_gpriors: List[LinearPrior] = field(default_factory=list, repr=False)
-    linear_upriors: List[LinearPrior] = field(default_factory=list, repr=False)
+    linear_gpriors: list[LinearPrior] = field(default_factory=list, repr=False)
+    linear_upriors: list[LinearPrior] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
         if (self.spline is None) and (self.spline_specs is None):
@@ -339,14 +351,12 @@ class SplineVariable(Variable):
                 if self.gprior is not None:
                     self.priors.remove(self.gprior)
                 self.gprior = prior
-                assert self.gprior.size == self.size, \
-                    "Gaussian prior size not match."
+                assert self.gprior.size == self.size, "Gaussian prior size not match."
             elif isinstance(prior, UniformPrior):
                 if self.uprior is not None:
                     self.priors.remove(self.uprior)
                 self.uprior = prior
-                assert self.uprior.size == self.size, \
-                    "Uniform prior size not match."
+                assert self.uprior.size == self.size, "Uniform prior size not match."
             else:
                 raise ValueError("Unknown prior type.")
 
@@ -366,7 +376,7 @@ class SplineVariable(Variable):
         self.linear_gpriors = list()
         self.linear_upriors = list()
 
-    def get_mat(self, data: Data) -> np.ndarray:
+    def get_mat(self, data: Data) -> NDArray:
         """Get design matrix.
 
         Parameters
@@ -376,48 +386,46 @@ class SplineVariable(Variable):
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Design matrix.
         """
         self.check_data(data)
         cov = data.get_cols(self.name)
         return self.spline.design_mat(cov, l_extra=True, r_extra=True)
 
-    def get_linear_uvec(self) -> np.ndarray:
+    def get_linear_uvec(self) -> NDArray:
         """Get linear Uniform prior vector.
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Linear uniform prior vector.
         """
         if not self.linear_upriors:
             uvec = np.empty((2, 0))
         else:
-            uvec = np.hstack([
-                np.vstack([prior.lb, prior.ub])
-                for prior in self.linear_upriors
-            ])
+            uvec = np.hstack(
+                [np.vstack([prior.lb, prior.ub]) for prior in self.linear_upriors]
+            )
         return uvec
 
-    def get_linear_gvec(self) -> np.ndarray:
+    def get_linear_gvec(self) -> NDArray:
         """Get linear Gaussian prior vector.
 
         Returns
         -------
-        np.ndarray
+        NDArray
             Linear Gaussian prior vector.
         """
         if not self.linear_gpriors:
             gvec = np.empty((2, 0))
         else:
-            gvec = np.hstack([
-                np.vstack([prior.mean, prior.sd])
-                for prior in self.linear_gpriors
-            ])
+            gvec = np.hstack(
+                [np.vstack([prior.mean, prior.sd]) for prior in self.linear_gpriors]
+            )
         return gvec
 
-    def get_linear_umat(self, data: Data = None) -> np.ndarray:
+    def get_linear_umat(self, data: Data = None) -> NDArray:
         """Get linear Uniform prior design matrix.
 
         Parameters
@@ -432,7 +440,7 @@ class SplineVariable(Variable):
 
         Returns
         -------
-        np.ndarray:
+        NDArray:
             Linear Uniform prior design matrix.
         """
         if not self.linear_upriors:
@@ -441,12 +449,10 @@ class SplineVariable(Variable):
             if self.spline is None:
                 assert data is not None, "Must check data to create spline first."
                 self.check_data(data)
-            umat = np.vstack([
-                prior.mat for prior in self.linear_upriors
-            ])
+            umat = np.vstack([prior.mat for prior in self.linear_upriors])
         return umat
 
-    def get_linear_gmat(self, data: Data = None) -> np.ndarray:
+    def get_linear_gmat(self, data: Data = None) -> NDArray:
         """Get linear Gaussian prior design matrix.
 
         Parameters
@@ -461,7 +467,7 @@ class SplineVariable(Variable):
 
         Returns
         -------
-        np.ndarray:
+        NDArray:
             Linear Gaussian prior design matrix.
         """
         if not self.linear_gpriors:
@@ -470,7 +476,5 @@ class SplineVariable(Variable):
             if self.spline is None:
                 assert data is not None, "Must check data to create spline first."
                 self.check_data(data)
-            gmat = np.vstack([
-                prior.mat for prior in self.linear_gpriors
-            ])
+            gmat = np.vstack([prior.mat for prior in self.linear_gpriors])
         return gmat
