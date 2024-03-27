@@ -1,9 +1,8 @@
-from typing import Tuple
-
 import numpy as np
-from msca.linalg.matrix import Matrix, asmatrix
-from numpy.typing import NDArray
+from msca.linalg.matrix import asmatrix
 from scipy.sparse import csc_matrix
+
+from regmod._typing import Matrix, NDArray
 
 
 def model_post_init(
@@ -11,7 +10,7 @@ def model_post_init(
     uvec: NDArray,
     linear_umat: NDArray,
     linear_uvec: NDArray,
-) -> Tuple[Matrix, Matrix, NDArray]:
+) -> tuple[Matrix, Matrix, NDArray]:
     # design matrix
     issparse = mat.size == 0 or ((mat == 0).sum() / mat.size) > 0.95
     if issparse:
@@ -31,12 +30,8 @@ def model_post_init(
         cmat = cmat / scale[:, np.newaxis]
         cvec = cvec / scale
 
-    cmat = np.vstack([
-        -cmat[~np.isneginf(cvec[0])], cmat[~np.isposinf(cvec[1])]
-    ])
-    cvec = np.hstack([
-        -cvec[0][~np.isneginf(cvec[0])], cvec[1][~np.isposinf(cvec[1])]
-    ])
+    cmat = np.vstack([-cmat[~np.isneginf(cvec[0])], cmat[~np.isposinf(cvec[1])]])
+    cvec = np.hstack([-cvec[0][~np.isneginf(cvec[0])], cvec[1][~np.isposinf(cvec[1])]])
     if issparse:
         cmat = csc_matrix(cmat).astype(np.float64)
     cmat = asmatrix(cmat)
