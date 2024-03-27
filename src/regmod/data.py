@@ -1,12 +1,11 @@
 """
 Data Module
 """
+
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Union
 
 import numpy as np
-from numpy import ndarray
-from pandas import DataFrame
+from regmod._typing import NDArray, DataFrame
 
 
 @dataclass
@@ -15,9 +14,9 @@ class Data:
 
     Parameters
     ----------
-    col_obs : Optional[Union[str, List[str]]], optional
+    col_obs : str, optional
         Column name(s) for observation. Default is `None`.
-    col_covs : List[str], optional
+    col_covs : list[str], optional
         Column names for covariates. Default is an empty list.
     col_weights : str, default="weights"
         Column name for weights. Default is `'weights'`. If `col_weights` is
@@ -40,10 +39,10 @@ class Data:
     offset
     trim_weights
     num_obs
-    col_obs : Optional[Union[str, List[str]]]
+    col_obs : str, optional
         Column name for observation, can be a single string, a list of string or
         `None`. When it is `None` you cannot access property `obs`.
-    col_covs : List[str]
+    col_covs : list[str]
         A list of column names for covariates.
     col_weights : str
         Column name for weights. `weights` can be used in the likelihood
@@ -59,7 +58,7 @@ class Data:
         `col_offset` will be added to the data frame filled with 0.
     df : pd.DataFrame
         Data frame for the object. Default is an empty data frame.
-    cols : List[str]
+    cols : list[str]
         All the relevant columns, including, `col_obs` (if not `None`),
         `col_covs`, `col_weights`, `col_offset` and `'trim_weights'`.
 
@@ -89,17 +88,18 @@ class Data:
     -----
     * This class should be replaced by a subclass of a more general dataclass
     * `get_covs` seems very redundant should only keep `get_cols`.
+
     """
 
-    col_obs: Optional[Union[str, List[str]]] = None
-    col_covs: List[str] = field(default_factory=list)
+    col_obs: str | None = None
+    col_covs: list[str] = field(default_factory=list)
     col_weights: str = "weights"
     col_offset: str = "offset"
     df: DataFrame = field(default_factory=DataFrame)
     subset_cols: bool = False
 
     def __post_init__(self):
-        self.col_covs = list(set(self.col_covs).union({'intercept'}))
+        self.col_covs = list(set(self.col_covs).union({"intercept"}))
         self.cols = self.col_covs + [self.col_weights, self.col_offset, "trim_weights"]
         if self.col_obs is not None:
             if isinstance(self.col_obs, str):
@@ -121,6 +121,7 @@ class Data:
         -------
         bool
             Return `True` when `self.df` is empty.
+
         """
         return self.num_obs == 0
 
@@ -131,17 +132,18 @@ class Data:
         ------
         ValueError
             Raised if any col in `self.cols` is not in `self.df`.
+
         """
         for col in self.cols:
             if col not in self.df.columns:
                 raise ValueError(f"Missing columnn {col}.")
 
-    def parse_df(self, df: Optional[DataFrame] = None) -> DataFrame:
+    def parse_df(self, df: DataFrame | None = None) -> DataFrame:
         """Subset `df` with `self.cols`.
 
         Parameters
         ----------
-        df : Optional[DataFrame], optional
+        df : DataFrame, optional
             Data Frame used to create subset. When it is `None`, it will use
             `self.df`.
 
@@ -149,6 +151,7 @@ class Data:
         -------
         DataFrame
             Copy of input data frame with given subset columns.
+
         """
         if df is not None:
             if self.subset_cols:
@@ -159,6 +162,7 @@ class Data:
     def fill_df(self) -> None:
         """Automatically add columns `'intercept'`, `col_weights`, `col_offset`
         and `'trim_weights'`, if they are not present in the `self.df`.
+
         """
         if "intercept" not in self.df.columns:
             self.df["intercept"] = 1.0
@@ -184,6 +188,7 @@ class Data:
         ----------
         df : DataFrame
             Data frame to be attached.
+
         """
         self.parse_df(df)
         self.fill_df()
@@ -202,26 +207,24 @@ class Data:
         -------
         Data
             Copied instance of `Data` class.
+
         """
         df = self.df.copy() if with_df else DataFrame(columns=self.cols)
-        return Data(self.col_obs,
-                    self.col_covs,
-                    self.col_weights,
-                    self.col_offset,
-                    df)
+        return Data(self.col_obs, self.col_covs, self.col_weights, self.col_offset, df)
 
-    def get_cols(self, cols: Union[List[str], str]) -> ndarray:
+    def get_cols(self, cols: str | list[str]) -> NDArray:
         """Access columns in `self.df`.
 
         Parameters
         ----------
-        cols : Union[List[str], str]
+        cols : str | list[str]
             Column name(s) need to accessed.
 
         Returns
         -------
-        ndarray
+        NDArray
             Numpy array corresponding to the column(s).
+
         """
         return self.df[cols].to_numpy()
 
@@ -231,53 +234,54 @@ class Data:
         return self.df.shape[0]
 
     @property
-    def obs(self) -> ndarray:
+    def obs(self) -> NDArray:
         """Observation column(s)."""
         if self.col_obs is None:
             raise ValueError("This data object does not contain observations.")
         return self.get_cols(self.col_obs)
 
     @property
-    def covs(self) -> Dict[str, ndarray]:
+    def covs(self) -> dict[str, NDArray]:
         """Covariates dictionary with column names as keys and corresponding
         numpy array as the column.
         """
         return self.df[self.col_covs].to_dict(orient="list")
 
     @property
-    def weights(self) -> ndarray:
+    def weights(self) -> NDArray:
         """Weights column."""
         return self.get_cols(self.col_weights)
 
     @property
-    def offset(self) -> ndarray:
+    def offset(self) -> NDArray:
         """Offset column."""
         return self.get_cols(self.col_offset)
 
     @property
-    def trim_weights(self) -> ndarray:
+    def trim_weights(self) -> NDArray:
         """Trimming weights column."""
         return self.get_cols("trim_weights")
 
     @trim_weights.setter
-    def trim_weights(self, weights: Union[float, ndarray]):
+    def trim_weights(self, weights: float | NDArray):
         if np.any(weights < 0.0) or np.any(weights > 1.0):
             raise ValueError("trim_weights has to be between 0 and 1.")
         self.df["trim_weights"] = weights
 
-    def get_covs(self, col_covs: Union[List[str], str]) -> ndarray:
+    def get_covs(self, col_covs: str | list[str]) -> NDArray:
         """Access covariates in `self.df`.
 
         Parameters
         ----------
-        col_covs : Union[List[str], str]
+        col_covs : str | list[str]
             Column name(s) of the covariates.
 
         Returns
         -------
-        ndarray
+        NDArray
             Return the corresponding column(s) in the data frame. Always return
             matrix even if `col_covs` is a single string.
+
         """
         if not isinstance(col_covs, list):
             col_covs = [col_covs]
