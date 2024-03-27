@@ -7,7 +7,8 @@ import numpy as np
 from scipy.special import digamma, loggamma, polygamma
 from scipy.stats import nbinom
 
-from regmod._typing import NDArray, DataFrame
+from regmod._typing import DataFrame, NDArray
+
 from .model import Model
 
 

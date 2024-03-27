@@ -6,6 +6,7 @@ import numpy as np
 from msca.optim.prox import proj_capped_simplex
 from msca.optim.solver import IPSolver, NTSolver
 from scipy.optimize import LinearConstraint, minimize
+
 from regmod._typing import Callable, NDArray
 
 

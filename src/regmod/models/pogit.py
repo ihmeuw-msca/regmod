@@ -5,7 +5,8 @@ Pogit Model
 import numpy as np
 from scipy.stats import poisson
 
-from regmod._typing import NDArray, DataFrame
+from regmod._typing import DataFrame, NDArray
+
 from .model import Model
 
 

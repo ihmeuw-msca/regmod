@@ -6,10 +6,10 @@ import numpy as np
 from scipy.linalg import block_diag
 from scipy.sparse import csc_matrix
 
+from regmod._typing import Callable, DataFrame, Matrix, NDArray
 from regmod.optimizer import scipy_optimize
 from regmod.parameter import Parameter
 from regmod.utils import sizes_to_slices
-from regmod._typing import Callable, NDArray, DataFrame, Matrix
 
 
 class Model:

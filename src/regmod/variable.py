@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from xspline import XSpline
 
+from regmod._typing import DataFrame, Iterable, NDArray
 from regmod.prior import (
     GaussianPrior,
     LinearGaussianPrior,
@@ -20,7 +21,6 @@ from regmod.prior import (
     UniformPrior,
 )
 from regmod.utils import SplineSpecs
-from regmod._typing import Iterable, NDArray, DataFrame
 
 
 @dataclass

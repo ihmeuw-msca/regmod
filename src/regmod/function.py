@@ -3,9 +3,10 @@ Function module
 """
 
 from dataclasses import dataclass, field
-from regmod._typing import Callable
 
 import numpy as np
+
+from regmod._typing import Callable
 
 
 @dataclass

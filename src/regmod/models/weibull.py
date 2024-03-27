@@ -5,7 +5,8 @@ Weibull Model
 import numpy as np
 from scipy.stats import weibull_min
 
-from regmod._typing import NDArray, DataFrame
+from regmod._typing import DataFrame, NDArray
+
 from .model import Model
 
 

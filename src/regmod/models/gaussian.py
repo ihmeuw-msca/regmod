@@ -5,8 +5,8 @@ Gaussian Model
 import numpy as np
 from scipy.stats import norm
 
+from regmod._typing import Callable, DataFrame, NDArray
 from regmod.optimizer import msca_optimize
-from regmod._typing import Callable, NDArray, DataFrame
 
 from .model import Model
 from .utils import model_post_init

@@ -7,10 +7,10 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.linalg import block_diag
 
+from regmod._typing import DataFrame, NDArray
 from regmod.function import SmoothFunction, fun_dict
 from regmod.prior import LinearGaussianPrior, LinearUniformPrior
 from regmod.variable import SplineVariable, Variable
-from regmod._typing import NDArray, DataFrame
 
 
 @dataclass

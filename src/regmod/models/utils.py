@@ -1,7 +1,8 @@
 import numpy as np
 from msca.linalg.matrix import asmatrix
 from scipy.sparse import csc_matrix
-from regmod._typing import NDArray, Matrix
+
+from regmod._typing import Matrix, NDArray
 
 
 def model_post_init(

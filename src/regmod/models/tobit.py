@@ -7,8 +7,8 @@ import jax.numpy as jnp
 from jax import grad, hessian, jit, lax
 from jax.scipy.stats.norm import logcdf, logpdf
 
-from regmod.function import SmoothFunction
 from regmod._typing import ArrayLike, DataFrame, JaxArray
+from regmod.function import SmoothFunction
 
 from .model import Model
 
