@@ -1,15 +1,12 @@
 """
 Poisson Model
 """
-from typing import Callable, List, Tuple
 
 import numpy as np
-import pandas as pd
-from numpy.typing import NDArray
 from scipy.stats import poisson
 
 from regmod.optimizer import msca_optimize
-
+from regmod._typing import Callable, NDArray, DataFrame
 from .model import Model
 from .utils import model_post_init
 
@@ -18,7 +15,7 @@ class PoissonModel(Model):
     param_names = ("lam",)
     default_param_specs = {"lam": {"inv_link": "exp"}}
 
-    def attach_df(self, df: pd.DataFrame):
+    def attach_df(self, df: DataFrame):
         super().attach_df(df)
         if not all(self.y >= 0):
             raise ValueError("Poisson model requires observations to be non-negagive.")
@@ -38,15 +35,11 @@ class PoissonModel(Model):
             Objective value.
         """
         inv_link = self.params[0].inv_link
-        lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
-        )
+        lin_param = self.params[0].get_lin_param(coefs, self.df, mat=self.mat[0])
         param = inv_link.fun(lin_param)
 
-        weights = self.weights*self.trim_weights
-        obj_param = weights * (
-            param - self.y * np.log(param)
-        )
+        weights = self.weights * self.trim_weights
+        obj_param = weights * (param - self.y * np.log(param))
         return obj_param.sum() + self.objective_from_gprior(coefs)
 
     def gradient(self, coefs: NDArray) -> NDArray:
@@ -64,16 +57,12 @@ class PoissonModel(Model):
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
-        lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
-        )
+        lin_param = self.params[0].get_lin_param(coefs, self.df, mat=self.mat[0])
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
 
-        weights = self.weights*self.trim_weights
-        grad_param = weights * (
-            1 - self.y / param
-        ) * dparam
+        weights = self.weights * self.trim_weights
+        grad_param = weights * (1 - self.y / param) * dparam
 
         return mat.T.dot(grad_param) + self.gradient_from_gprior(coefs)
 
@@ -92,17 +81,14 @@ class PoissonModel(Model):
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
-        lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
-        )
+        lin_param = self.params[0].get_lin_param(coefs, self.df, mat=self.mat[0])
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
         d2param = inv_link.d2fun(lin_param)
 
-        weights = self.weights*self.trim_weights
+        weights = self.weights * self.trim_weights
         hess_param = weights * (
-            self.y / param**2 * dparam**2 +
-            (1 - self.y / param) * d2param
+            self.y / param**2 * dparam**2 + (1 - self.y / param) * d2param
         )
 
         scaled_mat = mat.scale_rows(hess_param)
@@ -125,21 +111,17 @@ class PoissonModel(Model):
         """
         mat = self.mat[0]
         inv_link = self.params[0].inv_link
-        lin_param = self.params[0].get_lin_param(
-            coefs, self.df, mat=self.mat[0]
-        )
+        lin_param = self.params[0].get_lin_param(coefs, self.df, mat=self.mat[0])
         param = inv_link.fun(lin_param)
         dparam = inv_link.dfun(lin_param)
-        weights = self.weights*self.trim_weights
-        grad_param = weights * (1.0 - self.y/param) * dparam
+        weights = self.weights * self.trim_weights
+        grad_param = weights * (1.0 - self.y / param) * dparam
         jacobian = mat.T.scale_cols(grad_param)
         hess_mat_gprior = type(jacobian)(self.hessian_from_gprior())
         jacobian2 = jacobian.dot(jacobian.T) + hess_mat_gprior
         return jacobian2
 
-    def fit(self,
-            optimizer: Callable = msca_optimize,
-            **optimizer_options):
+    def fit(self, optimizer: Callable = msca_optimize, **optimizer_options):
         """Fit function.
 
         Parameters
@@ -147,21 +129,17 @@ class PoissonModel(Model):
         optimizer : Callable, optional
             Model solver, by default scipy_optimize.
         """
-        super().fit(
-            optimizer=optimizer,
-            **optimizer_options
-        )
+        super().fit(optimizer=optimizer, **optimizer_options)
 
-    def nll(self, params: List[NDArray]) -> NDArray:
-        return params[0] - self.y*np.log(params[0])
+    def nll(self, params: list[NDArray]) -> NDArray:
+        return params[0] - self.y * np.log(params[0])
 
-    def dnll(self, params: List[NDArray]) -> List[NDArray]:
-        return [1.0 - self.y/params[0]]
+    def dnll(self, params: list[NDArray]) -> list[NDArray]:
+        return [1.0 - self.y / params[0]]
 
-    def d2nll(self, params: List[NDArray]) -> List[List[NDArray]]:
-        return [[self.y/params[0]**2]]
+    def d2nll(self, params: list[NDArray]) -> list[list[NDArray]]:
+        return [[self.y / params[0] ** 2]]
 
-    def get_ui(self, params: List[NDArray], bounds: Tuple[float, float]) -> NDArray:
+    def get_ui(self, params: list[NDArray], bounds: tuple[float, float]) -> NDArray:
         mean = params[0]
-        return [poisson.ppf(bounds[0], mu=mean),
-                poisson.ppf(bounds[1], mu=mean)]
+        return [poisson.ppf(bounds[0], mu=mean), poisson.ppf(bounds[1], mu=mean)]

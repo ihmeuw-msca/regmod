@@ -1,17 +1,18 @@
 """
 Utility classes and functions
 """
+
 from dataclasses import dataclass
-from typing import Any, List, Optional
 
 import numpy as np
 from xspline import XSpline
 
+from regmod._typing import Any, NDArray
 
-def default_vec_factory(vec: Any,
-                        size: int,
-                        default_value: float,
-                        vec_name: str = 'vec') -> np.ndarray:
+
+def default_vec_factory(
+    vec: Any, size: int, default_value: float, vec_name: str = "vec"
+) -> NDArray:
     """Validate or create the vector.
 
     Parameters
@@ -30,7 +31,7 @@ def default_vec_factory(vec: Any,
 
     Returns
     -------
-    np.ndarray
+    NDArray
         Created or validated vector.
 
     Notes
@@ -46,12 +47,12 @@ def default_vec_factory(vec: Any,
     return vec
 
 
-def check_size(vec: np.ndarray, size: int, vec_name: str = 'vec') -> None:
+def check_size(vec: NDArray, size: int, vec_name: str = "vec") -> None:
     """Check the size of the vector.
 
     Parameters
     ----------
-    vec : np.ndarray
+    vec : NDArray
         Vector to be validated.
     size : int
         The assumption size of the vector.
@@ -76,7 +77,7 @@ class SplineSpecs:
 
     Attributes
     ----------
-    knots : np.ndarray
+    knots : NDArray
         Knots placement of the spline. Depends on `knots_type` this will be
         used differently.
     degree : int, default=3
@@ -106,7 +107,7 @@ class SplineSpecs:
         Create the spline from given vector as the data.
     """
 
-    knots: np.ndarray
+    knots: NDArray
     degree: int = 3
     l_linear: bool = False
     r_linear: bool = False
@@ -114,22 +115,26 @@ class SplineSpecs:
     knots_type: str = "abs"
 
     def __post_init__(self):
-        assert self.knots_type in ["abs", "rel_domain", "rel_freq"], \
-            "Knots type must be one of 'abs', 'rel_domain' or 'rel_freq'."
+        assert self.knots_type in [
+            "abs",
+            "rel_domain",
+            "rel_freq",
+        ], "Knots type must be one of 'abs', 'rel_domain' or 'rel_freq'."
 
     @property
     def num_spline_bases(self) -> int:
         """Number of the spline bases."""
-        inner_knots = self.knots[int(self.l_linear):
-                                 len(self.knots) - int(self.r_linear)]
+        inner_knots = self.knots[
+            int(self.l_linear) : len(self.knots) - int(self.r_linear)
+        ]
         return len(inner_knots) - 2 + self.degree + int(self.include_first_basis)
 
-    def create_spline(self, vec: Optional[np.ndarray] = None) -> XSpline:
+    def create_spline(self, vec: NDArray | None = None) -> XSpline:
         """Create spline from the given vector.
 
         Parameters
         ----------
-        vec : Optional[np.ndarray], optional
+        vec : Optional[NDArray], optional
             Given vector as the data. Default to `None`. When it is `None`
             it requires `knots_type` to be `abs`.
 
@@ -146,27 +151,31 @@ class SplineSpecs:
         if self.knots_type == "abs":
             knots = self.knots
         else:
-            assert vec is not None, \
-                "Using relative knots, must provide a vector to finalize knots."
+            assert (
+                vec is not None
+            ), "Using relative knots, must provide a vector to finalize knots."
             if self.knots_type == "rel_domain":
                 lb = np.min(vec)
                 ub = np.max(vec)
-                knots = lb + self.knots*(ub - lb)
+                knots = lb + self.knots * (ub - lb)
             else:
                 knots = np.quantile(vec, self.knots)
 
-        return XSpline(knots, self.degree,
-                       l_linear=self.l_linear,
-                       r_linear=self.r_linear,
-                       include_first_basis=self.include_first_basis)
+        return XSpline(
+            knots,
+            self.degree,
+            l_linear=self.l_linear,
+            r_linear=self.r_linear,
+            include_first_basis=self.include_first_basis,
+        )
 
 
-def sizes_to_slices(sizes: List[int]) -> List[slice]:
+def sizes_to_slices(sizes: list[int]) -> list[slice]:
     """Convert a list of sizes to a list of slices.
 
     Parameters
     ----------
-    sizes : List[int]
+    sizes : list[int]
         A list of positive integers representing sizes of the groups.
 
     Raises
@@ -176,7 +185,7 @@ def sizes_to_slices(sizes: List[int]) -> List[slice]:
 
     Returns
     -------
-    List[slice]
+    list[slice]
         A list of slices converted from sizes.
 
     Examples
